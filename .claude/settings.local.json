@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(node -v)",
+      "PowerShell(npm -v)",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); node -v; npm -v)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\\\\public\" && cp \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\CV EDITS\\\\Find Job 2026\\\\Rohan_Khullar_Resume_Product.pdf\" \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\\\\public\\\\Rohan_Khullar_Resume.pdf\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\\\\.claude\")",
+      "mcp__Claude_Preview__preview_start",
+      "Read(//c/Users/DELL/OneDrive/Desktop/**)",
+      "Bash(npx --yes create-expo-app@latest --version)",
+      "PowerShell($env:PATH += \";C:\\\\Program Files\\\\nodejs\"; node -v; npm -v)",
+      "Bash(PATH='__TRACKED_VAR__:/c/Program Files/nodejs' npx expo install --check)",
+      "PowerShell($env:PATH += \";C:\\\\Program Files\\\\nodejs\"; cd \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\\\\decision-dice-app\"; Start-Process powershell -ArgumentList '-NoExit','-Command','$env:PATH += \\\\\";C:\\\\Program Files\\\\nodejs\\\\\"; cd \\\\\"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\\\\decision-dice-app\\\\\"; npx eas login')",
+      "WebFetch(domain:claude.ai)",
+      "WebFetch(domain:product-with-rohan.vercel.app)",
+      "PowerShell(Get-ChildItem -Path . | Select-Object -First 20 | Format-Table -AutoSize Name, @{Name=\"Type\"; Expression={if\\($_.PSIsContainer\\){\"Dir\"}else{\"File\"}}})",
+      "Bash(git add *)",
+      "Bash(git init *)",
+      "Bash(git commit *)",
+      "Bash(git reset *)"
+    ]
+  }
+}

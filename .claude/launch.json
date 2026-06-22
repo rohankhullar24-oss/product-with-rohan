@@ -1,0 +1,18 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dev",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
+      "port": 3000
+    },
+    {
+      "name": "decision-dice-app",
+      "runtimeExecutable": "C:\\Program Files\\nodejs\\node.exe",
+      "runtimeArgs": ["node_modules/expo/bin/cli", "start", "--web", "--port", "8082"],
+      "cwd": "decision-dice-app",
+      "port": 8082
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --color-navy: #0f172a;
+  --color-slate: #475569;
+  --color-accent: #0d9488;
+  --color-accent-light: #ccfbf1;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f172a;
+    --foreground: #f1f5f9;
+  }
+}
+
+html.dark {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+}
+
+html.dark body {
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark main {
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark section {
+  background-color: #0f172a !important;
+  color: #f1f5f9 !important;
+}
+
+html.dark section.bg-slate-50 {
+  background-color: #020617;
+}
+
+html.dark section.bg-white {
+  background-color: #0f172a;
+}
+
+html.dark h1, html.dark h2, html.dark h3, html.dark h4, html.dark h5, html.dark h6 {
+  color: #f1f5f9;
+}
+
+html.dark p {
+  color: #cbd5e1;
+}
+
+html.dark a {
+  color: #0d9488;
+}
+
+html.dark button {
+  color: #f1f5f9;
+}
+
+html.dark .text-navy {
+  color: #f1f5f9;
+}
+
+html.dark .text-slate {
+  color: #cbd5e1;
+}
+
+html.dark .bg-white {
+  background-color: #1e293b;
+}
+
+html.dark .bg-slate-50 {
+  background-color: #020617;
+}
+
+html.dark .border-slate-200 {
+  border-color: #334155;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-navy: var(--color-navy);
+  --color-slate: var(--color-slate);
+  --color-accent: var(--color-accent);
+  --color-accent-light: var(--color-accent-light);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}

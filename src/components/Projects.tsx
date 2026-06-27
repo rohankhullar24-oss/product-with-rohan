@@ -14,16 +14,6 @@ type Project = {
 
 const projects: Project[] = [
   {
-    title: "Prototype Merchant App",
-    description:
-      "A working merchant-facing app prototype built entirely with Claude — no code written manually. Demonstrates how product thinking translates directly into a functional UI.",
-    fullDescription:
-      "Built a fully functional merchant-facing mobile app prototype using Claude without writing any code manually. The prototype demonstrates core merchant workflows including transaction history, settlement tracking, and merchant profile management. It showcases how clear product thinking and detailed specifications can be directly translated into a working UI/UX experience.",
-    tags: ["Side Project", "AI-Built"],
-    href: "https://claude.ai/public/artifacts/3cbc7699-4172-43fd-9aad-a97f1f3634da",
-    external: true,
-  },
-  {
     title: "Free AI Course Platform",
     description:
       "A work-in-progress interactive course platform teaching Applied AI concepts. Features 6 weeks of curriculum, video lessons, downloadable starter code, and progress tracking. Currently a prototype being built in public.",
@@ -41,29 +31,30 @@ const projects: Project[] = [
     tags: ["Product Case Study", "AI/ML"],
   },
   {
-    title: "This Portfolio Site — Built with AI, No Code Written",
-    description:
-      "Designed and shipped this entire site (Next.js + Tailwind) by directing Claude end-to-end — from spec and content to layout, styling, and deployment — without writing a single line of code myself.",
-    fullDescription:
-      "This entire portfolio site was built without writing any code myself. I used Claude to design the spec, create the layout, implement styling with Tailwind, and deploy to Vercel. This demonstrates how product managers can leverage AI to ship functional products independently, from concept to production—a hands-on look at how PMs can use AI to ship product themselves.",
-    tags: ["Side Project", "AI-Built"],
-  },
-  {
-    title: "Decision Dice",
-    description:
-      "A lightweight tool for beating analysis paralysis: enter the options you're torn between, answer a couple of quick questions about your priorities, and get a ranked recommendation with a one-line rationale.",
-    fullDescription:
-      "Decision Dice solves the problem of analysis paralysis by systematically evaluating your options against your stated priorities. The tool uses a simple questionnaire approach to understand what matters most to you, then applies weighted scoring to provide a clear recommendation. It's available at /projects/decision-dice with a fully interactive interface.",
-    tags: ["Side Project", "Tool"],
-    href: "/projects/decision-dice",
-  },
-  {
     title: "Lead-Generation & Assignment Tool",
     description:
       "Built a lead-generation and assignment tool that routes 25K leads/month into the onboarding funnel, and used activation-trend analysis to expand the retailer services catalog.",
     fullDescription:
       "Designed and launched a lead-generation and intelligent assignment tool that processes 25,000 leads monthly into the merchant onboarding pipeline. Used activation-trend analysis to identify untapped service opportunities (micro-ATM, biometric authentication) and expanded the retailer services catalog through third-party provider integrations. This tool became a key driver of merchant acquisition growth.",
     tags: ["Product Case Study"],
+  },
+  {
+    title: "Prototype Merchant App",
+    description:
+      "A working merchant-facing app prototype built entirely with Claude — no code written manually. Demonstrates how product thinking translates directly into a functional UI.",
+    fullDescription:
+      "Built a fully functional merchant-facing mobile app prototype using Claude without writing any code manually. The prototype demonstrates core merchant workflows including transaction history, settlement tracking, and merchant profile management. It showcases how clear product thinking and detailed specifications can be directly translated into a working UI/UX experience.",
+    tags: ["Side Project", "AI-Built"],
+    href: "https://claude.ai/public/artifacts/3cbc7699-4172-43fd-9aad-a97f1f3634da",
+    external: true,
+  },
+  {
+    title: "This Portfolio Site — Built with AI, No Code Written",
+    description:
+      "Designed and shipped this entire site (Next.js + Tailwind) by directing Claude end-to-end — from spec and content to layout, styling, and deployment — without writing a single line of code myself.",
+    fullDescription:
+      "This entire portfolio site was built without writing any code myself. I used Claude to design the spec, create the layout, implement styling with Tailwind, and deploy to Vercel. This demonstrates how product managers can leverage AI to ship functional products independently, from concept to production—a hands-on look at how PMs can use AI to ship product themselves.",
+    tags: ["Side Project", "AI-Built"],
   },
   {
     title: "Indian Stock Analyzer",
@@ -73,6 +64,15 @@ const projects: Project[] = [
       "Built an interactive stock analysis platform for Indian equities that uses fundamental metrics to score and rank stocks. The tool evaluates companies across 7 key financial dimensions — P/E ratio, ROE, debt-to-equity, revenue growth, profit margin, liquidity, and ROA — generating a composite investment score (0-100). Features include detailed metric breakdowns, trend analysis, investment ratings (Strong Buy to Avoid), and sector comparisons. Covers blue-chip stocks like Reliance, TCS, Infosys, and HDFC. Designed as an educational tool to help retail investors understand fundamental analysis without requiring financial expertise.",
     tags: ["Side Project", "Finance Tool"],
     href: "/projects/stock-analyzer",
+  },
+  {
+    title: "Decision Dice",
+    description:
+      "A lightweight tool for beating analysis paralysis: enter the options you're torn between, answer a couple of quick questions about your priorities, and get a ranked recommendation with a one-line rationale.",
+    fullDescription:
+      "Decision Dice solves the problem of analysis paralysis by systematically evaluating your options against your stated priorities. The tool uses a simple questionnaire approach to understand what matters most to you, then applies weighted scoring to provide a clear recommendation. It's available at /projects/decision-dice with a fully interactive interface.",
+    tags: ["Side Project", "Tool"],
+    href: "/projects/decision-dice",
   },
 ];
 

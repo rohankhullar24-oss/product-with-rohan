@@ -14,6 +14,16 @@ type Project = {
 
 const projects: Project[] = [
   {
+    title: "Prototype Merchant App",
+    description:
+      "A working merchant-facing app prototype built entirely with Claude — no code written manually. Demonstrates how product thinking translates directly into a functional UI.",
+    fullDescription:
+      "Built a fully functional merchant-facing mobile app prototype using Claude without writing any code manually. The prototype demonstrates core merchant workflows including transaction history, settlement tracking, and merchant profile management. It showcases how clear product thinking and detailed specifications can be directly translated into a working UI/UX experience.",
+    tags: ["Side Project", "AI-Built"],
+    href: "https://claude.ai/public/artifacts/3cbc7699-4172-43fd-9aad-a97f1f3634da",
+    external: true,
+  },
+  {
     title: "Free AI Course Platform",
     description:
       "A work-in-progress interactive course platform teaching Applied AI concepts. Features 6 weeks of curriculum, video lessons, downloadable starter code, and progress tracking. Currently a prototype being built in public.",
@@ -21,6 +31,14 @@ const projects: Project[] = [
       "Building an interactive course platform to teach Applied AI concepts from first principles. The platform features a 6-week curriculum covering LLMs, autonomous agents, ML models, RAG systems, production deployment, and AI capstone projects. Each week includes structured lessons, hands-on project briefs, downloadable Python starter code, and progress tracking. Currently live as a prototype — videos and expanded content coming soon. Designed to be a practical, hands-on introduction to AI engineering.",
     tags: ["Side Project", "WIP", "AI Education"],
     href: "/course",
+  },
+  {
+    title: "AI-Powered Document Verification for Merchant Onboarding",
+    description:
+      "Led the design and rollout of an AI-driven document-verification workflow for partner KYC, cutting manual verification effort by 60% while strengthening fraud and RBI compliance controls.",
+    fullDescription:
+      "This project involved designing and implementing an AI-powered document verification system to automate merchant KYC (Know Your Customer) processes. By leveraging machine learning for document classification and extraction, we reduced manual verification effort by 60%, improved compliance with RBI regulations, and created a more robust fraud detection system. This became a foundational component of the broader merchant onboarding revamp.",
+    tags: ["Product Case Study", "AI/ML"],
   },
   {
     title: "This Portfolio Site — Built with AI, No Code Written",
@@ -40,30 +58,12 @@ const projects: Project[] = [
     href: "/projects/decision-dice",
   },
   {
-    title: "AI-Powered Document Verification for Merchant Onboarding",
-    description:
-      "Led the design and rollout of an AI-driven document-verification workflow for partner KYC, cutting manual verification effort by 60% while strengthening fraud and RBI compliance controls.",
-    fullDescription:
-      "This project involved designing and implementing an AI-powered document verification system to automate merchant KYC (Know Your Customer) processes. By leveraging machine learning for document classification and extraction, we reduced manual verification effort by 60%, improved compliance with RBI regulations, and created a more robust fraud detection system. This became a foundational component of the broader merchant onboarding revamp.",
-    tags: ["Product Case Study", "AI/ML"],
-  },
-  {
     title: "Lead-Generation & Assignment Tool",
     description:
       "Built a lead-generation and assignment tool that routes 25K leads/month into the onboarding funnel, and used activation-trend analysis to expand the retailer services catalog.",
     fullDescription:
       "Designed and launched a lead-generation and intelligent assignment tool that processes 25,000 leads monthly into the merchant onboarding pipeline. Used activation-trend analysis to identify untapped service opportunities (micro-ATM, biometric authentication) and expanded the retailer services catalog through third-party provider integrations. This tool became a key driver of merchant acquisition growth.",
     tags: ["Product Case Study"],
-  },
-  {
-    title: "Prototype Merchant App",
-    description:
-      "A working merchant-facing app prototype built entirely with Claude — no code written manually. Demonstrates how product thinking translates directly into a functional UI.",
-    fullDescription:
-      "Built a fully functional merchant-facing mobile app prototype using Claude without writing any code manually. The prototype demonstrates core merchant workflows including transaction history, settlement tracking, and merchant profile management. It showcases how clear product thinking and detailed specifications can be directly translated into a working UI/UX experience.",
-    tags: ["Side Project", "AI-Built"],
-    href: "https://claude.ai/public/artifacts/3cbc7699-4172-43fd-9aad-a97f1f3634da",
-    external: true,
   },
   {
     title: "Indian Stock Analyzer",

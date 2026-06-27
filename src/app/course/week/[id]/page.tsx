@@ -289,6 +289,27 @@ export default function WeekModule() {
     toast.success('Week completed! Great work! 🎉')
   }
 
+  const handleDownloadCode = async () => {
+    try {
+      const filePath = `/projects/week${weekNum}-chatbot/app.py`
+      const response = await fetch(filePath)
+      if (!response.ok) throw new Error('File not found')
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `week${weekNum}-chatbot.py`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+      toast.success('Starter code downloaded! 📥')
+    } catch (error) {
+      toast.error('Failed to download starter code')
+      console.error(error)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       {/* Header */}
@@ -369,7 +390,7 @@ export default function WeekModule() {
                 <Download size={20} /> Get Started
               </h4>
               <p className="text-slate-400 mb-4">Clone the starter code and customize it for your use case.</p>
-              <button className="w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold transition">
+              <button onClick={handleDownloadCode} className="w-full bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg font-semibold transition">
                 Download Starter Code ({week.project.starterCode})
               </button>
             </div>

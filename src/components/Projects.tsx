@@ -14,6 +14,15 @@ type Project = {
 
 const projects: Project[] = [
   {
+    title: "Free AI Course Platform",
+    description:
+      "A work-in-progress interactive course platform teaching Applied AI concepts. Features 6 weeks of curriculum, video lessons, downloadable starter code, and progress tracking. Currently a prototype being built in public.",
+    fullDescription:
+      "Building an interactive course platform to teach Applied AI concepts from first principles. The platform features a 6-week curriculum covering LLMs, autonomous agents, ML models, RAG systems, production deployment, and AI capstone projects. Each week includes structured lessons, hands-on project briefs, downloadable Python starter code, and progress tracking. Currently live as a prototype — videos and expanded content coming soon. Designed to be a practical, hands-on introduction to AI engineering.",
+    tags: ["Side Project", "WIP", "AI Education"],
+    href: "/course",
+  },
+  {
     title: "This Portfolio Site — Built with AI, No Code Written",
     description:
       "Designed and shipped this entire site (Next.js + Tailwind) by directing Claude end-to-end — from spec and content to layout, styling, and deployment — without writing a single line of code myself.",

@@ -21,7 +21,16 @@
       "Bash(git reset *)",
       "Bash(git config *)",
       "Bash(git remote *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "mcp__Claude_in_Chrome__navigate",
+      "Bash(curl -s https://product-with-rohan.vercel.app/)",
+      "Bash(curl -s \"https://product-with-rohan.vercel.app/_next/static/chunks/0-50p1nsnubxl.css\")",
+      "Bash(npm run *)",
+      "Bash(Start-Sleep -Seconds 8)",
+      "Bash(curl -s http://localhost:3000)",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); cd \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\"; npx vercel --prod --yes 2>&1 | Select-Object -Last 25)",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); cd \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\"; npx vercel --prod --yes 2>&1 | Select-Object -Last 30)",
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); cd \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\"; npm install lucide-react 2>&1 | Select-Object -Last 20)"
     ]
   }
 }

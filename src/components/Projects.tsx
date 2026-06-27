@@ -56,6 +56,15 @@ const projects: Project[] = [
     href: "https://claude.ai/public/artifacts/3cbc7699-4172-43fd-9aad-a97f1f3634da",
     external: true,
   },
+  {
+    title: "Indian Stock Analyzer",
+    description:
+      "A fundamental analysis tool for Indian stocks with comprehensive metrics (P/E, ROE, debt ratios, profit margins) and AI-powered scoring to help identify investment opportunities. Analyzes 8+ major Indian stocks with detailed financial insights.",
+    fullDescription:
+      "Built an interactive stock analysis platform for Indian equities that uses fundamental metrics to score and rank stocks. The tool evaluates companies across 7 key financial dimensions — P/E ratio, ROE, debt-to-equity, revenue growth, profit margin, liquidity, and ROA — generating a composite investment score (0-100). Features include detailed metric breakdowns, trend analysis, investment ratings (Strong Buy to Avoid), and sector comparisons. Covers blue-chip stocks like Reliance, TCS, Infosys, and HDFC. Designed as an educational tool to help retail investors understand fundamental analysis without requiring financial expertise.",
+    tags: ["Side Project", "Finance Tool"],
+    href: "/projects/stock-analyzer",
+  },
 ];
 
 export default function Projects() {

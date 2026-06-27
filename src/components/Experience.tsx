@@ -12,29 +12,30 @@ type Role = {
 
 const roles: Role[] = [
   {
-    title: "Product Manager — B2B",
+    title: "Product Manager",
     company: "Airtel Payments Bank",
-    dates: "Jan 2024 – Present",
+    dates: "Jul 2022 – Present",
     bullets: [
-      "Own product strategy and roadmap for the B2B merchant & retailer lifecycle platform (600K+ partners, ₹7 Cr monthly GMV), aligning engineering, business, operations, and design across merchants, distributors, banking partners, and enterprise clients.",
-      "Led funnel optimization and journey redesign that lifted partner onboarding conversion from 50% to 73%, using drop-off analysis to prioritize the highest-friction steps.",
-      "Cut onboarding turnaround from 3 days to 15 minutes by digitizing workflows and building seamless, automated verification journeys.",
-      "Reduced merchant inactivity 15% by launching targeted in-app interventions — contextual pop-ups, re-engagement nudges, and lifecycle prompts — triggered by dormancy and drop-off signals.",
-      "Built reusable, configurable acquisition infrastructure and AI-powered document-verification workflows — accelerating new partner-journey launches while cutting manual verification effort 60% and strengthening fraud / compliance controls.",
-      "Ran A/B testing, UAT, and controlled rollouts informed by product analytics, cutting onboarding-related issues 20% and lifting partner satisfaction.",
+      "Led product strategy, roadmap prioritization and execution for a high-scale B2B platform serving 600K+ users and ₹7 Cr monthly GMV, driving growth, platform scalability, automation and user experience improvements.",
+      "Delivered platform modernization initiatives across multiple digital touchpoints, introducing automation and self-service capabilities that improved onboarding conversion from 50% to 73%, increased lead conversion from 17% to 40%, and enhanced operational efficiency through workflow automation.",
+      "Re-engineered onboarding workflows and user journeys, increasing completion rates from 5% to 50%, reducing turnaround time from 33 minutes to 15 minutes, and significantly improving process efficiency through journey optimization.",
+      "Built and deployed AI-powered document verification and image intelligence capabilities, reducing onboarding turnaround from 3 days to 15 minutes, lowering manual effort by ~60%, and scaling verification coverage through automated workflows.",
+      "Improved user engagement and platform adoption through targeted lifecycle interventions, reducing inactive users by ~15% and enabling proactive identification and reactivation of high-value user segments.",
+      "Implemented platform controls, risk-management capabilities and automation frameworks that strengthened platform reliability, improved onboarding quality and reduced operational overhead at scale.",
     ],
     awards: [
-      "Highflyer Award — led the RBI audit for the B2B platform",
+      "Highflyer Award — Recognized for driving high-impact platform transformation initiatives",
       "Certificate of Appreciation — launched the lead-generation flow driving higher conversion",
     ],
   },
   {
     title: "Assistant Product Manager",
     company: "Airtel Payments Bank",
-    dates: "Jul 2022 – Dec 2023",
+    dates: "Part of tenure",
     bullets: [
-      "Conducted market and user research to identify product opportunities and shape onboarding and new financial-service launches.",
-      "Built a lead-generation & assignment tool routing 25K leads/month into onboarding, and expanded the retailer services catalog (micro-ATM, biometric auth) by onboarding third-party providers — analyzing activation trends to inform roadmap prioritization.",
+      "Built and launched an end-to-end inventory and ordering platform supporting catalog management, order tracking, fulfillment workflows and third-party integrations, improving operational efficiency and user experience.",
+      "Improved self-onboarding conversion from 50% to 85% through authentication enhancements, journey optimization and error reduction initiatives.",
+      "Built a lead-management platform processing 25K+ leads per month and leveraged user research and market insights to support product launches and roadmap prioritization.",
     ],
   },
   {

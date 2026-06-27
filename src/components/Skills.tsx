@@ -5,43 +5,65 @@ import { useScrollAnimation } from "@/lib/use-scroll-animation";
 
 const skillGroups = [
   {
-    title: "Product Strategy",
+    title: "Product Management",
     skills: [
-      "Vision & roadmap",
+      "Product strategy",
+      "Roadmapping",
       "Opportunity sizing & prioritization",
-      "Market & competitive research",
+      "Product discovery",
       "GTM strategy",
-      "Build-vs-buy",
-    ],
-  },
-  {
-    title: "Platform & Infrastructure",
-    skills: [
-      "B2B SaaS platforms",
-      "Fintech & payments infrastructure",
-      "API & payment integrations",
-      "Merchant ecosystems",
-      "Reusable / configurable workflows",
-      "Fraud & compliance (RBI)",
-    ],
-  },
-  {
-    title: "Growth & Analytics",
-    skills: [
-      "Funnel optimization & drop-off analysis",
-      "Activation & acquisition",
-      "Retention",
-      "A/B testing & experimentation",
       "Product analytics",
+      "A/B testing",
+      "Agile / Scrum",
     ],
   },
   {
-    title: "Collaboration",
-    skills: ["Stakeholder management", "Cross-functional leadership", "Agile / Scrum"],
+    title: "Growth & User Experience",
+    skills: [
+      "Funnel optimization",
+      "User acquisition",
+      "Activation",
+      "Conversion optimization",
+      "Retention strategy",
+      "Experimentation",
+      "User research",
+    ],
   },
   {
-    title: "Tools",
-    skills: ["SQL", "Power BI", "Google Analytics", "Advanced Excel", "Jira"],
+    title: "Platform Products",
+    skills: [
+      "Workflow automation",
+      "Self-service platforms",
+      "API integrations",
+      "Platform modernization",
+      "Business process automation",
+      "Internal tools",
+    ],
+  },
+  {
+    title: "AI & Automation",
+    skills: [
+      "AI agents (LangGraph, LangChain)",
+      "LLM workflows",
+      "AI-powered automation",
+      "Agentic AI",
+      "Prompt engineering",
+      "Rapid prototyping",
+      "AI-assisted product development",
+    ],
+  },
+  {
+    title: "Leadership",
+    skills: [
+      "Stakeholder management",
+      "Cross-functional collaboration",
+      "Requirement gathering",
+      "Product execution",
+    ],
+  },
+  {
+    title: "Tools & Platforms",
+    skills: ["SQL", "Power BI", "Google Analytics", "Jira", "Figma", "Claude", "ChatGPT", "Cursor", "VS Code"],
   },
 ];
 

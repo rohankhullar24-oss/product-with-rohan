@@ -4,17 +4,17 @@ import { useScrollAnimation } from "@/lib/use-scroll-animation";
 import { AnimatedCounter } from "./AnimatedCounter";
 
 const highlights = [
-  "4 years driving product strategy & roadmap for a B2B fintech platform",
-  "Own a merchant onboarding & lifecycle platform — 600K+ partners, ₹7 Cr monthly GMV",
-  "Lifted partner onboarding conversion from 50% to 73%",
-  "Cut onboarding turnaround from 3 days to 15 minutes",
+  "4+ years leading platform, growth and automation products at scale",
+  "Manage a B2B platform serving 600K+ users — ₹7 Cr monthly GMV",
+  "Delivered 73% onboarding conversion, 40% lead conversion, 15-min B2B onboarding TAT",
+  "Built AI-powered automation workflows reducing manual effort by 60%",
 ];
 
 const stats = [
   { label: "Years of Experience", value: 4, suffix: "+" },
-  { label: "Partners Managed", value: 600000, suffix: "+", prefix: "" },
-  { label: "Conversion Lift", value: 23, suffix: "%", prefix: "+" },
-  { label: "Faster Onboarding", value: 95, suffix: "%", prefix: "" },
+  { label: "Active Users", value: 600000, suffix: "+", prefix: "" },
+  { label: "Onboarding Conversion", value: 73, suffix: "%", prefix: "" },
+  { label: "Lead Conversion", value: 40, suffix: "%", prefix: "" },
 ];
 
 const education = [
@@ -23,17 +23,12 @@ const education = [
     school: "Delhi School of Economics, University of Delhi",
     detail: "2022 · 81.43%",
   },
-  {
-    degree: "B.Com. (Hons.)",
-    school: "Rani Durgavati Vishwavidyalaya (RDU)",
-    detail: "2020 · 76%",
-  },
 ];
 
 const certifications = [
+  "Google AI Professional Certificate (Google)",
   "Certified Registered Product Owner (Scrum Inc.)",
   "Advanced Excel (CFI)",
-  "Digital Marketing (Udemy)",
 ];
 
 export default function About() {
@@ -54,13 +49,11 @@ export default function About() {
           About
         </h2>
         <h3 className="mt-2 text-3xl font-bold text-navy dark:text-white">
-          A product manager who turns messy journeys into scalable systems
+          Driving product strategy, growth and AI-led automation at scale
         </h3>
 
         <p className="mt-6 max-w-3xl text-slate dark:text-slate-400 leading-relaxed">
-          I combine market &amp; competitive research, funnel analytics, and ruthless
-          prioritization to find the highest-leverage problems — then build reusable,
-          configurable products that solve them at scale. Based in Gurugram, India.
+          I lead platform, growth and automation products delivering measurable business impact through improved conversion, operational efficiency and AI-led automation. I combine market research, funnel analytics, and AI-powered workflows to solve high-leverage problems at scale. Based in Gurugram, India.
         </p>
 
         {/* Animated Stats */}

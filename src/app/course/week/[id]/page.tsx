@@ -273,6 +273,8 @@ export default function WeekModule() {
   const weekNum = parseInt(id) || 1
   const week = weekContent[weekNum] || weekContent[1]
   const [completed, setCompleted] = useState(false)
+  const [selectedLesson, setSelectedLesson] = useState<any>(null)
+  const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
     if (id) {
@@ -308,6 +310,11 @@ export default function WeekModule() {
       toast.error('Failed to download starter code')
       console.error(error)
     }
+  }
+
+  const handleWatchLesson = (lesson: any) => {
+    setSelectedLesson(lesson)
+    setShowModal(true)
   }
 
   return (
@@ -355,7 +362,7 @@ export default function WeekModule() {
                       <span>{lesson.duration}</span>
                     </div>
                   </div>
-                  <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-sm whitespace-nowrap transition">
+                  <button onClick={() => handleWatchLesson(lesson)} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold text-sm whitespace-nowrap transition">
                     Watch
                   </button>
                 </div>
@@ -465,6 +472,51 @@ export default function WeekModule() {
           </div>
         </div>
       </div>
+
+      {/* Video Modal */}
+      {showModal && selectedLesson && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-700 flex justify-between items-center">
+              <h3 className="text-xl font-bold">{selectedLesson.title}</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-slate-400 hover:text-white text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="p-6">
+              <div className="bg-slate-900 rounded-lg p-12 text-center mb-6">
+                <div className="inline-block bg-slate-700 rounded-full p-6 mb-4">
+                  <Play size={48} className="text-blue-400" />
+                </div>
+                <h4 className="text-lg font-semibold mb-2">Video Player</h4>
+                <p className="text-slate-400 mb-6">Add your video URL to display here</p>
+                <div className="bg-slate-800 rounded p-4 text-left">
+                  <p className="text-sm text-slate-400 mb-2">To add video content:</p>
+                  <code className="text-xs text-slate-300 bg-slate-900 p-2 rounded block">
+                    Edit lesson content and add videoUrl property
+                  </code>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h4 className="font-semibold">Lesson Details</h4>
+                <p className="text-slate-300">{selectedLesson.description}</p>
+                <p className="text-slate-400 text-sm">Duration: {selectedLesson.duration}</p>
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-700 flex justify-end gap-3">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg font-semibold transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

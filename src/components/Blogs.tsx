@@ -5,6 +5,13 @@ import Link from "next/link";
 
 const blogs = [
   {
+    slug: "product-discovery-agent",
+    title: "The Product Discovery Agent",
+    description: "How AI agents are changing product discovery — from manual signal-hunting to continuous pattern recognition, and what that means for PMs.",
+    date: "2026-06-28",
+    category: "AI & Product",
+  },
+  {
     slug: "state-of-ai-agents-2026",
     title: "The State of AI Agents (2026)",
     description: "A comprehensive analysis of how AI agents are reshaping enterprise productivity, customer service, and the future of work — with a focus on winners, losers, and what's overhyped.",

@@ -13,8 +13,8 @@ const blogs = [
   },
   {
     slug: "state-of-ai-agents-2026",
-    title: "The State of AI Agents (2026)",
-    description: "A comprehensive analysis of how AI agents are reshaping enterprise productivity, customer service, and the future of work — with a focus on winners, losers, and what's overhyped.",
+    title: "AI Agents in Enterprise: The 2026 Reality Check",
+    description: "AI agents have moved from demos to daily use — but adoption is far more uneven than the hype suggests. What's working, what's overhyped, and where things are heading.",
     date: "2026-06-24",
     category: "AI & Agents",
   },

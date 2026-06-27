@@ -1,5 +1,5 @@
 ---
-title: "The State of AI Agents in 2026"
+title: "AI Agents in Enterprise: The 2026 Reality Check"
 description: "AI agents have moved from demos to daily use — but adoption is far more uneven than the hype suggests. What's working, what's overhyped, and where things are heading."
 date: "2026-06-17"
 ---

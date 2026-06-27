@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { ChevronLeft, CheckCircle, BookOpen, Code2, FileText, Download, Play } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -268,9 +268,9 @@ const weekContent: { [key: number]: any } = {
 }
 
 export default function WeekModule() {
-  const router = useRouter()
-  const { id } = router.query
-  const weekNum = parseInt(id as string) || 1
+  const params = useParams()
+  const id = params.id as string
+  const weekNum = parseInt(id) || 1
   const week = weekContent[weekNum] || weekContent[1]
   const [completed, setCompleted] = useState(false)
 

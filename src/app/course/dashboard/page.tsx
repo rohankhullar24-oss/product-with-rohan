@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { CheckCircle, Circle, BookOpen, Users, Settings, LogOut, ArrowRight } from 'lucide-react'

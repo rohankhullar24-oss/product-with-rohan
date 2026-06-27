@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Metadata } from "next";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { getAllPosts, getPostBySlug } from "@/lib/posts";
@@ -11,12 +12,28 @@ export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
-}) {
+}): Promise<Metadata> {
   const { slug } = await params;
   const post = getPostBySlug(slug);
+  const url = `https://productwithrohan.online/blogs/${slug}`;
+
   return {
     title: `${post.title} | Rohan Khullar`,
     description: post.description,
+    keywords: ["blog", "product management", "AI", "technology"],
+    authors: [{ name: "Rohan Khullar" }],
+    openGraph: {
+      type: "article",
+      url: url,
+      title: post.title,
+      description: post.description,
+      siteName: "Product with Rohan",
+    },
+    twitter: {
+      card: "summary",
+      title: post.title,
+      description: post.description,
+    },
   };
 }
 

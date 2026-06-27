@@ -1,9 +1,18 @@
 import Link from "next/link";
+import { Metadata } from "next";
 import { getAllPosts } from "@/lib/posts";
 
-export const metadata = {
-  title: "Blogs | Rohan Khullar",
-  description: "Research and writing on AI agents, product management, and technology.",
+export const metadata: Metadata = {
+  title: "Blogs | Rohan Khullar | AI, Product, and Technology Insights",
+  description:
+    "Research and writing on AI agents, product management, and technology. Insights from a Product Manager in fintech and B2B SaaS.",
+  keywords: ["blog", "product management", "AI", "technology", "fintech"],
+  openGraph: {
+    type: "website",
+    url: "https://productwithrohan.online/blogs",
+    title: "Blogs | Rohan Khullar",
+    description: "Research and writing on AI agents, product management, and technology.",
+  },
 };
 
 export default function BlogPage() {

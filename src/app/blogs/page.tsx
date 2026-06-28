@@ -19,7 +19,7 @@ export default function BlogPage() {
   const posts = getAllPosts();
 
   return (
-    <main className="flex-1 px-6 py-16 sm:py-24">
+    <main className="flex-1 bg-white dark:bg-slate-950 px-6 py-16 sm:py-24">
       <div className="mx-auto max-w-4xl">
         <Link href="/" className="text-sm text-accent hover:underline">
           ← Back to home

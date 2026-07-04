@@ -9,6 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.110.0",
     "ecc-universal": "github:affaan-m/ECC",
     "framer-motion": "^12.42.0",
     "gray-matter": "^4.0.3",

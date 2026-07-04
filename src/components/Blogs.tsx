@@ -12,6 +12,13 @@ const blogs = [
     category: "AI & Product",
   },
   {
+    slug: "agile-methodologies-age-of-ai",
+    title: "Agile Methodologies in the Age of AI",
+    description: "How AI is forcing agile teams to evolve: velocity metrics are breaking, estimation is fiction, and new practices are emerging. Real case studies inside.",
+    date: "2026-06-27",
+    category: "Agile & AI",
+  },
+  {
     slug: "state-of-ai-agents-2026",
     title: "AI Agents in Enterprise: The 2026 Reality Check",
     description: "AI agents have moved from demos to daily use — but adoption is far more uneven than the hype suggests. What's working, what's overhyped, and where things are heading.",

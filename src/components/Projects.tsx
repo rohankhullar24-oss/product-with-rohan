@@ -14,6 +14,16 @@ type Project = {
 
 const projects: Project[] = [
   {
+    title: "Product Shots — Finshots for Product Managers",
+    description:
+      "Daily product management practice inspired by Finshots. Get bite-sized PM questions daily, curated news (AI, corporate, hiring), and weekly articles — all designed to sharpen your product thinking.",
+    fullDescription:
+      "Product Shots brings the Finshots approach to product management learning. The app combines three core features: (1) Daily rotating product-sense questions across 8 types (guesstimate, behavioral, prioritization, metrics, root cause, strategy, critique, analysis) with full written answers; (2) Curated PM-relevant news auto-pulled daily (AI, corporate, hiring); (3) Weekly articles from Rohan's blog on applied product thinking. Built with Next.js + Supabase, email-only authentication, and persistent sessions. Users can browse past questions via the archive and explore news by category. Features a Finshots-inspired UI with dark mode, sidebar navigation, and category filters. Deployed to Vercel with automated daily content generation.",
+    tags: ["Side Project", "PM Tool", "Learning"],
+    href: "https://product-shots-pink.vercel.app",
+    external: true,
+  },
+  {
     title: "Free AI Course Platform",
     description:
       "A work-in-progress interactive course platform teaching Applied AI concepts. Features 6 weeks of curriculum, video lessons, downloadable starter code, and progress tracking. Currently a prototype being built in public.",
@@ -73,16 +83,6 @@ const projects: Project[] = [
       "Decision Dice solves the problem of analysis paralysis by systematically evaluating your options against your stated priorities. The tool uses a simple questionnaire approach to understand what matters most to you, then applies weighted scoring to provide a clear recommendation. It's available at /projects/decision-dice with a fully interactive interface.",
     tags: ["Side Project", "Tool"],
     href: "/projects/decision-dice",
-  },
-  {
-    title: "Product Shots — Finshots for Product Managers",
-    description:
-      "Daily product management practice inspired by Finshots. Get bite-sized PM questions daily, curated news (AI, corporate, hiring), and weekly articles — all designed to sharpen your product thinking.",
-    fullDescription:
-      "Product Shots brings the Finshots approach to product management learning. The app combines three core features: (1) Daily rotating product-sense questions across 8 types (guesstimate, behavioral, prioritization, metrics, root cause, strategy, critique, analysis) with full written answers; (2) Curated PM-relevant news auto-pulled daily (AI, corporate, hiring); (3) Weekly articles from Rohan's blog on applied product thinking. Built with Next.js + Supabase, email-only authentication, and persistent sessions. Users can browse past questions via the archive and explore news by category. Features a Finshots-inspired UI with dark mode, sidebar navigation, and category filters. Deployed to Vercel with automated daily content generation.",
-    tags: ["Side Project", "PM Tool", "Learning"],
-    href: "https://product-shots-pink.vercel.app",
-    external: true,
   },
 ];
 

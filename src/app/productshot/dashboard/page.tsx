@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-
-export const dynamic = "force-dynamic";
 import { getArticles } from "@/lib/articles/fetch-posts";
 import type { NewsItem } from "@/types/database";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -13,7 +13,7 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    redirect("/productshot/login");
   }
 
   const [articles, newsResult] = await Promise.all([
@@ -44,7 +44,7 @@ export default async function DashboardPage() {
         {/* Quick Links */}
         <div className="mb-10 grid gap-4 sm:grid-cols-3">
           <Link
-            href="/shots"
+            href="/productshot/shots"
             className="flex items-center justify-between rounded-lg bg-gradient-to-br from-accent to-accent/80 p-6 text-white hover:shadow-lg transition-shadow"
           >
             <div>
@@ -65,7 +65,7 @@ export default async function DashboardPage() {
           </Link>
 
           <Link
-            href="/articles"
+            href="/productshot/articles"
             className="flex items-center justify-between rounded-lg bg-gradient-to-br from-blue-400 to-blue-500 p-6 text-white hover:shadow-lg transition-shadow"
           >
             <div>
@@ -82,7 +82,7 @@ export default async function DashboardPage() {
           </Link>
 
           <Link
-            href="/news"
+            href="/productshot/news"
             className="flex items-center justify-between rounded-lg bg-gradient-to-br from-purple-400 to-purple-500 p-6 text-white hover:shadow-lg transition-shadow"
           >
             <div>
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 Latest Articles
               </h2>
-              <Link href="/articles" className="text-sm text-accent hover:underline">
+              <Link href="/productshot/articles" className="text-sm text-accent hover:underline">
                 View all →
               </Link>
             </div>
@@ -120,7 +120,7 @@ export default async function DashboardPage() {
                 latestArticles.map((a) => (
                   <Link
                     key={a.slug}
-                    href={`/articles/${a.slug}`}
+                    href={`/productshot/articles/${a.slug}`}
                     className="block rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-4 hover:border-accent transition"
                   >
                     <p className="text-xs text-slate-500 dark:text-slate-500">
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                 Latest News
               </h2>
-              <Link href="/news" className="text-sm text-accent hover:underline">
+              <Link href="/productshot/news" className="text-sm text-accent hover:underline">
                 View all →
               </Link>
             </div>

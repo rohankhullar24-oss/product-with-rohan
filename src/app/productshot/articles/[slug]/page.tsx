@@ -31,7 +31,7 @@ export default async function ArticlePage({
   return (
     <main className="flex-1 px-6 py-16">
       <article className="mx-auto max-w-3xl">
-        <Link href="/articles" className="text-sm text-accent hover:underline">
+        <Link href="/productshot/articles" className="text-sm text-accent hover:underline">
           ← Back to articles
         </Link>
 

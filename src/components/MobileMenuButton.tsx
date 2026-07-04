@@ -19,7 +19,7 @@ export function MobileMenuButton() {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
-    router.push("/login");
+    router.push("/productshot/login");
     router.refresh();
   }
 
@@ -89,7 +89,7 @@ export function MobileMenuButton() {
         {/* Menu Items */}
         <nav className="flex flex-col divide-y divide-slate-200 dark:divide-slate-700">
           <Link
-            href="/dashboard"
+            href="/productshot/dashboard"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
@@ -104,7 +104,7 @@ export function MobileMenuButton() {
           </Link>
 
           <Link
-            href="/articles"
+            href="/productshot/articles"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
@@ -119,7 +119,7 @@ export function MobileMenuButton() {
           </Link>
 
           <Link
-            href="/news"
+            href="/productshot/news"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
@@ -134,7 +134,7 @@ export function MobileMenuButton() {
           </Link>
 
           <Link
-            href="/shots"
+            href="/productshot/shots"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           >
@@ -153,7 +153,7 @@ export function MobileMenuButton() {
           </Link>
 
           <Link
-            href="/bookmarks"
+            href="/productshot/bookmarks"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
           >

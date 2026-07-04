@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sidebar } from "@/components/Sidebar";
 import { BottomNav } from "@/components/BottomNav";
+import { MobileMenuButton } from "@/components/MobileMenuButton";
 
 export const dynamic = "force-dynamic";
 
@@ -21,11 +22,12 @@ export default function ProductShotLayout({
         <Sidebar />
       </div>
 
-      {/* Mobile: Header */}
+      {/* Mobile: Header with Hamburger */}
       <div className="md:hidden sticky top-0 z-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 px-4 py-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           Product Shots
         </h1>
+        <MobileMenuButton />
       </div>
 
       {/* Main Content */}

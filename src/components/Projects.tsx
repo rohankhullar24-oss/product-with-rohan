@@ -75,11 +75,11 @@ const projects: Project[] = [
     href: "/projects/decision-dice",
   },
   {
-    title: "Product Shots — Daily PM Questions",
+    title: "Product Shots — Finshots for Product Managers",
     description:
-      "A product management learning app delivering daily product-sense questions with curated PM news and weekly articles. Features email-only signup, persistent sessions, rotating question types (8 daily rotations), and archive browsing for past questions.",
+      "Daily product management practice inspired by Finshots. Get bite-sized PM questions daily, curated news (AI, corporate, hiring), and weekly articles — all designed to sharpen your product thinking.",
     fullDescription:
-      "Product Shots is a daily practice platform for product managers combining three core features: (1) Daily rotating product-sense questions across 8 types (guesstimate, behavioral, prioritization, metrics, root cause, strategy, critique, analysis) with full written answers; (2) Curated PM-relevant news auto-pulled daily (AI, corporate, hiring); (3) Weekly articles from Rohan's blog on applied product thinking. Built with Next.js + Supabase, email-only authentication, and persistent sessions. Users can browse past questions via the archive and explore news by category. Deployed to Vercel with automated daily content generation.",
+      "Product Shots brings the Finshots approach to product management learning. The app combines three core features: (1) Daily rotating product-sense questions across 8 types (guesstimate, behavioral, prioritization, metrics, root cause, strategy, critique, analysis) with full written answers; (2) Curated PM-relevant news auto-pulled daily (AI, corporate, hiring); (3) Weekly articles from Rohan's blog on applied product thinking. Built with Next.js + Supabase, email-only authentication, and persistent sessions. Users can browse past questions via the archive and explore news by category. Features a Finshots-inspired UI with dark mode, sidebar navigation, and category filters. Deployed to Vercel with automated daily content generation.",
     tags: ["Side Project", "PM Tool", "Learning"],
     href: "https://product-shots-pink.vercel.app",
     external: true,

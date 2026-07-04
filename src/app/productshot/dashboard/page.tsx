@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getArticles } from "@/lib/articles/fetch-posts";
 import type { NewsItem } from "@/types/database";
@@ -8,13 +7,6 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/productshot/login");
-  }
 
   const [articles, newsResult] = await Promise.all([
     getArticles(),

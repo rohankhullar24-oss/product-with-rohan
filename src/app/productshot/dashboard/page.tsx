@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 import { getArticles } from "@/lib/articles/fetch-posts";
 import type { NewsItem } from "@/types/database";
 

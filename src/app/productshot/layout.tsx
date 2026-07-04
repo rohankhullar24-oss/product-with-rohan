@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Sidebar } from "@/components/Sidebar";
 import { BottomNav } from "@/components/BottomNav";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Product Shots",
   description: "Daily PM practice questions, articles, and news",

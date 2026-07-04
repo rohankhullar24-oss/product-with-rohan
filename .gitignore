@@ -41,3 +41,16 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# local claude settings
+.claude/settings.local.json
+
+# temporary files
+dev.log
+FINSHOTS_MOBILE_SETUP.md
+finshots-mobile-app-README.md
+finshots-mobile-app.json
+
+# separate project directories
+decision-dice-app/
+src/app/projects/finshots/

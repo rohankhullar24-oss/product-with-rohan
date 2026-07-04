@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "ecc-universal": "github:affaan-m/ECC",
     "framer-motion": "^12.42.0",
     "gray-matter": "^4.0.3",
     "lucide-react": "^1.21.0",

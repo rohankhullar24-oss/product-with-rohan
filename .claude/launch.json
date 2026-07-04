@@ -13,6 +13,13 @@
       "runtimeArgs": ["node_modules/expo/bin/cli", "start", "--web", "--port", "8082"],
       "cwd": "decision-dice-app",
       "port": 8082
+    },
+    {
+      "name": "product-shots",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "3002"],
+      "cwd": "../../product-shots",
+      "port": 3002
     }
   ]
 }

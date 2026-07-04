@@ -20,8 +20,8 @@ const projects: Project[] = [
     fullDescription:
       "Product Shots brings the Finshots approach to product management learning. The app combines three core features: (1) Daily rotating product-sense questions across 8 types (guesstimate, behavioral, prioritization, metrics, root cause, strategy, critique, analysis) with full written answers; (2) Curated PM-relevant news auto-pulled daily (AI, corporate, hiring); (3) Weekly articles from Rohan's blog on applied product thinking. Built with Next.js + Supabase, email-only authentication, and persistent sessions. Users can browse past questions via the archive and explore news by category. Features a Finshots-inspired UI with dark mode, sidebar navigation, and category filters. Deployed to Vercel with automated daily content generation.",
     tags: ["Side Project", "PM Tool", "Learning"],
-    href: "https://product-shots-pink.vercel.app",
-    external: true,
+    href: "/productshot/dashboard",
+    external: false,
   },
   {
     title: "Free AI Course Platform",

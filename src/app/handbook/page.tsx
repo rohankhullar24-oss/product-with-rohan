@@ -19,35 +19,35 @@ const volumes = [
     numeral: "I",
     title: "Product Management Foundations",
     description:
-      "The core discipline — what a PM does, discovery, prioritization, strategy, metrics, roadmaps, stakeholder management, PRDs, launches, and the operating rhythms that hold it together.",
+      "The core discipline of product management — the PM mindset, customer research, prioritization, strategy, metrics, roadmaps, stakeholder management, PRDs, launches, and the operating habits that separate good PMs from great ones.",
     chapters: 16,
   },
   {
     numeral: "II",
     title: "Product Sense",
     description:
-      "Frameworks and fully solved case studies — food delivery, maps, ride-hailing, fintech, healthcare, B2B SaaS, and AI products — plus mock interviews and 100 practice prompts to build judgment.",
+      "A practical, case-study-driven training ground for product sense — a structured framework plus more than twenty worked case studies (food delivery, maps, fintech, healthcare, B2B SaaS, AI products) and executive-level mock interviews.",
     chapters: 29,
   },
   {
     numeral: "III",
     title: "Product Execution",
     description:
-      "Turning strategy into shipped product — discovery, PRDs, user stories, roadmaps, Agile and sprint planning, analytics and experimentation, launches, post-launch reviews, and cross-functional leadership.",
+      "The operational backbone of shipping product — discovery and validation, prioritization, PRDs, agile delivery, analytics, experimentation, launches, and cross-functional leadership.",
     chapters: 16,
   },
   {
     numeral: "IV",
     title: "AI Product Management",
     description:
-      "Building AI-native products — LLM fundamentals, prompt engineering, RAG, agents, MCP and tool use, evaluation frameworks, safety and governance, AI cost optimization, and a capstone project.",
+      "A ground-up guide to building AI-native products — LLM fundamentals, prompt engineering, RAG, agents, MCP and tool use, evaluation, safety and governance, cost optimization, and real AI product case studies.",
     chapters: 16,
   },
   {
     numeral: "V",
     title: "Company Interview Guides",
     description:
-      "Company-specific PM interview prep — Google, Meta, Amazon, Microsoft, Atlassian, Stripe, Airbnb, Uber, Revolut, CRED, PhonePe, Razorpay, Flipkart, Meesho — plus a full mock interview marathon.",
+      "Company-specific interview playbooks — Google, Meta, Amazon, Microsoft, Atlassian, Stripe, Airbnb, Uber, Revolut, CRED, PhonePe, Razorpay, Flipkart, and Meesho — capped with a full mock interview marathon.",
     chapters: 16,
   },
 ];
@@ -80,10 +80,10 @@ export default function HandbookPage() {
         <p className="mt-3 max-w-2xl text-slate dark:text-slate-400">
           A complete guide from foundations to AI-native product leadership — five volumes,
           93 chapters, a glossary, an index, and a full set of PM templates and cheat sheets.
-          Free to download, no email required.
+          337 pages. Free to download, no email required.
         </p>
 
-        <div className="mt-8 flex flex-wrap gap-3">
+        <div className="mt-8 flex flex-wrap items-center gap-3">
           <a
             href="/handbook/The-Product-Manager-Handbook.pdf"
             download
@@ -98,6 +98,9 @@ export default function HandbookPage() {
           >
             Download Word (.docx)
           </a>
+          <span className="text-xs text-slate-400 dark:text-slate-500">
+            PDF 4.6 MB · DOCX 171 KB
+          </span>
         </div>
 
         <section className="mt-14">

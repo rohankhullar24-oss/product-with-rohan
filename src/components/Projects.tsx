@@ -15,6 +15,17 @@ type Project = {
 
 const projects: Project[] = [
   {
+    title: "AI Resume Builder",
+    description:
+      "Upload your resume, pick a target role and industry, and get a tailored, professionally formatted resume PDF back in seconds — powered by Gemini.",
+    fullDescription:
+      "Upload an existing resume (PDF or DOCX) along with your name, phone, and email, then choose the role you're targeting (Associate PM through VP of Product) and optionally the industry/company you're applying to. The tool extracts your resume content, rewrites it with an AI model to sharpen bullets, quantify impact, and prioritize the most relevant experience for that target, then generates a clean, downloadable PDF resume — all without inventing facts not present in the original.",
+    tags: ["Side Project", "AI Tool", "Career"],
+    href: "/resume-builder",
+    external: false,
+    linkLabel: "Try the resume builder →",
+  },
+  {
     title: "Product Shots — Finshots for Product Managers",
     description:
       "Daily product management practice inspired by Finshots. Get bite-sized PM questions daily, curated news (AI, corporate, hiring), and weekly articles — all designed to sharpen your product thinking.",

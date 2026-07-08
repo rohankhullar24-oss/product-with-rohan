@@ -37,7 +37,9 @@
       "mcp__71da1c53-84c3-4c7c-a630-25a0c8d1b92d__apply_migration",
       "Bash(git pull *)",
       "Bash(git stash *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "mcp__68fe795d-055d-477a-8b2d-602129124843__COMPOSIO_SEARCH_TOOLS",
+      "mcp__68fe795d-055d-477a-8b2d-602129124843__COMPOSIO_MULTI_EXECUTE_TOOL"
     ]
   }
 }

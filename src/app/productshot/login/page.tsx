@@ -3,16 +3,17 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const CALLBACK_ERROR_MESSAGES: Record<string, string> = {
   missing_code: "That sign-in link looks incomplete. Please request a new one.",
   "both auth code and code verifier should be non-empty":
-    "That link didn't work — this usually happens when it's opened in a different browser or app than the one you requested it from (e.g. an email app's built-in browser). Request a new link and open it in the same browser you're signing in from.",
+    "That link didn't work — this usually happens when it's opened in a different browser or app than the one you requested it from (e.g. an email app's built-in browser). Request a new link and open it in the same browser you're signing in from, or enter the 6-digit code instead.",
 };
 
 function LoginForm() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const callbackErrorRaw = searchParams.get("error");
   const callbackError = callbackErrorRaw
@@ -20,7 +21,10 @@ function LoginForm() {
     : null;
 
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [code, setCode] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "verifying" | "error">(
+    "idle"
+  );
   const [errorMessage, setErrorMessage] = useState("");
 
   const supabase = createClient();
@@ -43,6 +47,25 @@ function LoginForm() {
     }
   }
 
+  async function handleVerifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    setStatus("verifying");
+    setErrorMessage("");
+
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: "email",
+    });
+
+    if (error) {
+      setStatus("sent");
+      setErrorMessage(error.message);
+    } else {
+      router.push("/productshot/dashboard");
+    }
+  }
+
   return (
     <div className="flex flex-1 items-center justify-center bg-background px-4 py-24">
       <div className="w-full max-w-sm rounded-2xl border border-slate/15 bg-background p-8 shadow-sm">
@@ -60,10 +83,44 @@ function LoginForm() {
           </p>
         )}
 
-        {status === "sent" ? (
-          <p className="mt-6 rounded-lg bg-accent-light px-4 py-3 text-sm text-navy">
-            Check <span className="font-medium">{email}</span> for a sign-in link.
-          </p>
+        {status === "sent" || status === "verifying" ? (
+          <>
+            <p className="mt-6 rounded-lg bg-accent-light px-4 py-3 text-sm text-navy">
+              Check <span className="font-medium">{email}</span> for a 6-digit code (or a
+              sign-in link).
+            </p>
+            <form onSubmit={handleVerifyCode} className="mt-4 flex flex-col gap-3">
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                required
+                placeholder="123456"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="rounded-full border border-slate/25 px-5 py-3 text-center text-sm tracking-widest text-navy outline-none focus:border-accent dark:text-foreground"
+              />
+              <button
+                type="submit"
+                disabled={status === "verifying"}
+                className="rounded-full bg-accent px-5 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+              >
+                {status === "verifying" ? "Verifying..." : "Verify code"}
+              </button>
+              {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
+              <button
+                type="button"
+                onClick={() => {
+                  setStatus("idle");
+                  setCode("");
+                  setErrorMessage("");
+                }}
+                className="text-sm text-slate underline-offset-2 hover:underline"
+              >
+                Use a different email
+              </button>
+            </form>
+          </>
         ) : (
           <form onSubmit={handleEmailSignIn} className="mt-6 flex flex-col gap-3">
             <input
@@ -79,7 +136,7 @@ function LoginForm() {
               disabled={status === "sending"}
               className="rounded-full bg-accent px-5 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-60"
             >
-              {status === "sending" ? "Sending link..." : "Email me a sign-in link"}
+              {status === "sending" ? "Sending code..." : "Email me a sign-in code"}
             </button>
             {status === "error" && (
               <p className="text-sm text-red-600">{errorMessage}</p>

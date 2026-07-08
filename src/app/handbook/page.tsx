@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { Metadata } from "next";
+import HandbookCheckout from "@/components/HandbookCheckout";
 
 export const metadata: Metadata = {
-  title: "The Product Manager Handbook | Free Download | Rohan Khullar",
+  title: "The Product Manager Handbook | Rohan Khullar",
   description:
-    "A free, complete Product Manager handbook — five volumes covering PM foundations, product sense, execution, AI product management, and company interview guides. Download as PDF or Word.",
+    "A complete Product Manager handbook — five volumes covering PM foundations, product sense, execution, AI product management, and company interview guides. Pay what you want, including free.",
   openGraph: {
     type: "website",
     url: "https://productwithrohan.online/handbook",
     title: "The Product Manager Handbook | Rohan Khullar",
     description:
-      "A free, complete Product Manager handbook — five volumes covering foundations, product sense, execution, AI product management, and company interview guides.",
+      "A complete Product Manager handbook — five volumes covering foundations, product sense, execution, AI product management, and company interview guides. Pay what you want, including free.",
   },
 };
 
@@ -72,7 +73,7 @@ export default function HandbookPage() {
         </Link>
 
         <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-accent">
-          Free download
+          Pay what you want
         </p>
         <h1 className="mt-2 text-3xl font-semibold text-navy dark:text-white sm:text-4xl">
           The Product Manager Handbook
@@ -80,31 +81,13 @@ export default function HandbookPage() {
         <p className="mt-3 max-w-2xl text-slate dark:text-slate-400">
           A complete guide from foundations to AI-native product leadership — five volumes,
           93 chapters, a glossary, an index, and a full set of PM templates and cheat sheets.
-          337 pages. Free to download, no email required.
+          337 pages. Pay what you want — including ₹0.
         </p>
 
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <a
-            href="/handbook/The-Product-Manager-Handbook.pdf"
-            download
-            className="rounded-full bg-navy px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent dark:bg-slate-700 dark:hover:bg-accent"
-          >
-            Download PDF
-          </a>
-          <a
-            href="/handbook/The-Product-Manager-Handbook.docx"
-            download
-            className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-navy transition-colors hover:border-accent hover:text-accent dark:border-slate-600 dark:text-white dark:hover:border-accent dark:hover:text-accent"
-          >
-            Download Word (.docx)
-          </a>
-          <span className="text-xs text-slate-400 dark:text-slate-500">
-            PDF 4.6 MB · DOCX 171 KB
-          </span>
-        </div>
+        <HandbookCheckout />
 
         <section className="mt-14">
-          <h2 className="text-lg font-semibold text-navy dark:text-white">What's inside</h2>
+          <h2 className="text-lg font-semibold text-navy dark:text-white">What&apos;s inside</h2>
           <ul className="mt-4 grid gap-x-8 gap-y-2 text-sm text-slate dark:text-slate-400 sm:grid-cols-2">
             <li>Five complete volumes, 93 chapters</li>
             <li>Cover, copyright, dedication &amp; foreword</li>
@@ -144,7 +127,7 @@ export default function HandbookPage() {
         <section className="mt-14">
           <h2 className="text-lg font-semibold text-navy dark:text-white">Appendices</h2>
           <p className="mt-2 text-sm text-slate dark:text-slate-400">
-            Practical, reusable reference material to keep on hand after you've read the book.
+            Practical, reusable reference material to keep on hand after you&apos;ve read the book.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             {appendices.map((item) => (

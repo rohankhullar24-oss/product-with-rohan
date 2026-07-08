@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
   },
+  outputFileTracingIncludes: {
+    "/api/handbook/download": ["./handbook-assets/**/*"],
+  },
   headers: async () => [
     {
       source: "/:path*",

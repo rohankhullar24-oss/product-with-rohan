@@ -10,6 +10,7 @@ type Project = {
   tags: string[];
   href?: string;
   external?: boolean;
+  linkLabel?: string;
 };
 
 const projects: Project[] = [
@@ -22,6 +23,7 @@ const projects: Project[] = [
     tags: ["Side Project", "PM Tool", "Learning"],
     href: "/productshot/dashboard",
     external: false,
+    linkLabel: "Open the live app →",
   },
   {
     title: "Free AI Course Platform",
@@ -202,7 +204,7 @@ export default function Projects() {
                   onClick={(e) => e.stopPropagation()}
                   className="mt-4 inline-flex items-center text-sm font-semibold text-accent hover:underline"
                 >
-                  View prototype →
+                  {project.linkLabel ?? "View prototype →"}
                 </a>
               )}
             </div>

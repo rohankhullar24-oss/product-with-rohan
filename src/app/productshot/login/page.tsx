@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const CROSS_BROWSER_LINK_ERROR =
-  "That link didn't work — this usually happens when it's opened in a different browser or app than the one you requested it from (e.g. an email app's built-in browser). Enter the 6-digit code from the same email instead, or request a new link and open it in the same browser you're signing in from.";
+  "That link didn't work — this usually happens when it's opened in a different browser or app than the one you requested it from (e.g. an email app's built-in browser). Enter the 8-digit code from the same email instead, or request a new link and open it in the same browser you're signing in from.";
 
 const CALLBACK_ERROR_MESSAGES: Record<string, string> = {
   missing_code: "That sign-in link looks incomplete. Please request a new one.",
@@ -99,7 +99,7 @@ function LoginForm() {
         {status === "sent" || status === "verifying" ? (
           <>
             <p className="mt-6 rounded-lg bg-accent-light px-4 py-3 text-sm text-navy">
-              Check <span className="font-medium">{email}</span> for a 6-digit code (or a
+              Check <span className="font-medium">{email}</span> for an 8-digit code (or a
               sign-in link).
             </p>
             <form onSubmit={handleVerifyCode} className="mt-4 flex flex-col gap-3">
@@ -108,7 +108,7 @@ function LoginForm() {
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 required
-                placeholder="123456"
+                placeholder="12345678"
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 className="rounded-full border border-slate/25 px-5 py-3 text-center text-sm tracking-widest text-navy outline-none focus:border-accent dark:text-foreground"

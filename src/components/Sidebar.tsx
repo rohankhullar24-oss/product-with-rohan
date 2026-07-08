@@ -186,6 +186,25 @@ export function Sidebar() {
             PM Handbook
           </Link>
 
+          <Link
+            href="/resume-builder"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 1.5L14.5 7H11V3.5zM8 11a1 1 0 100 2h4a1 1 0 100-2H8zm0 3a1 1 0 100 2h4a1 1 0 100-2H8z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Resume Builder
+          </Link>
+
           <a
             href="https://productwithrohan.online/"
             target="_blank"

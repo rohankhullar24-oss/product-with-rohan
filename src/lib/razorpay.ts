@@ -42,6 +42,5 @@ export function verifyRazorpaySignature(
   return crypto.timingSafeEqual(expectedBuffer, actualBuffer);
 }
 
-// Razorpay's absolute minimum order amount is 100 paise (₹1); we set a
-// higher floor so a "paid" selection is always meaningfully above free.
-export const MIN_PAID_AMOUNT_INR = 19;
+// Razorpay's absolute minimum order amount is 100 paise (₹1).
+export const MIN_PAID_AMOUNT_INR = 1;

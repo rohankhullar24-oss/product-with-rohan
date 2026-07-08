@@ -4,8 +4,8 @@ import Script from "next/script";
 import { useState } from "react";
 import type { RazorpayFailureResponse, RazorpayPaymentResponse } from "@/types/razorpay";
 
-const PRESETS = [0, 99, 199, 499];
-const MIN_PAID_AMOUNT = 19;
+const PRESETS = [49, 99, 199, 499];
+const MIN_PAID_AMOUNT = 1;
 
 export default function HandbookCheckout() {
   const [amount, setAmount] = useState<number>(199);
@@ -14,20 +14,13 @@ export default function HandbookCheckout() {
   const [error, setError] = useState<string | null>(null);
 
   const effectiveAmount = customAmount !== "" ? Number(customAmount) : amount;
-  const isFree = effectiveAmount === 0;
-  const isValid =
-    isFree || (Number.isInteger(effectiveAmount) && effectiveAmount >= MIN_PAID_AMOUNT);
+  const isValid = Number.isInteger(effectiveAmount) && effectiveAmount >= MIN_PAID_AMOUNT;
 
   async function handleContinue() {
     setError(null);
 
-    if (isFree) {
-      window.location.href = "/api/handbook/download?type=pdf&free=true";
-      return;
-    }
-
     if (!isValid) {
-      setError(`Enter ₹0 for free, or at least ₹${MIN_PAID_AMOUNT}.`);
+      setError(`Enter at least ₹${MIN_PAID_AMOUNT}.`);
       return;
     }
 
@@ -108,7 +101,7 @@ export default function HandbookCheckout() {
 
       <p className="text-sm font-medium text-navy dark:text-white">Name your price</p>
       <p className="mt-1 text-sm text-slate dark:text-slate-400">
-        Pay what you think it&apos;s worth — including ₹0. Card and UPI supported.
+        Pay what you think it&apos;s worth — starting at ₹1. Card and UPI supported.
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
@@ -126,12 +119,12 @@ export default function HandbookCheckout() {
                 : "border border-slate-300 text-navy dark:border-slate-600 dark:text-white hover:border-accent hover:text-accent"
             }`}
           >
-            {preset === 0 ? "Free" : `₹${preset}`}
+            ₹{preset}
           </button>
         ))}
         <input
           type="number"
-          min={0}
+          min={1}
           placeholder="Custom ₹"
           value={customAmount}
           onChange={(e) => setCustomAmount(e.target.value)}
@@ -147,7 +140,7 @@ export default function HandbookCheckout() {
         disabled={loading}
         className="mt-5 rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent disabled:opacity-60 dark:bg-slate-700 dark:hover:bg-accent"
       >
-        {loading ? "Redirecting…" : isFree ? "Get it free" : `Pay ₹${effectiveAmount} & download`}
+        {loading ? "Redirecting…" : `Pay ₹${effectiveAmount} & download`}
       </button>
     </div>
   );

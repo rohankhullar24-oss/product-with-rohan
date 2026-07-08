@@ -31,7 +31,12 @@
       "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); cd \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\"; npx vercel --prod --yes 2>&1 | Select-Object -Last 25)",
       "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); cd \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\"; npx vercel --prod --yes 2>&1 | Select-Object -Last 30)",
       "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); cd \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\"; npm install lucide-react 2>&1 | Select-Object -Last 20)",
-      "mcp__Claude_Code_Remote__send_later"
+      "mcp__Claude_Code_Remote__send_later",
+      "mcp__71da1c53-84c3-4c7c-a630-25a0c8d1b92d__execute_sql",
+      "WebSearch",
+      "mcp__71da1c53-84c3-4c7c-a630-25a0c8d1b92d__apply_migration",
+      "Bash(git pull *)",
+      "Bash(git stash *)"
     ]
   }
 }

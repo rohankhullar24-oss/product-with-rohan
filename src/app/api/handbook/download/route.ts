@@ -1,11 +1,7 @@
 import { readFile } from "fs/promises";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
-import {
-  getStripe,
-  HANDBOOK_PRODUCT_METADATA_KEY,
-  HANDBOOK_PRODUCT_METADATA_VALUE,
-} from "@/lib/stripe";
+import { verifyRazorpaySignature } from "@/lib/razorpay";
 
 const FILES = {
   pdf: {
@@ -27,7 +23,9 @@ function isFileType(value: string | null): value is FileType {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type");
-  const sessionId = searchParams.get("session_id");
+  const orderId = searchParams.get("order_id");
+  const paymentId = searchParams.get("payment_id");
+  const signature = searchParams.get("signature");
   const isFree = searchParams.get("free") === "true";
 
   if (!isFileType(type)) {
@@ -35,23 +33,19 @@ export async function GET(request: NextRequest) {
   }
 
   if (!isFree) {
-    if (!sessionId) {
-      return NextResponse.json({ error: "Missing session_id." }, { status: 400 });
+    if (!orderId || !paymentId || !signature) {
+      return NextResponse.json({ error: "Missing payment details." }, { status: 400 });
     }
 
+    let verified: boolean;
     try {
-      const stripe = getStripe();
-      const session = await stripe.checkout.sessions.retrieve(sessionId);
-
-      const isPaid = session.payment_status === "paid";
-      const isThisProduct =
-        session.metadata?.[HANDBOOK_PRODUCT_METADATA_KEY] === HANDBOOK_PRODUCT_METADATA_VALUE;
-
-      if (!isPaid || !isThisProduct) {
-        return NextResponse.json({ error: "Payment not verified." }, { status: 402 });
-      }
+      verified = verifyRazorpaySignature(orderId, paymentId, signature);
     } catch (error) {
-      console.error("Stripe session verification failed:", error);
+      console.error("Razorpay signature verification failed:", error);
+      return NextResponse.json({ error: "Payment not verified." }, { status: 402 });
+    }
+
+    if (!verified) {
       return NextResponse.json({ error: "Payment not verified." }, { status: 402 });
     }
   }

@@ -1,6 +1,8 @@
 "use client";
 
+import Script from "next/script";
 import { useState } from "react";
+import type { RazorpayFailureResponse, RazorpayPaymentResponse } from "@/types/razorpay";
 
 const PRESETS = [0, 99, 199, 499];
 const MIN_PAID_AMOUNT = 19;
@@ -31,18 +33,69 @@ export default function HandbookCheckout() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/checkout", {
+      const orderRes = await fetch("/api/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: effectiveAmount }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.url) {
-        setError(data.error ?? "Something went wrong. Please try again.");
+      const order = await orderRes.json();
+      if (!orderRes.ok || !order.order_id) {
+        setError(order.error ?? "Something went wrong. Please try again.");
         setLoading(false);
         return;
       }
-      window.location.href = data.url;
+
+      if (typeof window.Razorpay !== "function") {
+        setError("Payment could not load. Please refresh and try again.");
+        setLoading(false);
+        return;
+      }
+
+      const razorpay = new window.Razorpay({
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID ?? "",
+        amount: order.amount,
+        currency: order.currency,
+        name: "The Product Manager Handbook",
+        description: "PDF + Word edition — 5 volumes, 93 chapters",
+        order_id: order.order_id,
+        theme: { color: "#0d9488" },
+        handler: async (response: RazorpayPaymentResponse) => {
+          try {
+            const verifyRes = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(response),
+            });
+            const verifyData = await verifyRes.json();
+            if (!verifyRes.ok || !verifyData.verified) {
+              setError("We couldn't verify that payment. Please contact me if you were charged.");
+              setLoading(false);
+              return;
+            }
+            const params = new URLSearchParams({
+              order_id: response.razorpay_order_id,
+              payment_id: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            });
+            window.location.href = `/handbook/success?${params.toString()}`;
+          } catch {
+            setError("We couldn't verify that payment. Please contact me if you were charged.");
+            setLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+          },
+        },
+      });
+
+      razorpay.on("payment.failed", (response: RazorpayFailureResponse) => {
+        setError(response.error?.description || "Payment failed. Please try again.");
+        setLoading(false);
+      });
+
+      razorpay.open();
     } catch {
       setError("Something went wrong. Please try again.");
       setLoading(false);
@@ -51,6 +104,8 @@ export default function HandbookCheckout() {
 
   return (
     <div className="mt-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
+
       <p className="text-sm font-medium text-navy dark:text-white">Name your price</p>
       <p className="mt-1 text-sm text-slate dark:text-slate-400">
         Pay what you think it&apos;s worth — including ₹0. Card and UPI supported.

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function Hero() {
@@ -86,6 +87,12 @@ export default function Hero() {
           >
             Get in Touch
           </a>
+          <Link
+            href="/handbook"
+            className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-navy dark:text-white dark:border-slate-600 transition-colors hover:border-accent hover:text-accent dark:hover:border-accent"
+          >
+            Free PM Handbook
+          </Link>
         </div>
       </div>
     </section>

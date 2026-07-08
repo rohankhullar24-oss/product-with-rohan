@@ -6,19 +6,32 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+const CROSS_BROWSER_LINK_ERROR =
+  "That link didn't work — this usually happens when it's opened in a different browser or app than the one you requested it from (e.g. an email app's built-in browser). Enter the 6-digit code from the same email instead, or request a new link and open it in the same browser you're signing in from.";
+
 const CALLBACK_ERROR_MESSAGES: Record<string, string> = {
   missing_code: "That sign-in link looks incomplete. Please request a new one.",
-  "both auth code and code verifier should be non-empty":
-    "That link didn't work — this usually happens when it's opened in a different browser or app than the one you requested it from (e.g. an email app's built-in browser). Request a new link and open it in the same browser you're signing in from, or enter the 6-digit code instead.",
 };
+
+function describeCallbackError(raw: string): string {
+  const known = CALLBACK_ERROR_MESSAGES[raw];
+  if (known) return known;
+
+  const normalized = raw.toLowerCase();
+  const isPkceMismatch =
+    normalized.includes("pkce") ||
+    normalized.includes("code verifier") ||
+    normalized.includes("code_verifier");
+  if (isPkceMismatch) return CROSS_BROWSER_LINK_ERROR;
+
+  return raw;
+}
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackErrorRaw = searchParams.get("error");
-  const callbackError = callbackErrorRaw
-    ? CALLBACK_ERROR_MESSAGES[callbackErrorRaw] ?? callbackErrorRaw
-    : null;
+  const callbackError = callbackErrorRaw ? describeCallbackError(callbackErrorRaw) : null;
 
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");

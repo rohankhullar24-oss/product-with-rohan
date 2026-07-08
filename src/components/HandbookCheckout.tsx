@@ -2,6 +2,7 @@
 
 import Script from "next/script";
 import { useState } from "react";
+import { track } from "@vercel/analytics";
 import type { RazorpayFailureResponse, RazorpayPaymentResponse } from "@/types/razorpay";
 
 const PRESETS = [49, 99, 199, 499];
@@ -25,6 +26,7 @@ export default function HandbookCheckout() {
     }
 
     setLoading(true);
+    track("handbook_checkout_started", { amount: effectiveAmount });
     try {
       const orderRes = await fetch("/api/create-order", {
         method: "POST",
@@ -65,6 +67,7 @@ export default function HandbookCheckout() {
               setLoading(false);
               return;
             }
+            track("handbook_payment_succeeded", { amount: effectiveAmount });
             const params = new URLSearchParams({
               order_id: response.razorpay_order_id,
               payment_id: response.razorpay_payment_id,
@@ -84,6 +87,7 @@ export default function HandbookCheckout() {
       });
 
       razorpay.on("payment.failed", (response: RazorpayFailureResponse) => {
+        track("handbook_payment_failed", { amount: effectiveAmount });
         setError(response.error?.description || "Payment failed. Please try again.");
         setLoading(false);
       });

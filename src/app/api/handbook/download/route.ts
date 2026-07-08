@@ -26,28 +26,25 @@ export async function GET(request: NextRequest) {
   const orderId = searchParams.get("order_id");
   const paymentId = searchParams.get("payment_id");
   const signature = searchParams.get("signature");
-  const isFree = searchParams.get("free") === "true";
 
   if (!isFileType(type)) {
     return NextResponse.json({ error: "Invalid file type." }, { status: 400 });
   }
 
-  if (!isFree) {
-    if (!orderId || !paymentId || !signature) {
-      return NextResponse.json({ error: "Missing payment details." }, { status: 400 });
-    }
+  if (!orderId || !paymentId || !signature) {
+    return NextResponse.json({ error: "Missing payment details." }, { status: 400 });
+  }
 
-    let verified: boolean;
-    try {
-      verified = verifyRazorpaySignature(orderId, paymentId, signature);
-    } catch (error) {
-      console.error("Razorpay signature verification failed:", error);
-      return NextResponse.json({ error: "Payment not verified." }, { status: 402 });
-    }
+  let verified: boolean;
+  try {
+    verified = verifyRazorpaySignature(orderId, paymentId, signature);
+  } catch (error) {
+    console.error("Razorpay signature verification failed:", error);
+    return NextResponse.json({ error: "Payment not verified." }, { status: 402 });
+  }
 
-    if (!verified) {
-      return NextResponse.json({ error: "Payment not verified." }, { status: 402 });
-    }
+  if (!verified) {
+    return NextResponse.json({ error: "Payment not verified." }, { status: 402 });
   }
 
   const file = FILES[type];

@@ -30,7 +30,8 @@
       "Bash(curl -s http://localhost:3000)",
       "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); cd \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\"; npx vercel --prod --yes 2>&1 | Select-Object -Last 25)",
       "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); cd \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\"; npx vercel --prod --yes 2>&1 | Select-Object -Last 30)",
-      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); cd \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\"; npm install lucide-react 2>&1 | Select-Object -Last 20)"
+      "PowerShell($env:Path = [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\) + \";\" + [System.Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); cd \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\"; npm install lucide-react 2>&1 | Select-Object -Last 20)",
+      "mcp__Claude_Code_Remote__send_later"
     ]
   }
 }

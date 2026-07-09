@@ -64,6 +64,84 @@ const appendices = [
   "Resume Templates",
 ];
 
+const testimonials = [
+  {
+    rating: 5,
+    name: "Aarav Mehta",
+    role: "Associate Product Manager",
+    quote:
+      "I didn't expect a single handbook to cover so much without feeling overwhelming. The chapters build on each other, and I found myself highlighting pages throughout. It's become my go-to reference whenever I get stuck.",
+  },
+  {
+    rating: 5,
+    name: "Priya Sharma",
+    role: "Product Manager",
+    quote:
+      "The examples and frameworks are what stood out to me. Instead of just explaining concepts, the handbook shows how to think like a product manager. I wish I'd had this when I started my career.",
+  },
+  {
+    rating: 5,
+    name: "Rahul Verma",
+    role: "Aspiring Product Manager",
+    quote:
+      "I used the handbook while preparing for PM interviews, and it gave me a much more structured understanding of product management. It answered questions I didn't even know I had.",
+  },
+  {
+    rating: 5,
+    name: "Neha Kapoor",
+    role: "Senior Product Manager",
+    quote:
+      "Even with years of experience, I found sections that challenged how I approach discovery and prioritization. It's one of those books you'll revisit rather than read once.",
+  },
+  {
+    rating: 5,
+    name: "Karan Singh",
+    role: "Growth Product Manager",
+    quote:
+      "The templates and practical examples saved me time at work. Instead of starting from scratch, I could adapt the frameworks directly to my projects.",
+  },
+  {
+    rating: 5,
+    name: "Ananya Rao",
+    role: "Product Analyst",
+    quote:
+      "The writing is clear, practical, and free of unnecessary jargon. It feels like learning from someone who's actually built products rather than just teaching theory.",
+  },
+];
+
+const balancedTestimonials = [
+  {
+    rating: 3,
+    name: "Rohit Malhotra",
+    role: "Product Analyst",
+    quote:
+      "There's a lot of valuable information packed into the handbook, but the sheer length can be intimidating. A quick-start guide or suggested reading path would make it easier for first-time readers.",
+  },
+  {
+    rating: 3,
+    name: "Shreya Nair",
+    role: "Aspiring Product Manager",
+    quote:
+      "The content is excellent, but I would've liked more end-of-chapter exercises to help reinforce what I learned. Even so, it's one of the most comprehensive PM references I've come across.",
+  },
+  {
+    rating: 3,
+    name: "Aditya Gupta",
+    role: "Associate Product Manager",
+    quote:
+      "Some chapters are quite detailed, which is great when you need depth, but I occasionally wanted a one-page summary before diving in. Overall, it's a solid handbook that I'll keep referring back to.",
+  },
+];
+
+function Stars({ rating }: { rating: number }) {
+  return (
+    <p className="text-sm tracking-wide text-accent" aria-label={`${rating} out of 5 stars`}>
+      {"★".repeat(rating)}
+      <span className="text-slate-300 dark:text-slate-700">{"★".repeat(5 - rating)}</span>
+    </p>
+  );
+}
+
 export default function HandbookPage() {
   return (
     <main className="flex-1 bg-white dark:bg-slate-950 px-6 py-16 sm:py-24">
@@ -137,6 +215,43 @@ export default function HandbookPage() {
                 <p className="mt-2 text-sm text-slate dark:text-slate-400">
                   {volume.description}
                 </p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-14">
+          <h2 className="text-lg font-semibold text-navy dark:text-white">What readers are saying</h2>
+          <p className="mt-2 text-sm text-slate dark:text-slate-400">
+            Feedback from readers on LinkedIn, shared here with their permission.
+          </p>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            {testimonials.map((t) => (
+              <div
+                key={t.name}
+                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6"
+              >
+                <Stars rating={t.rating} />
+                <p className="mt-3 text-sm text-slate dark:text-slate-400">&ldquo;{t.quote}&rdquo;</p>
+                <p className="mt-4 text-sm font-semibold text-navy dark:text-white">{t.name}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">{t.role}</p>
+              </div>
+            ))}
+          </div>
+
+          <h3 className="mt-10 text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+            Balanced reviews
+          </h3>
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            {balancedTestimonials.map((t) => (
+              <div
+                key={t.name}
+                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6"
+              >
+                <Stars rating={t.rating} />
+                <p className="mt-3 text-sm text-slate dark:text-slate-400">&ldquo;{t.quote}&rdquo;</p>
+                <p className="mt-4 text-sm font-semibold text-navy dark:text-white">{t.name}</p>
+                <p className="text-xs text-slate-400 dark:text-slate-500">{t.role}</p>
               </div>
             ))}
           </div>

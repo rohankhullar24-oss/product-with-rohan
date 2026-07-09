@@ -111,6 +111,27 @@ export default function TermsPage() {
           </section>
 
           <section>
+            <h2 className="text-lg font-semibold text-navy dark:text-white">Age requirement</h2>
+            <p className="mt-2">
+              This site, Product Shots, the Handbook, and the AI Resume Builder are intended for
+              users 18 and older. By using this site, you confirm you meet this requirement.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-navy dark:text-white">Accessibility</h2>
+            <p className="mt-2">
+              I want this site to be usable by as many people as possible. If you run into an
+              accessibility barrier — a screen reader issue, a color-contrast problem, keyboard
+              navigation that doesn&apos;t work — email{" "}
+              <a href="mailto:rohankhullar24@gmail.com" className="text-accent hover:underline">
+                rohankhullar24@gmail.com
+              </a>{" "}
+              and I&apos;ll look into it.
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-lg font-semibold text-navy dark:text-white">
               Limitation of liability
             </h2>

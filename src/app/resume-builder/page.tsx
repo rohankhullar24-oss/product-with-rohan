@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 
 const ROLE_OPTIONS = [
@@ -20,12 +21,17 @@ export default function ResumeBuilderPage() {
   const [targetRole, setTargetRole] = useState(ROLE_OPTIONS[1]);
   const [targetIndustry, setTargetIndustry] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [consent, setConsent] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!file) {
       toast.error("Please upload your resume (PDF or DOCX).");
+      return;
+    }
+    if (!consent) {
+      toast.error("Please confirm you understand how your resume will be processed.");
       return;
     }
 
@@ -38,6 +44,7 @@ export default function ResumeBuilderPage() {
     if (targetCompany) formData.append("targetCompany", targetCompany);
     if (targetIndustry) formData.append("targetIndustry", targetIndustry);
     formData.append("resume", file);
+    formData.append("consent", "true");
 
     try {
       const res = await fetch("/api/resume-builder", {
@@ -76,6 +83,14 @@ export default function ResumeBuilderPage() {
         <p className="mt-2 text-slate-600 dark:text-slate-400">
           Upload your current resume and get a version tailored to the role you&apos;re
           targeting.
+        </p>
+        <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
+          Your resume text is sent to Google&apos;s Gemini API to generate your tailored version.
+          It&apos;s processed in memory and never stored — see the{" "}
+          <Link href="/privacy" className="text-accent hover:underline">
+            Privacy Policy
+          </Link>
+          .
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-4">
@@ -150,6 +165,20 @@ export default function ResumeBuilderPage() {
             onChange={(e) => setTargetCompany(e.target.value)}
             className="rounded-lg border border-slate-300 dark:border-slate-700 bg-transparent px-4 py-2 text-sm text-slate-900 dark:text-white outline-none focus:border-accent"
           />
+
+          <label className="flex items-start gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <input
+              type="checkbox"
+              required
+              checked={consent}
+              onChange={(e) => setConsent(e.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              I understand my resume and contact details will be sent to Google&apos;s Gemini API
+              to generate my tailored resume, and won&apos;t be stored afterward.
+            </span>
+          </label>
 
           <button
             type="submit"

@@ -86,6 +86,24 @@ export default function HandbookPage() {
 
         <HandbookCheckout />
 
+        <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+          Sold by Rohan Khullar, Gurugram, India. This handbook is AI-assisted content, curated
+          and reviewed by the author. Payments are processed by Razorpay — I never see your card
+          or bank details. All sales are final on delivery; see the{" "}
+          <Link href="/refund-policy" className="text-accent hover:underline">
+            Refund Policy
+          </Link>{" "}
+          for the one exception (failed/duplicate payments). See also the{" "}
+          <Link href="/privacy" className="text-accent hover:underline">
+            Privacy Policy
+          </Link>{" "}
+          and{" "}
+          <Link href="/terms" className="text-accent hover:underline">
+            Terms of Service
+          </Link>
+          .
+        </p>
+
         <section className="mt-14">
           <h2 className="text-lg font-semibold text-navy dark:text-white">What&apos;s inside</h2>
           <ul className="mt-4 grid gap-x-8 gap-y-2 text-sm text-slate dark:text-slate-400 sm:grid-cols-2">

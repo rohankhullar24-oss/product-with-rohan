@@ -104,6 +104,27 @@ export default function HandbookPage() {
           .
         </p>
 
+        <section className="mt-14 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6">
+          <p className="text-xs font-semibold uppercase tracking-wide text-accent">
+            Written from the job, not just about it
+          </p>
+          <p className="mt-2 text-sm text-slate dark:text-slate-400">
+            I&apos;m a Product Manager at Airtel Payments Bank, where I own the strategy and
+            roadmap for a B2B merchant platform serving{" "}
+            <span className="font-semibold text-navy dark:text-white">600K+ partners</span> at{" "}
+            <span className="font-semibold text-navy dark:text-white">₹7 Cr monthly GMV</span>.
+            This handbook is built from the same frameworks I use to run that platform —
+            prioritization, funnel optimization that took onboarding conversion from{" "}
+            <span className="font-semibold text-navy dark:text-white">50% to 73%</span>, and the
+            interview prep that got me here.
+          </p>
+          <p className="mt-3 text-sm">
+            <Link href="/#about" className="text-accent hover:underline">
+              More about my background →
+            </Link>
+          </p>
+        </section>
+
         <section className="mt-14">
           <h2 className="text-lg font-semibold text-navy dark:text-white">What&apos;s inside</h2>
           <ul className="mt-4 grid gap-x-8 gap-y-2 text-sm text-slate dark:text-slate-400 sm:grid-cols-2">
@@ -139,6 +160,19 @@ export default function HandbookPage() {
                 </p>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section className="mt-14">
+          <h2 className="text-lg font-semibold text-navy dark:text-white">What readers say</h2>
+          <div className="mt-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 p-6 text-center">
+            <p className="text-sm text-slate dark:text-slate-400">
+              This edition is new, so there&apos;s nothing to show here yet. If you read it,{" "}
+              <Link href="/#contact" className="text-accent hover:underline">
+                send your feedback
+              </Link>{" "}
+              — real reader stories will replace this note as they come in.
+            </p>
           </div>
         </section>
 

@@ -41,7 +41,12 @@ export default function PrivacyPolicyPage() {
             <ul className="mt-2 list-disc space-y-2 pl-5">
               <li>
                 <b className="text-navy dark:text-white">Product Shots login:</b> your email
-                address, used only to send a sign-in code and maintain your session.
+                address, used to send a sign-in code and maintain your session. Signing in also
+                adds you to an occasional mailing list about site updates — you can{" "}
+                <Link href="/unsubscribe" className="text-accent hover:underline">
+                  unsubscribe
+                </Link>{" "}
+                at any time.
               </li>
               <li>
                 <b className="text-navy dark:text-white">AI Resume Builder:</b> the name, phone
@@ -90,7 +95,11 @@ export default function PrivacyPolicyPage() {
               </li>
               <li>
                 <b className="text-navy dark:text-white">Resend</b> — delivers login-code emails
-                for Product Shots.
+                and mailing-list emails.
+              </li>
+              <li>
+                <b className="text-navy dark:text-white">Composio</b> — runs the scheduled
+                automation that sends mailing-list emails via Resend.
               </li>
             </ul>
             <p className="mt-2">I do not sell your data, and I do not use it for advertising.</p>
@@ -120,6 +129,19 @@ export default function PrivacyPolicyPage() {
               Product Shots uses a strictly necessary session cookie (via Supabase) to keep you
               signed in — nothing else. There are no advertising or marketing cookies on this
               site, and Vercel Analytics does not use cookies at all.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-semibold text-navy dark:text-white">Mailing list</h2>
+            <p className="mt-2">
+              Signing in to Product Shots adds your email to an occasional mailing list about site
+              updates, sent via a scheduled automation (Composio) through Resend. You can
+              unsubscribe at any time at{" "}
+              <Link href="/unsubscribe" className="text-accent hover:underline">
+                productwithrohan.online/unsubscribe
+              </Link>
+              , with no effect on your Product Shots login.
             </p>
           </section>
 

@@ -18,6 +18,14 @@ export async function POST(request: Request) {
     const targetCompany = formData.get("targetCompany")?.toString().trim();
     const targetIndustry = formData.get("targetIndustry")?.toString().trim();
     const file = formData.get("resume");
+    const consent = formData.get("consent")?.toString();
+
+    if (consent !== "true") {
+      return NextResponse.json(
+        { error: "You must confirm how your resume will be processed before submitting." },
+        { status: 400 }
+      );
+    }
 
     if (!name || !phone || !email) {
       return NextResponse.json(

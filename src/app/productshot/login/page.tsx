@@ -3,6 +3,7 @@
 export const dynamic = "force-dynamic";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -88,6 +89,13 @@ function LoginForm() {
         <p className="mt-2 text-sm text-slate">
           One weekly article, the PM news that matters, and a daily product-sense
           question.
+        </p>
+        <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500">
+          Signing in also subscribes you to our occasional mailing list. Unsubscribe anytime at{" "}
+          <Link href="/unsubscribe" className="underline hover:text-accent">
+            /unsubscribe
+          </Link>
+          .
         </p>
 
         {callbackError && (

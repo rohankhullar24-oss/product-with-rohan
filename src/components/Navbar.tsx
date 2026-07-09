@@ -24,7 +24,7 @@ export default function Navbar() {
         </a>
 
         <button
-          className="md:hidden text-navy dark:text-white"
+          className="lg:hidden text-navy dark:text-white"
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle menu"
         >
@@ -33,7 +33,7 @@ export default function Navbar() {
           </svg>
         </button>
 
-        <ul className="hidden md:flex items-center gap-8 text-sm font-medium text-slate dark:text-slate-300">
+        <ul className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate dark:text-slate-300">
           {links.map((link) => (
             <li key={link.href}>
               <a
@@ -58,7 +58,7 @@ export default function Navbar() {
       </nav>
 
       {open && (
-        <ul className="md:hidden flex flex-col gap-1 border-t border-slate-200 bg-white px-6 py-4 text-sm font-medium text-slate dark:bg-slate-950 dark:border-slate-700 dark:text-slate-300">
+        <ul className="lg:hidden flex flex-col gap-1 border-t border-slate-200 bg-white px-6 py-4 text-sm font-medium text-slate dark:bg-slate-950 dark:border-slate-700 dark:text-slate-300">
           {links.map((link) => (
             <li key={link.href}>
               <a

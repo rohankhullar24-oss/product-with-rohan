@@ -8,10 +8,16 @@ import { createClient } from "@/lib/supabase/client";
 
 type BookmarkedItem = {
   id: string;
-  content_type: "article" | "news";
+  content_type: "article" | "news" | "shot";
   content_id: string;
   content_title: string;
   created_at: string;
+};
+
+const CONTENT_TYPE_LABELS: Record<BookmarkedItem["content_type"], string> = {
+  article: "Article",
+  news: "News",
+  shot: "Shot",
 };
 
 export default function BookmarksPage() {
@@ -65,7 +71,7 @@ export default function BookmarksPage() {
               Bookmarks
             </h1>
             <p className="mt-2 text-slate-600 dark:text-slate-400">
-              Your saved articles and news
+              Your saved articles, shots, and news
             </p>
           </div>
 
@@ -95,14 +101,19 @@ export default function BookmarksPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <span className="text-xs font-semibold uppercase text-accent mb-1 inline-block">
-                        {bookmark.content_type === "article"
-                          ? "Article"
-                          : "News"}
+                        {CONTENT_TYPE_LABELS[bookmark.content_type]}
                       </span>
                       <h3 className="font-semibold text-slate-900 dark:text-white">
                         {bookmark.content_type === "article" ? (
                           <Link
                             href={`/articles/${bookmark.content_id}`}
+                            className="hover:text-accent transition"
+                          >
+                            {bookmark.content_title}
+                          </Link>
+                        ) : bookmark.content_type === "shot" ? (
+                          <Link
+                            href="/productshot/shots"
                             className="hover:text-accent transition"
                           >
                             {bookmark.content_title}
@@ -156,7 +167,7 @@ export default function BookmarksPage() {
               Bookmarks
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Your saved articles and news
+              Your saved articles, shots, and news
             </p>
           </div>
 
@@ -188,14 +199,19 @@ export default function BookmarksPage() {
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex-1">
                       <span className="text-xs font-semibold uppercase text-accent mb-1 inline-block">
-                        {bookmark.content_type === "article"
-                          ? "Article"
-                          : "News"}
+                        {CONTENT_TYPE_LABELS[bookmark.content_type]}
                       </span>
                       <h3 className="font-semibold text-slate-900 dark:text-white">
                         {bookmark.content_type === "article" ? (
                           <Link
                             href={`/articles/${bookmark.content_id}`}
+                            className="hover:text-accent transition"
+                          >
+                            {bookmark.content_title}
+                          </Link>
+                        ) : bookmark.content_type === "shot" ? (
+                          <Link
+                            href="/productshot/shots"
                             className="hover:text-accent transition"
                           >
                             {bookmark.content_title}

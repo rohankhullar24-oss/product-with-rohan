@@ -1,4 +1,6 @@
-import { readFile } from "fs/promises";
+import { createReadStream } from "fs";
+import { stat } from "fs/promises";
+import { Readable } from "stream";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
 import { verifyRazorpaySignature } from "@/lib/razorpay";
@@ -49,13 +51,14 @@ export async function GET(request: NextRequest) {
 
   const file = FILES[type];
   const filePath = path.join(process.cwd(), "handbook-assets", file.filename);
-  const buffer = await readFile(filePath);
+  const { size } = await stat(filePath);
+  const stream = Readable.toWeb(createReadStream(filePath)) as ReadableStream;
 
-  return new NextResponse(new Uint8Array(buffer), {
+  return new NextResponse(stream, {
     headers: {
       "Content-Type": file.contentType,
       "Content-Disposition": `attachment; filename="${file.filename}"`,
-      "Content-Length": String(buffer.byteLength),
+      "Content-Length": String(size),
     },
   });
 }

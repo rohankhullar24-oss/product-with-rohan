@@ -10,6 +10,10 @@ const FILES = {
     filename: "The-Product-Manager-Handbook.pdf",
     contentType: "application/pdf",
   },
+  "pdf-compressed": {
+    filename: "The-Product-Manager-Handbook-compressed.pdf",
+    contentType: "application/pdf",
+  },
   docx: {
     filename: "The-Product-Manager-Handbook.docx",
     contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -19,7 +23,7 @@ const FILES = {
 type FileType = keyof typeof FILES;
 
 function isFileType(value: string | null): value is FileType {
-  return value === "pdf" || value === "docx";
+  return value === "pdf" || value === "pdf-compressed" || value === "docx";
 }
 
 export async function GET(request: NextRequest) {

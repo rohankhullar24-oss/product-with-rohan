@@ -47,6 +47,8 @@ export default async function HandbookSuccessPage({
               <a
                 href={`/api/handbook/download?type=pdf&${downloadParams}`}
                 download
+                target="_blank"
+                rel="noopener noreferrer"
                 className="rounded-full bg-navy px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent dark:bg-slate-700 dark:hover:bg-accent"
               >
                 Download PDF
@@ -54,11 +56,23 @@ export default async function HandbookSuccessPage({
               <a
                 href={`/api/handbook/download?type=docx&${downloadParams}`}
                 download
+                target="_blank"
+                rel="noopener noreferrer"
                 className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-navy transition-colors hover:border-accent hover:text-accent dark:border-slate-600 dark:text-white dark:hover:border-accent dark:hover:text-accent"
               >
                 Download Word (.docx)
               </a>
             </div>
+            <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
+              Button not working? This can happen inside an app&apos;s built-in browser (e.g.
+              LinkedIn, Instagram, WhatsApp). Tap the &bull;&bull;&bull; or share icon and choose
+              &quot;Open in Chrome/Safari&quot;, then try the buttons again. Still stuck? Email me
+              at{" "}
+              <a href="mailto:rohankhullar24@gmail.com" className="text-accent hover:underline">
+                rohankhullar24@gmail.com
+              </a>{" "}
+              with your payment ID and I&apos;ll send the book directly.
+            </p>
           </>
         ) : (
           <>

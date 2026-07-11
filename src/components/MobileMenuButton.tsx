@@ -25,7 +25,7 @@ export function MobileMenuButton() {
   }
 
   const getInitial = () => {
-    return user?.email?.[0]?.toUpperCase() || "U";
+    return user?.email?.[0]?.toUpperCase() || "G";
   };
 
   return (
@@ -80,9 +80,11 @@ export function MobileMenuButton() {
             </div>
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-bold text-white truncate">
-                {user?.email?.split("@")[0] || "User"}
+                {user?.email?.split("@")[0] || "Guest"}
               </h3>
-              <p className="text-sm text-blue-100 truncate">{user?.email}</p>
+              <p className="text-sm text-blue-100 truncate">
+                {user?.email || "Not signed in"}
+              </p>
             </div>
           </div>
         </div>
@@ -225,23 +227,44 @@ export function MobileMenuButton() {
 
         {/* Bottom Actions */}
         <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-700">
-          <button
-            onClick={handleSignOut}
-            className="flex w-full items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="currentColor"
-              viewBox="0 0 20 20"
+          {user ? (
+            <button
+              onClick={handleSignOut}
+              className="flex w-full items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
             >
-              <path
-                fillRule="evenodd"
-                d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
-                clipRule="evenodd"
-              />
-            </svg>
-            Sign out
-          </button>
+              <svg
+                className="h-5 w-5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Sign out
+            </button>
+          ) : (
+            <Link
+              href="/productshot/login"
+              onClick={() => setIsOpen(false)}
+              className="flex w-full items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h7a1 1 0 100-2H4V6h6a1 1 0 100-2H3zm10.293 3.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L15.586 11H8a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
     </>

@@ -42,5 +42,4 @@ export function verifyRazorpaySignature(
   return crypto.timingSafeEqual(expectedBuffer, actualBuffer);
 }
 
-// Razorpay's absolute minimum order amount is 100 paise (₹1).
-export const MIN_PAID_AMOUNT_INR = 1;
+export const HANDBOOK_PRICE_INR = 199;

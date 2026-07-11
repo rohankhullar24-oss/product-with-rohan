@@ -46,4 +46,4 @@ The skill being tested isn't willpower — it's whether you've built a repeatabl
 
 ## Want the deeper playbook?
 
-If prioritization frameworks and stakeholder communication are the parts of the job you want to get systematically better at, not just muddle through, the Handbook walks through the frameworks behind decisions like these in more depth. It's pay-what-you-want, starting at ₹1: https://productwithrohan.online/handbook
+If prioritization frameworks and stakeholder communication are the parts of the job you want to get systematically better at, not just muddle through, the Handbook walks through the frameworks behind decisions like these in more depth. It's ₹199: https://productwithrohan.online/handbook

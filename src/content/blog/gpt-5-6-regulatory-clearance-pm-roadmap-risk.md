@@ -55,4 +55,4 @@ For a few years, the PM playbook for AI-dependent products has treated model ava
 
 ## Want the deeper playbook?
 
-Roadmap risk like this — the kind that lives outside your own engineering org and doesn't show up until it's already cost you a launch date — is exactly what a sharper planning framework should catch earlier. The Handbook is pay-what-you-want, starting at ₹1: https://productwithrohan.online/handbook
+Roadmap risk like this — the kind that lives outside your own engineering org and doesn't show up until it's already cost you a launch date — is exactly what a sharper planning framework should catch earlier. The Handbook is ₹199: https://productwithrohan.online/handbook

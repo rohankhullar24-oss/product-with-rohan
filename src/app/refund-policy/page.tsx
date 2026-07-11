@@ -37,12 +37,11 @@ export default function RefundPolicyPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-navy dark:text-white">
-              Pay-what-you-want pricing
-            </h2>
+            <h2 className="text-lg font-semibold text-navy dark:text-white">Fixed pricing</h2>
             <p className="mt-2">
-              You choose your own price at checkout. Because you set the amount yourself, refund
-              requests based on price (&quot;I paid too much&quot;) aren&apos;t applicable.
+              The handbook is sold at a fixed price of ₹199, clearly shown before checkout. Refund
+              requests based on price (&quot;I didn&apos;t mean to pay that much&quot;) aren&apos;t
+              applicable, since the price is disclosed upfront.
             </p>
           </section>
 

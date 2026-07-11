@@ -46,9 +46,9 @@ export default async function HandbookSuccessPage({
             </p>
             <div className="mt-8 flex flex-wrap justify-center gap-3">
               <HandbookDownloadButton
-                href={`/api/handbook/download?type=pdf&${downloadParams}`}
-                filename="The-Product-Manager-Handbook.pdf"
-                label="Download PDF"
+                href={`/api/handbook/download?type=pdf-compressed&${downloadParams}`}
+                filename="The-Product-Manager-Handbook-compressed.pdf"
+                label="Download PDF (1.5MB, faster)"
                 className="rounded-full bg-navy px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent disabled:opacity-70 dark:bg-slate-700 dark:hover:bg-accent"
               />
               <HandbookDownloadButton
@@ -57,7 +57,18 @@ export default async function HandbookSuccessPage({
                 label="Download Word (.docx)"
                 className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-navy transition-colors hover:border-accent hover:text-accent disabled:opacity-70 dark:border-slate-600 dark:text-white dark:hover:border-accent dark:hover:text-accent"
               />
+              <HandbookDownloadButton
+                href={`/api/handbook/download?type=pdf&${downloadParams}`}
+                filename="The-Product-Manager-Handbook.pdf"
+                label="Download PDF (4.6MB, original)"
+                className="rounded-full border border-slate-300 px-5 py-2.5 text-sm font-medium text-navy transition-colors hover:border-accent hover:text-accent disabled:opacity-70 dark:border-slate-600 dark:text-white dark:hover:border-accent dark:hover:text-accent"
+              />
             </div>
+            <p className="mt-3 text-xs text-slate-400 dark:text-slate-500">
+              The compressed PDF looks and reads identically — same text, same layout — but has
+              slightly reduced accessibility tagging for screen readers. Choose the original if
+              that matters to you.
+            </p>
             <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
               Button not working? This can happen inside an app&apos;s built-in browser (e.g.
               LinkedIn, Instagram, WhatsApp). Tap the &bull;&bull;&bull; or share icon and choose

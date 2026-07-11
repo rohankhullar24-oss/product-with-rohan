@@ -17,6 +17,7 @@ type BookmarkedItem = {
 export default function BookmarksPage() {
   const [bookmarks, setBookmarks] = useState<BookmarkedItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -25,9 +26,12 @@ export default function BookmarksPage() {
       const userEmail = userData?.user?.email;
 
       if (!userEmail) {
+        setIsLoggedIn(false);
         setLoading(false);
         return;
       }
+
+      setIsLoggedIn(true);
 
       const { data } = await supabase
         .from("bookmarks")
@@ -65,7 +69,19 @@ export default function BookmarksPage() {
             </p>
           </div>
 
-          {bookmarks.length === 0 ? (
+          {!isLoggedIn ? (
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-6 text-center">
+              <p className="text-slate-600 dark:text-slate-400">
+                Log in to bookmark your favorite articles and shots.
+              </p>
+              <Link
+                href="/productshot/login"
+                className="mt-3 inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              >
+                Sign in
+              </Link>
+            </div>
+          ) : bookmarks.length === 0 ? (
             <p className="text-slate-600 dark:text-slate-400">
               No bookmarks yet. Save articles and news to see them here.
             </p>
@@ -144,7 +160,19 @@ export default function BookmarksPage() {
             </p>
           </div>
 
-          {bookmarks.length === 0 ? (
+          {!isLoggedIn ? (
+            <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-6 text-center">
+              <p className="text-slate-600 dark:text-slate-400">
+                Log in to bookmark your favorite articles and shots.
+              </p>
+              <Link
+                href="/productshot/login"
+                className="mt-3 inline-block rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
+              >
+                Sign in
+              </Link>
+            </div>
+          ) : bookmarks.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-slate-600 dark:text-slate-400">
                 No bookmarks yet. Save articles and news to see them here.

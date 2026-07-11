@@ -164,6 +164,15 @@ function LoginForm() {
             )}
           </form>
         )}
+
+        <div className="mt-6 text-center">
+          <Link
+            href="/productshot/dashboard"
+            className="text-sm text-slate underline-offset-2 hover:text-accent hover:underline"
+          >
+            Proceed without logging in →
+          </Link>
+        </div>
       </div>
     </div>
   );

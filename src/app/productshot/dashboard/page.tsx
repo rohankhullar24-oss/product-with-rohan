@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getArticles } from "@/lib/articles/fetch-posts";
 import type { NewsItem } from "@/types/database";
@@ -11,10 +10,6 @@ export default async function DashboardPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/productshot/login");
-  }
 
   const [articles, newsResult] = await Promise.all([
     getArticles(),
@@ -39,6 +34,15 @@ export default async function DashboardPage() {
           <p className="mt-2 text-slate-600 dark:text-slate-400">
             Daily practice questions + PM news for your growth
           </p>
+          {!user && (
+            <p className="mt-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
+              Browsing as a guest.{" "}
+              <Link href="/productshot/login" className="text-accent hover:underline">
+                Sign in
+              </Link>{" "}
+              to bookmark articles and shots.
+            </p>
+          )}
         </div>
 
         {/* Quick Links */}

@@ -55,7 +55,7 @@ export default function HandbookEmailForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-3 flex flex-wrap items-start justify-center gap-2">
+    <form onSubmit={handleSubmit} className="flex flex-wrap items-start gap-2">
       <input
         type="email"
         required

@@ -3,7 +3,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Refund & Cancellation Policy | Rohan Khullar",
-  description: "Refund and cancellation policy for The Product Manager Handbook.",
+  description: "Refund and cancellation policy for digital products sold on this site.",
   robots: { index: true, follow: true },
 };
 
@@ -19,7 +19,7 @@ export default function RefundPolicyPage() {
           Refund &amp; Cancellation Policy
         </h1>
         <p className="mt-2 text-sm text-slate-400 dark:text-slate-500">
-          Effective July 8, 2026 — applies to purchases of The Product Manager Handbook
+          Effective July 8, 2026 — applies to digital product purchases on this site
         </p>
 
         <div className="mt-10 space-y-8 text-sm leading-relaxed text-slate dark:text-slate-400">
@@ -28,18 +28,18 @@ export default function RefundPolicyPage() {
               Digital product — all sales are final
             </h2>
             <p className="mt-2">
-              The Product Manager Handbook is a digital product delivered instantly upon
-              successful payment. Because it&apos;s delivered immediately and can&apos;t be
-              &quot;returned,&quot; all purchases are final and non-refundable once the file has
-              been successfully delivered — including for change of mind, dissatisfaction with the
-              content, or not having read this policy before purchasing.
+              Digital products on this site are delivered instantly upon successful payment.
+              Because they&apos;re delivered immediately and can&apos;t be &quot;returned,&quot;
+              all purchases are final and non-refundable once the file has been successfully
+              delivered — including for change of mind, dissatisfaction with the content, or not
+              having read this policy before purchasing.
             </p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-navy dark:text-white">Fixed pricing</h2>
             <p className="mt-2">
-              The handbook is sold at a fixed price of ₹199, clearly shown before checkout. Refund
+              Digital products are sold at a fixed price, clearly shown before checkout. Refund
               requests based on price (&quot;I didn&apos;t mean to pay that much&quot;) aren&apos;t
               applicable, since the price is disclosed upfront.
             </p>

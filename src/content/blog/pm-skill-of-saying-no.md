@@ -43,7 +43,3 @@ Notice that none of these three failures are really about the *content* of the d
 ## The actual skill
 
 The skill being tested isn't willpower — it's whether you've built a repeatable habit sturdy enough to survive pressure. Nobody delivers a well-structured no for the first time under the stress of an angry VP or a churning customer; they deliver whatever their default pattern is, which for most people defaults to one of the three failure modes above. The people who are good at saying no aren't braver than everyone else. They've just run the same five steps enough times on low-stakes requests that it's still available to them when the stakes are high.
-
-## Want the deeper playbook?
-
-If prioritization frameworks and stakeholder communication are the parts of the job you want to get systematically better at, not just muddle through, the Handbook walks through the frameworks behind decisions like these in more depth. It's ₹199: https://productwithrohan.online/handbook

@@ -54,11 +54,6 @@ export default function PrivacyPolicyPage() {
                 industry — used only to generate your tailored resume.
               </li>
               <li>
-                <b className="text-navy dark:text-white">Handbook payments:</b> Razorpay processes
-                your payment directly. I never see or store your card, UPI, or bank details — I
-                only receive confirmation that a payment succeeded.
-              </li>
-              <li>
                 <b className="text-navy dark:text-white">Site usage:</b> anonymous page-view
                 analytics via Vercel Analytics, which does not use cookies and does not identify
                 you individually.
@@ -80,7 +75,7 @@ export default function PrivacyPolicyPage() {
                 account/session data.
               </li>
               <li>
-                <b className="text-navy dark:text-white">Razorpay</b> — processes handbook
+                <b className="text-navy dark:text-white">Razorpay</b> — processes digital product
                 payments. Subject to Razorpay&apos;s own privacy policy.
               </li>
               <li>

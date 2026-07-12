@@ -3,7 +3,7 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Terms of Service | Rohan Khullar",
-  description: "Terms governing use of Product with Rohan, the PM Handbook, and the AI Resume Builder.",
+  description: "Terms governing use of Product with Rohan and the AI Resume Builder.",
   robots: { index: true, follow: true },
 };
 
@@ -41,10 +41,6 @@ export default function TermsPage() {
                 interview-prep tool (daily questions, news, articles).
               </li>
               <li>
-                <b className="text-navy dark:text-white">The Product Manager Handbook</b> — a
-                fixed-price (₹199) digital book, delivered by download after payment via Razorpay.
-              </li>
-              <li>
                 <b className="text-navy dark:text-white">AI Resume Builder</b> — you upload a
                 resume and target role; an AI model (Google Gemini) generates a tailored version
                 for you to download.
@@ -57,7 +53,7 @@ export default function TermsPage() {
               AI-generated content — no warranty on accuracy
             </h2>
             <p className="mt-2">
-              The Handbook and the resumes produced by the AI Resume Builder are AI-assisted or
+              The resumes produced by the AI Resume Builder are AI-assisted or
               AI-generated. They&apos;re provided &quot;as is,&quot; without any warranty of
               accuracy, completeness, or fitness for a particular purpose — including no guarantee
               that a tailored resume will result in interviews or job offers. You&apos;re
@@ -68,26 +64,12 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="text-lg font-semibold text-navy dark:text-white">Payments</h2>
-            <p className="mt-2">
-              Handbook payments are processed by Razorpay. Pricing is fixed at ₹199. Refunds are
-              governed by the{" "}
-              <Link href="/refund-policy" className="text-accent hover:underline">
-                Refund &amp; Cancellation Policy
-              </Link>
-              .
-            </p>
-          </section>
-
-          <section>
             <h2 className="text-lg font-semibold text-navy dark:text-white">
               Intellectual property
             </h2>
             <ul className="mt-2 list-disc space-y-2 pl-5">
               <li>
-                The Handbook, site content, and code are owned by Rohan Khullar unless otherwise
-                noted. Purchasing the Handbook gives you a personal-use license to read and keep
-                it — you may not resell, redistribute, or republish it commercially.
+                Site content and code are owned by Rohan Khullar unless otherwise noted.
               </li>
               <li>
                 You retain ownership of the resume and personal information you upload to the AI
@@ -113,7 +95,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-navy dark:text-white">Age requirement</h2>
             <p className="mt-2">
-              This site, Product Shots, the Handbook, and the AI Resume Builder are intended for
+              This site, Product Shots, and the AI Resume Builder are intended for
               users 18 and older. By using this site, you confirm you meet this requirement.
             </p>
           </section>

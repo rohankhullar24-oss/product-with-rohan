@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { track } from "@vercel/analytics";
 import { createClient } from "@/lib/supabase/client";
 
 export function MobileMenuButton() {
@@ -168,24 +167,6 @@ export function MobileMenuButton() {
               <path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z" />
             </svg>
             Bookmarks
-          </Link>
-
-          <Link
-            href="/handbook"
-            onClick={() => {
-              track("handbook_link_click", { source: "productshot_sidebar_mobile" });
-              setIsOpen(false);
-            }}
-            className="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
-          >
-            <svg
-              className="h-5 w-5"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-            >
-              <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
-            </svg>
-            PM Handbook
           </Link>
 
           <Link

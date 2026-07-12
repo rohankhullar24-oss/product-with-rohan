@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { track } from "@vercel/analytics";
 
 const links = [
   { href: "#about", label: "About" },
@@ -11,7 +10,6 @@ const links = [
   { href: "#contact", label: "Contact" },
   { href: "/blogs", label: "Blogs" },
   { href: "/productshot", label: "Product Shots" },
-  { href: "/handbook", label: "Handbook" },
 ];
 
 export default function Navbar() {
@@ -37,11 +35,7 @@ export default function Navbar() {
         <ul className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate dark:text-slate-300">
           {links.map((link) => (
             <li key={link.href}>
-              <a
-                href={link.href}
-                onClick={() => link.href === "/handbook" && track("handbook_link_click", { source: "navbar" })}
-                className="transition-colors hover:text-accent"
-              >
+              <a href={link.href} className="transition-colors hover:text-accent">
                 {link.label}
               </a>
             </li>
@@ -65,10 +59,7 @@ export default function Navbar() {
               <a
                 href={link.href}
                 className="block py-2 transition-colors hover:text-accent"
-                onClick={() => {
-                  if (link.href === "/handbook") track("handbook_link_click", { source: "navbar_mobile" });
-                  setOpen(false);
-                }}
+                onClick={() => setOpen(false)}
               >
                 {link.label}
               </a>

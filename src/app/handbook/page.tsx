@@ -12,7 +12,7 @@ export default function HandbookPage() {
     <main className="flex-1 bg-white dark:bg-slate-950 px-6 py-16 sm:py-24">
       <div className="mx-auto max-w-2xl text-center">
         <h1 className="text-3xl font-semibold text-navy dark:text-white sm:text-4xl">
-          Temporarily unavailable
+          UNAVAILABLE
         </h1>
         <Link href="/" className="mt-8 inline-block text-sm text-accent hover:underline">
           ← Back to home

@@ -70,16 +70,28 @@ export default async function HandbookSuccessPage({
               slightly reduced accessibility tagging for screen readers. Choose the original if
               that matters to you.
             </p>
-            <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
-              Button not working? This can happen inside an app&apos;s built-in browser (e.g.
-              LinkedIn, Instagram, WhatsApp). Tap the &bull;&bull;&bull; or share icon and choose
-              &quot;Open in Chrome/Safari&quot;, then try the buttons again — or have the Word
-              file emailed to you instead (the PDF is too large to email quickly):
-            </p>
+
             {orderId && paymentId && signature && (
-              <HandbookEmailForm orderId={orderId} paymentId={paymentId} signature={signature} />
+              <div className="mt-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 text-left">
+                <p className="text-sm font-semibold text-navy dark:text-white">
+                  Prefer it by email?
+                </p>
+                <p className="mt-1 text-sm text-slate dark:text-slate-400">
+                  Get the Word (.docx) file sent straight to your inbox — useful if the buttons
+                  above aren&apos;t working for you.
+                </p>
+                <div className="mt-4">
+                  <HandbookEmailForm orderId={orderId} paymentId={paymentId} signature={signature} />
+                </div>
+              </div>
             )}
-            <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
+
+            <p className="mt-6 text-xs text-slate-400 dark:text-slate-500">
+              Downloads not working? This can happen inside an app&apos;s built-in browser (e.g.
+              LinkedIn, Instagram, WhatsApp) — tap the &bull;&bull;&bull; or share icon and choose
+              &quot;Open in Chrome/Safari&quot;, then try again.
+            </p>
+            <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
               Still stuck? Email me at{" "}
               <a href="mailto:rohankhullar24@gmail.com" className="text-accent hover:underline">
                 rohankhullar24@gmail.com

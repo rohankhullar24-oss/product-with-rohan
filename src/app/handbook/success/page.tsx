@@ -73,8 +73,8 @@ export default async function HandbookSuccessPage({
             <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
               Button not working? This can happen inside an app&apos;s built-in browser (e.g.
               LinkedIn, Instagram, WhatsApp). Tap the &bull;&bull;&bull; or share icon and choose
-              &quot;Open in Chrome/Safari&quot;, then try the buttons again — or have the files
-              emailed to you instead:
+              &quot;Open in Chrome/Safari&quot;, then try the buttons again — or have the Word
+              file emailed to you instead (the PDF is too large to email quickly):
             </p>
             {orderId && paymentId && signature && (
               <HandbookEmailForm orderId={orderId} paymentId={paymentId} signature={signature} />

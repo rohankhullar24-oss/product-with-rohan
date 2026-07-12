@@ -8,10 +8,6 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const FILES = [
   {
-    filename: "The-Product-Manager-Handbook.pdf",
-    path: "The-Product-Manager-Handbook-compressed.pdf",
-  },
-  {
     filename: "The-Product-Manager-Handbook.docx",
     path: "The-Product-Manager-Handbook.docx",
   },
@@ -62,7 +58,7 @@ export async function POST(request: NextRequest) {
       from: `The Product Manager Handbook <${HANDBOOK_FROM_EMAIL}>`,
       to: email,
       subject: "Your Product Manager Handbook",
-      text: "Thanks for your purchase — your PDF and Word copies of The Product Manager Handbook are attached to this email.",
+      text: "Thanks for your purchase — the Word copy of The Product Manager Handbook is attached to this email. For the PDF, use the download buttons on the site.",
       attachments,
     });
 

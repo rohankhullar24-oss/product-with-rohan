@@ -49,7 +49,7 @@ export default function HandbookEmailForm({
   if (status === "sent") {
     return (
       <p className="mt-3 rounded-lg bg-accent-light px-4 py-3 text-sm text-navy">
-        Sent! Check <span className="font-medium">{email}</span> for the PDF and Word files.
+        Sent! Check <span className="font-medium">{email}</span> for the Word file.
       </p>
     );
   }
@@ -69,7 +69,7 @@ export default function HandbookEmailForm({
         disabled={status === "sending"}
         className="rounded-full bg-navy px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent disabled:opacity-60 dark:bg-slate-700 dark:hover:bg-accent"
       >
-        {status === "sending" ? "Sending…" : "Email me the files"}
+        {status === "sending" ? "Sending…" : "Email me the Word file"}
       </button>
       {status === "error" && (
         <p className="w-full text-sm text-red-600 dark:text-red-400">{errorMessage}</p>

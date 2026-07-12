@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Metadata } from "next";
 import { verifyRazorpaySignature } from "@/lib/razorpay";
 import HandbookDownloadButton from "@/components/HandbookDownloadButton";
+import HandbookEmailForm from "@/components/HandbookEmailForm";
 
 export const metadata: Metadata = {
   title: "Thank you | The Product Manager Handbook",
@@ -72,8 +73,14 @@ export default async function HandbookSuccessPage({
             <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
               Button not working? This can happen inside an app&apos;s built-in browser (e.g.
               LinkedIn, Instagram, WhatsApp). Tap the &bull;&bull;&bull; or share icon and choose
-              &quot;Open in Chrome/Safari&quot;, then try the buttons again. Still stuck? Email me
-              at{" "}
+              &quot;Open in Chrome/Safari&quot;, then try the buttons again — or have the Word
+              file emailed to you instead (the PDF is too large to email quickly):
+            </p>
+            {orderId && paymentId && signature && (
+              <HandbookEmailForm orderId={orderId} paymentId={paymentId} signature={signature} />
+            )}
+            <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
+              Still stuck? Email me at{" "}
               <a href="mailto:rohankhullar24@gmail.com" className="text-accent hover:underline">
                 rohankhullar24@gmail.com
               </a>{" "}

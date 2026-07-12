@@ -52,7 +52,3 @@ For a few years, the PM playbook for AI-dependent products has treated model ava
 2. [OpenAI wins US clearance for a broad GPT-5.6 rollout after weeks of government testing — TheNextWeb](https://thenextweb.com/news/openai-gpt-5-6-broad-rollout-us-approval)
 3. [OpenAI Receives Federal Approval to Launch GPT-5.6 Models Thursday — Blockonomi](https://blockonomi.com/openai-receives-federal-approval-to-launch-gpt-5-6-models-thursday/)
 4. [OpenAI gets US govt's approval for broad rollout of advanced GPT-5.6 model — Business Standard](https://www.business-standard.com/technology/tech-news/openai-gets-us-govt-s-approval-for-broad-rollout-of-advanced-gpt-5-6-model-126070800227_1.html)
-
-## Want the deeper playbook?
-
-Roadmap risk like this — the kind that lives outside your own engineering org and doesn't show up until it's already cost you a launch date — is exactly what a sharper planning framework should catch earlier. The Handbook is ₹199: https://productwithrohan.online/handbook

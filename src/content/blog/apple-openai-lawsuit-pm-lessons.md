@@ -45,7 +45,3 @@ Apple and OpenAI's relationship has been unusually close for competitors. In 202
 5. [OpenAI engineer's 'LOL' moment set stage for legal fight with Apple — Fortune](https://fortune.com/2026/07/11/openai-engineers-legal-fight-apple-ai-product-poaching/)
 6. [Exclusive: OpenAI aims to debut first device in 2026 — Axios](https://www.axios.com/2026/01/19/openai-device-2026-lehane-jony-ive)
 7. [OpenAI Consumer Device: Jony Ive's Screenless AI Hardware Arrives H2 2026 — Introl](https://introl.com/blog/openai-consumer-device-jony-ive-hardware-2026)
-
-## Want the deeper playbook?
-
-If lawsuits, layoffs, and hardware bets like this one are the kind of signal you want turned into a repeatable decision framework rather than a one-off news reaction, the Handbook goes deeper on how to build product judgment under competitive pressure. It's ₹199: https://productwithrohan.online/handbook

@@ -36,15 +36,6 @@ export default function Navbar() {
               </Link>
             </li>
           ))}
-          <li>
-            <a
-              href="/Rohan_Khullar_Resume.pdf"
-              download
-              className="rounded-full bg-navy px-4 py-2 text-white transition-colors hover:bg-accent dark:bg-slate-700 dark:hover:bg-accent"
-            >
-              Download CV
-            </a>
-          </li>
         </ul>
       </nav>
 
@@ -61,15 +52,6 @@ export default function Navbar() {
               </Link>
             </li>
           ))}
-          <li className="pt-2">
-            <a
-              href="/Rohan_Khullar_Resume.pdf"
-              download
-              className="inline-block rounded-full bg-navy px-4 py-2 text-white transition-colors hover:bg-accent dark:bg-slate-700 dark:hover:bg-accent"
-            >
-              Download CV
-            </a>
-          </li>
         </ul>
       )}
     </header>

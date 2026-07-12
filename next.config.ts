@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   },
   outputFileTracingIncludes: {
     "/api/handbook/download": ["./handbook-assets/**/*"],
+    "/api/handbook/email": ["./handbook-assets/**/*"],
   },
   headers: async () => [
     {

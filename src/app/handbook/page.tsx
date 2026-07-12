@@ -17,10 +17,7 @@ export default function HandbookPage() {
         <h1 className="mt-2 text-3xl font-semibold text-navy dark:text-white sm:text-4xl">
           Temporarily unavailable
         </h1>
-        <p className="mt-3 text-slate dark:text-slate-400">
-          The handbook isn&apos;t available for purchase right now. Check back soon.
-        </p>
-        <p className="mt-3 text-sm text-slate-400 dark:text-slate-500">
+        <p className="mt-4 text-sm text-slate-400 dark:text-slate-500">
           Already bought it and need your files? Email me at{" "}
           <a href="mailto:rohankhullar24@gmail.com" className="text-accent hover:underline">
             rohankhullar24@gmail.com

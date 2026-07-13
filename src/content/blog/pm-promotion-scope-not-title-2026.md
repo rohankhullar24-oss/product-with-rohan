@@ -49,7 +49,3 @@ The fix in both directions is the same: track scope directly, as its own metric,
 ## The one thing to actually do with this
 
 If you take one action out of this, make it a quarterly habit rather than a one-time exercise: write down, in one sentence each, the two or three hardest ambiguous calls you personally made this quarter — not tasks you completed, calls you made where a wrong answer would have cost something real. If that list is thin, that's your actual signal to go find unowned scope, independent of whether a title conversation is anywhere on the calendar. If that list is substantial, you have the raw material for your next negotiation, internal or external, regardless of what title currently sits next to your name — and regardless of how few new title-shaped slots the org happens to be minting this year.
-
-## Want the deeper playbook?
-
-If you're trying to figure out how to actually identify and claim scope — not just work harder, but work on the right ambiguous problems — the Handbook breaks down the frameworks for prioritization and stakeholder navigation that make scope-taking legible instead of invisible. It's ₹199: https://productwithrohan.online/handbook

@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+
+const FunStickers = dynamic(() => import("@/components/FunStickers"), { ssr: false });
 
 export default function Hero() {
   const [mounted, setMounted] = useState(false);
@@ -12,8 +15,9 @@ export default function Hero() {
   return (
     <section
       id="top"
-      className="border-b border-slate-200 bg-slate-50 dark:bg-slate-950 dark:border-slate-700"
+      className="relative overflow-hidden border-b border-slate-200 bg-slate-50 dark:bg-slate-950 dark:border-slate-700"
     >
+      <FunStickers />
       <div className="mx-auto max-w-5xl px-6 py-24 sm:py-32">
         <p
           className={`text-sm font-semibold uppercase tracking-widest text-accent transition-all duration-700 ${

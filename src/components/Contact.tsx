@@ -89,19 +89,6 @@ export default function Contact() {
             )
           )}
         </div>
-
-        <a
-          href="/Rohan_Khullar_Resume.pdf"
-          download
-          className={`mt-10 inline-block rounded-full bg-accent px-6 py-3 text-sm font-semibold text-navy transition-all duration-500 hover:bg-white hover:shadow-lg ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-          style={{
-            transitionDelay: isVisible ? "400ms" : "0ms",
-          }}
-        >
-          Download CV
-        </a>
       </div>
     </section>
   );

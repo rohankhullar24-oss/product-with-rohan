@@ -78,15 +78,8 @@ export default function Hero() {
           }}
         >
           <a
-            href="/Rohan_Khullar_Resume.pdf"
-            download
-            className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent dark:bg-slate-700 dark:hover:bg-accent"
-          >
-            Download CV
-          </a>
-          <a
             href="#contact"
-            className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-navy dark:text-white dark:border-slate-600 transition-colors hover:border-accent hover:text-accent dark:hover:border-accent"
+            className="rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent dark:bg-slate-700 dark:hover:bg-accent"
           >
             Get in Touch
           </a>

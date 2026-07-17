@@ -43,9 +43,6 @@ export default function Contact() {
           Contact
         </h2>
         <h3 className="mt-2 text-3xl font-bold text-white">Let&apos;s talk</h3>
-        <p className="mx-auto mt-4 max-w-xl text-slate-300 dark:text-slate-400">
-          Open to product roles and conversations. Feel free to reach out directly.
-        </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-6">
           {contacts.map((contact, i) =>
@@ -89,19 +86,6 @@ export default function Contact() {
             )
           )}
         </div>
-
-        <a
-          href="/Rohan_Khullar_Resume.pdf"
-          download
-          className={`mt-10 inline-block rounded-full bg-accent px-6 py-3 text-sm font-semibold text-navy transition-all duration-500 hover:bg-white hover:shadow-lg ${
-            isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
-          }`}
-          style={{
-            transitionDelay: isVisible ? "400ms" : "0ms",
-          }}
-        >
-          Download CV
-        </a>
       </div>
     </section>
   );

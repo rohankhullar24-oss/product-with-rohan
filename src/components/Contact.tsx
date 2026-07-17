@@ -43,9 +43,6 @@ export default function Contact() {
           Contact
         </h2>
         <h3 className="mt-2 text-3xl font-bold text-white">Let&apos;s talk</h3>
-        <p className="mx-auto mt-4 max-w-xl text-slate-300 dark:text-slate-400">
-          Open to product roles and conversations. Feel free to reach out directly.
-        </p>
 
         <div className="mt-10 flex flex-wrap items-center justify-center gap-6">
           {contacts.map((contact, i) =>

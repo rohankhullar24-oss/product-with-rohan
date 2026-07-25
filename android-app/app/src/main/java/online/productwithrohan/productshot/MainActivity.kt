@@ -14,7 +14,7 @@ import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 
-private const val HOME_URL = "https://productwithrohan.online/productshot"
+private const val HOME_URL = "https://productwithrohan.online/productshot/dashboard"
 private const val SITE_HOST = "productwithrohan.online"
 
 class MainActivity : AppCompatActivity() {

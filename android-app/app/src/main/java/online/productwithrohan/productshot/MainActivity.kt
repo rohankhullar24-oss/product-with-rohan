@@ -59,6 +59,10 @@ class MainActivity : AppCompatActivity() {
 
             override fun onPageFinished(view: WebView, url: String) {
                 swipeRefresh.isRefreshing = false
+                // Without an explicit flush, cookies (and the Supabase session with
+                // them) can be lost if Android kills the app process before the
+                // WebView's own persistence gets around to writing them to disk.
+                CookieManager.getInstance().flush()
             }
         }
 
@@ -89,5 +93,13 @@ class MainActivity : AppCompatActivity() {
             return true
         }
         return super.onKeyDown(keyCode, event)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Belt-and-suspenders: also flush whenever the app goes to the
+        // background, since that's exactly when Android is most likely to
+        // kill the process shortly after.
+        CookieManager.getInstance().flush()
     }
 }

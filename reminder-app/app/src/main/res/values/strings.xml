@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Reminders</string>
+
+    <string name="channel_name">Reminders</string>
+    <string name="channel_description">Reminder notifications that repeat until you confirm them</string>
+
+    <string name="empty_list">No reminders yet.\nTap + to add a birthday, anniversary or task.</string>
+    <string name="add_reminder">Add reminder</string>
+
+    <string name="item_next">Next: %1$s</string>
+    <string name="item_paused">Paused</string>
+    <string name="item_completed">Completed</string>
+
+    <string name="banner_notifications">Notifications are off — reminders can\'t alert you. Tap to fix.</string>
+    <string name="banner_exact_alarms">Exact alarms are off — reminders may be late. Tap to fix.</string>
+
+    <string name="title_new_reminder">New reminder</string>
+    <string name="title_edit_reminder">Edit reminder</string>
+
+    <string name="label_title">Title</string>
+    <string name="hint_title">e.g. Mom\'s birthday</string>
+    <string name="label_notes">Notes (optional)</string>
+    <string name="hint_notes">e.g. Call her in the morning</string>
+    <string name="label_type">Repeats</string>
+    <string name="label_date">Date</string>
+    <string name="pick_date">Pick a date</string>
+    <string name="label_weekdays">On these days</string>
+    <string name="label_day_of_month">Day of month</string>
+    <string name="label_times">Reminder times</string>
+    <string name="label_times_hint">Add as many times per day as you want to be reminded (e.g. 4 or 5)</string>
+    <string name="add_time">+ Add time</string>
+    <string name="remove_time">Remove time</string>
+    <string name="label_nag">If I don\'t confirm, remind me again</string>
+
+    <string name="save">Save</string>
+    <string name="delete">Delete reminder</string>
+    <string name="delete_title">Delete reminder?</string>
+    <string name="delete_message">This reminder and its alarms will be removed.</string>
+    <string name="delete_confirm">Delete</string>
+
+    <string name="action_done">Done ✓</string>
+    <string name="action_snooze">Snooze 1h</string>
+    <string name="notification_nag_hint">Will remind again every %1$d min until you tap Done</string>
+
+    <string name="error_title_required">Please enter a title</string>
+    <string name="error_time_required">Add at least one reminder time</string>
+    <string name="error_date_required">Please pick a date</string>
+    <string name="error_weekday_required">Pick at least one day of the week</string>
+    <string name="error_past_time">That date/time is in the past — pick a future one</string>
+    <string name="error_max_times">Maximum %1$d times per day</string>
+
+    <string-array name="reminder_types">
+        <item>One time</item>
+        <item>Daily</item>
+        <item>Weekly</item>
+        <item>Monthly</item>
+        <item>Yearly (birthday/anniversary)</item>
+    </string-array>
+
+    <string-array name="week_days">
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
+    </string-array>
+
+    <string-array name="nag_intervals">
+        <item>Don\'t repeat</item>
+        <item>Every 10 minutes</item>
+        <item>Every 15 minutes</item>
+        <item>Every 30 minutes</item>
+        <item>Every hour</item>
+        <item>Every 2 hours</item>
+    </string-array>
+</resources>

@@ -39,7 +39,10 @@
       "Bash(git stash *)",
       "Bash(git commit -m ' *)",
       "mcp__68fe795d-055d-477a-8b2d-602129124843__COMPOSIO_SEARCH_TOOLS",
-      "mcp__68fe795d-055d-477a-8b2d-602129124843__COMPOSIO_MULTI_EXECUTE_TOOL"
+      "mcp__68fe795d-055d-477a-8b2d-602129124843__COMPOSIO_MULTI_EXECUTE_TOOL",
+      "mcp__Claude_Code_Remote__unsubscribe_pr_activity",
+      "Bash(cp /home/user/product-with-rohan/.claude/settings.local.json /tmp/claude-0/-home-user-product-with-rohan/7c38b8a3-ef9f-5ea8-afe0-e0f168c5410f/scratchpad/settings.local.json.bak)",
+      "Bash(mkdir -p /tmp/claude-0/-home-user-product-with-rohan/7c38b8a3-ef9f-5ea8-afe0-e0f168c5410f/scratchpad)"
     ]
   }
 }

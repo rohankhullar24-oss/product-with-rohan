@@ -4,6 +4,9 @@
         android:id="@+id/action_account"
         android:title="@string/title_account" />
     <item
+        android:id="@+id/action_sound"
+        android:title="@string/notification_sound" />
+    <item
         android:id="@+id/action_export"
         android:title="@string/export_reminders" />
     <item

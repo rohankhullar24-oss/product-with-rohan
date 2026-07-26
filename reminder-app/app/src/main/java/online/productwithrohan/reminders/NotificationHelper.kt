@@ -9,7 +9,7 @@ import androidx.core.app.NotificationCompat
 
 object NotificationHelper {
 
-    private const val CHANNEL_ID = "reminders"
+    const val CHANNEL_ID = "reminders"
 
     fun ensureChannel(context: Context) {
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

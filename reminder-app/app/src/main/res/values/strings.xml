@@ -64,6 +64,8 @@
     <string name="account_signed_out">Signed out. Reminders stay on this phone.</string>
     <string name="account_bad_email">Please enter a valid email address</string>
 
+    <string name="notification_sound">Notification sound</string>
+
     <string name="export_reminders">Export backup</string>
     <string name="import_reminders">Import backup</string>
     <string name="export_done">Backup saved</string>

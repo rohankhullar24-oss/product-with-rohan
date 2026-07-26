@@ -126,6 +126,15 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, AccountActivity::class.java))
             true
         }
+        R.id.action_sound -> {
+            NotificationHelper.ensureChannel(this)
+            startActivity(
+                Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                    .putExtra(Settings.EXTRA_CHANNEL_ID, NotificationHelper.CHANNEL_ID)
+            )
+            true
+        }
         R.id.action_export -> {
             exportLauncher.launch("reminders-backup.json")
             true

@@ -9,6 +9,10 @@ A native Android app for reminders that **keep nagging you until you confirm the
 - **N times a day**: each reminder can fire at as many times of day as you want
   (e.g. a birthday at 08:00, 11:00, 15:00 and 19:00 — that's the "remind me
   4 times a day" setting).
+- **Rings like an alarm clock** (default): at the reminder time the phone plays
+  the alarm ringtone on loop, vibrates, and shows a full-screen Done/Snooze
+  screen over the lock screen — it keeps ringing until you respond. Each
+  reminder can instead be set to a quiet notification.
 - **Nagging**: when a reminder fires and you don't tap **Done ✓**, it re-notifies
   every 10/15/30/60/120 minutes (your choice per reminder) until you confirm.
   **Snooze 1h** quiets it for an hour.

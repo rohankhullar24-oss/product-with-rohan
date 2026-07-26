@@ -32,18 +32,27 @@ class AlarmReceiver : BroadcastReceiver() {
                 ReminderStore.upsert(context, reminder)
                 return
             }
-            NotificationHelper.show(context, reminder, occurrenceDay)
+            fire(context, reminder, occurrenceDay)
             AlarmScheduler.scheduleNag(context, id, occurrenceDay, reminder.nagIntervalMinutes)
         } else {
             if (reminder.doneForDay == occurrenceDay) {
                 AlarmScheduler.scheduleNext(context, reminder)
                 return
             }
-            NotificationHelper.show(context, reminder, occurrenceDay)
+            fire(context, reminder, occurrenceDay)
             reminder.activeNagDay = occurrenceDay
             ReminderStore.upsert(context, reminder)
             AlarmScheduler.scheduleNag(context, id, occurrenceDay, reminder.nagIntervalMinutes)
             AlarmScheduler.scheduleNext(context, reminder)
+        }
+    }
+
+    /** Ring like an alarm clock, or post a quiet notification. */
+    private fun fire(context: Context, reminder: Reminder, occurrenceDay: String) {
+        if (reminder.alarmStyle) {
+            AlarmService.start(context, reminder.id, occurrenceDay)
+        } else {
+            NotificationHelper.show(context, reminder, occurrenceDay)
         }
     }
 }

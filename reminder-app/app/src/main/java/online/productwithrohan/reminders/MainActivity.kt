@@ -1,6 +1,7 @@
 package online.productwithrohan.reminders
 
 import android.Manifest
+import android.app.NotificationManager
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -169,12 +170,21 @@ class MainActivity : AppCompatActivity() {
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
         val missingExact = !AlarmScheduler.canScheduleExact(this)
+        val missingFullScreen = !canUseFullScreenIntent()
         permissionBanner.visibility =
-            if (missingNotifications || missingExact) View.VISIBLE else View.GONE
+            if (missingNotifications || missingExact || missingFullScreen) View.VISIBLE else View.GONE
         permissionBanner.text = when {
             missingNotifications -> getString(R.string.banner_notifications)
-            else -> getString(R.string.banner_exact_alarms)
+            missingExact -> getString(R.string.banner_exact_alarms)
+            else -> getString(R.string.banner_full_screen)
         }
+    }
+
+    /** Android 14+ gates full-screen alarms behind a user-granted permission. */
+    private fun canUseFullScreenIntent(): Boolean {
+        if (Build.VERSION.SDK_INT < 34) return true
+        val nm = getSystemService(NotificationManager::class.java)
+        return nm?.canUseFullScreenIntent() ?: true
     }
 
     private fun fixPermissions() {
@@ -189,6 +199,11 @@ class MainActivity : AppCompatActivity() {
         } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !AlarmScheduler.canScheduleExact(this)) {
             startActivity(
                 Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+                    .setData(Uri.parse("package:$packageName"))
+            )
+        } else if (Build.VERSION.SDK_INT >= 34 && !canUseFullScreenIntent()) {
+            startActivity(
+                Intent(Settings.ACTION_MANAGE_APP_USE_FULL_SCREEN_INTENT)
                     .setData(Uri.parse("package:$packageName"))
             )
         }

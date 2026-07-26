@@ -12,6 +12,7 @@ import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
@@ -42,6 +43,7 @@ class EditReminderActivity : AppCompatActivity() {
     private lateinit var dayOfMonthSpinner: Spinner
     private lateinit var timesContainer: LinearLayout
     private lateinit var nagSpinner: Spinner
+    private lateinit var styleGroup: RadioGroup
     private val weekChecks = mutableListOf<CheckBox>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +66,7 @@ class EditReminderActivity : AppCompatActivity() {
         dayOfMonthSpinner = findViewById(R.id.spinner_day_of_month)
         timesContainer = findViewById(R.id.times_container)
         nagSpinner = findViewById(R.id.spinner_nag)
+        styleGroup = findViewById(R.id.group_style)
 
         titleInput.setText(reminder.title)
         notesInput.setText(reminder.notes)
@@ -72,6 +75,10 @@ class EditReminderActivity : AppCompatActivity() {
         setUpWeekChecks()
         setUpDayOfMonthSpinner()
         setUpNagSpinner()
+        styleGroup.check(if (reminder.alarmStyle) R.id.radio_alarm else R.id.radio_notification)
+        styleGroup.setOnCheckedChangeListener { _, checkedId ->
+            reminder.alarmStyle = checkedId == R.id.radio_alarm
+        }
         renderTimes()
 
         dateButton.setOnClickListener { pickDate() }

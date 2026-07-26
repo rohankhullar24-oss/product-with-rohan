@@ -21,6 +21,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             ACTION_DONE -> {
+                AlarmService.stop(context)
                 NotificationHelper.cancel(context, id)
                 AlarmScheduler.cancelNag(context, id)
                 reminder.activeNagDay = null
@@ -38,6 +39,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 SyncManager.syncAsync(context)
             }
             ACTION_SNOOZE -> {
+                AlarmService.stop(context)
                 NotificationHelper.cancel(context, id)
                 AlarmScheduler.cancelNag(context, id)
                 AlarmScheduler.scheduleNag(context, id, occurrenceDay, SNOOZE_MINUTES)

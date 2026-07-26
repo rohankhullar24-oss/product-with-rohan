@@ -42,6 +42,8 @@ data class Reminder(
     var doneForDay: String? = null,
     /** ISO date of the occurrence day currently being nagged, null when quiet */
     var activeNagDay: String? = null,
+    /** True = full alarm (rings until dismissed); false = normal notification */
+    var alarmStyle: Boolean = true,
     /** Epoch millis of the last local edit; used for last-write-wins sync */
     var updatedAt: Long = System.currentTimeMillis(),
 ) {
@@ -108,6 +110,7 @@ data class Reminder(
         put("completed", completed)
         put("doneForDay", doneForDay ?: JSONObject.NULL)
         put("activeNagDay", activeNagDay ?: JSONObject.NULL)
+        put("alarmStyle", alarmStyle)
         put("updatedAt", updatedAt)
     }
 
@@ -135,6 +138,7 @@ data class Reminder(
                 completed = o.optBoolean("completed", false),
                 doneForDay = if (o.isNull("doneForDay")) null else o.getString("doneForDay"),
                 activeNagDay = if (o.isNull("activeNagDay")) null else o.getString("activeNagDay"),
+                alarmStyle = o.optBoolean("alarmStyle", true),
                 updatedAt = o.optLong("updatedAt", 0L),
             )
         }

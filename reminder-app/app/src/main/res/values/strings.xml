@@ -66,6 +66,14 @@
 
     <string name="notification_sound">Notification sound</string>
 
+    <string name="alarm_channel_name">Ringing alarms</string>
+    <string name="alarm_channel_description">Full-screen alarm that rings until you respond</string>
+    <string name="alarm_ringing">Reminder — tap Done to stop</string>
+    <string name="label_style">How should it alert you?</string>
+    <string name="style_alarm">Ring like an alarm (full screen, until dismissed)</string>
+    <string name="style_notification">Quiet notification</string>
+    <string name="banner_full_screen">Allow full-screen alarms so reminders can ring over the lock screen. Tap to fix.</string>
+
     <string name="export_reminders">Export backup</string>
     <string name="import_reminders">Import backup</string>
     <string name="export_done">Backup saved</string>

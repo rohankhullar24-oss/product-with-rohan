@@ -36,8 +36,10 @@ jobs:
 
       # Also publish the APK on a rolling prerelease so it has a stable,
       # phone-friendly download URL (Actions artifacts require login + unzip).
+      # Only master publishes: this asset is what the website links to, so a
+      # work-in-progress branch build must never become the public download.
       - name: Publish APK to release
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

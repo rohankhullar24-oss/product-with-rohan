@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity() {
             },
             onToggle = { reminder, enabled ->
                 reminder.enabled = enabled
+                reminder.updatedAt = System.currentTimeMillis()
                 if (!enabled) {
                     reminder.activeNagDay = null
                     AlarmScheduler.cancelAll(this, reminder.id)
@@ -89,6 +90,7 @@ class MainActivity : AppCompatActivity() {
                     AlarmScheduler.scheduleNext(this, reminder)
                 }
                 refresh()
+                SyncManager.syncAsync(this)
             }
         )
 
@@ -109,6 +111,9 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         refresh()
         updatePermissionBanner()
+        SyncManager.syncAsync(this) { changed ->
+            if (changed) runOnUiThread { refresh() }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -117,6 +122,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.action_account -> {
+            startActivity(Intent(this, AccountActivity::class.java))
+            true
+        }
         R.id.action_export -> {
             exportLauncher.launch("reminders-backup.json")
             true

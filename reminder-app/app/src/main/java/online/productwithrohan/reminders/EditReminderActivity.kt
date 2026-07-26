@@ -268,10 +268,12 @@ class EditReminderActivity : AppCompatActivity() {
             return
         }
 
+        reminder.updatedAt = System.currentTimeMillis()
         ReminderStore.upsert(this, reminder)
         AlarmScheduler.cancelNag(this, reminder.id)
         NotificationHelper.cancel(this, reminder.id)
         AlarmScheduler.scheduleNext(this, reminder)
+        SyncManager.syncAsync(this)
         finish()
     }
 
@@ -283,6 +285,8 @@ class EditReminderActivity : AppCompatActivity() {
                 AlarmScheduler.cancelAll(this, reminder.id)
                 NotificationHelper.cancel(this, reminder.id)
                 ReminderStore.delete(this, reminder.id)
+                SyncManager.recordDeletion(this, reminder.id)
+                SyncManager.syncAsync(this)
                 finish()
             }
             .setNegativeButton(android.R.string.cancel, null)

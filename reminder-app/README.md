@@ -15,7 +15,10 @@ A native Android app for reminders that **keep nagging you until you confirm the
 - Tapping **Done** on a recurring reminder silences the rest of that day's slots
   and schedules the next occurrence. A one-time reminder is finished for good.
 - Survives reboots, time changes and timezone changes (alarms are re-armed).
-- All data stays **on the device** — no account, no server, works offline.
+- **Optional sign-in with cloud sync** (⋮ → Account & sync): email OTP login
+  (Supabase). Signed in, your reminders sync across devices — log in on any
+  phone and they're there, merged last-write-wins, with deletions propagated.
+  Without an account everything still works fully offline and on-device.
 - **Survives uninstall**: reminders are included in Android's Google cloud
   backup and device-to-device transfer, and the ⋮ menu has manual
   **Export backup / Import backup** (a JSON file you can keep in Drive,

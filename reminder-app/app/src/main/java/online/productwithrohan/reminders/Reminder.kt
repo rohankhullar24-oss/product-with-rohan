@@ -42,6 +42,8 @@ data class Reminder(
     var doneForDay: String? = null,
     /** ISO date of the occurrence day currently being nagged, null when quiet */
     var activeNagDay: String? = null,
+    /** Epoch millis of the last local edit; used for last-write-wins sync */
+    var updatedAt: Long = System.currentTimeMillis(),
 ) {
 
     fun occursOn(d: LocalDate): Boolean = when (type) {
@@ -106,6 +108,7 @@ data class Reminder(
         put("completed", completed)
         put("doneForDay", doneForDay ?: JSONObject.NULL)
         put("activeNagDay", activeNagDay ?: JSONObject.NULL)
+        put("updatedAt", updatedAt)
     }
 
     companion object {
@@ -132,6 +135,7 @@ data class Reminder(
                 completed = o.optBoolean("completed", false),
                 doneForDay = if (o.isNull("doneForDay")) null else o.getString("doneForDay"),
                 activeNagDay = if (o.isNull("activeNagDay")) null else o.getString("activeNagDay"),
+                updatedAt = o.optLong("updatedAt", 0L),
             )
         }
 

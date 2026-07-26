@@ -43,6 +43,27 @@
     <string name="action_snooze">Snooze 1h</string>
     <string name="notification_nag_hint">Will remind again every %1$d min until you tap Done</string>
 
+    <string name="title_account">Account &amp; sync</string>
+    <string name="account_intro">Sign in to sync your reminders to the cloud. Log in on any phone with the same email and your reminders will be there. The app keeps working offline.</string>
+    <string name="account_email_hint">Your email address</string>
+    <string name="account_send_code">Send login code</string>
+    <string name="account_code_hint">6-digit code from the email</string>
+    <string name="account_verify">Verify &amp; sign in</string>
+    <string name="account_sending">Sending code…</string>
+    <string name="account_code_sent">Code sent to %1$s — check your inbox (and spam)</string>
+    <string name="account_send_failed">Couldn\'t send the code. Check the address and your connection.</string>
+    <string name="account_verifying">Verifying…</string>
+    <string name="account_verify_failed">That code didn\'t work — check it or request a new one.</string>
+    <string name="account_signed_in">Signed in — syncing your reminders</string>
+    <string name="account_signed_in_as">Signed in as %1$s</string>
+    <string name="account_last_sync">Last synced: %1$s</string>
+    <string name="account_never_synced">Not synced yet</string>
+    <string name="account_syncing">Syncing…</string>
+    <string name="account_sync_now">Sync now</string>
+    <string name="account_sign_out">Sign out</string>
+    <string name="account_signed_out">Signed out. Reminders stay on this phone.</string>
+    <string name="account_bad_email">Please enter a valid email address</string>
+
     <string name="export_reminders">Export backup</string>
     <string name="import_reminders">Import backup</string>
     <string name="export_done">Backup saved</string>

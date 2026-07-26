@@ -39,6 +39,11 @@ object ReminderStore {
         save(context, getAll(context).filter { it.id != id })
     }
 
+    /** Replaces the whole store, e.g. with a merged list after a cloud sync. */
+    fun replaceAll(context: Context, list: List<Reminder>) = synchronized(lock) {
+        save(context, list)
+    }
+
     /** Pretty-printed JSON of all reminders, for the user-facing backup file. */
     fun exportJson(context: Context): String = synchronized(lock) {
         val arr = JSONArray()

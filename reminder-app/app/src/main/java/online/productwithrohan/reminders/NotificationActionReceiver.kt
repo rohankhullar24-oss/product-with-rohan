@@ -24,6 +24,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 NotificationHelper.cancel(context, id)
                 AlarmScheduler.cancelNag(context, id)
                 reminder.activeNagDay = null
+                reminder.updatedAt = System.currentTimeMillis()
                 if (reminder.type == ReminderType.ONE_TIME) {
                     reminder.completed = true
                     ReminderStore.upsert(context, reminder)
@@ -34,6 +35,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     ReminderStore.upsert(context, reminder)
                     AlarmScheduler.scheduleNext(context, reminder)
                 }
+                SyncManager.syncAsync(context)
             }
             ACTION_SNOOZE -> {
                 NotificationHelper.cancel(context, id)

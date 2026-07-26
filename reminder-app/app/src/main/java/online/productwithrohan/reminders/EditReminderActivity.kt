@@ -26,12 +26,22 @@ class EditReminderActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_REMINDER_ID = "reminder_id"
+        private const val STATE_PICKED_DATE = "picked_date"
         private val NAG_MINUTES = listOf(0, 10, 15, 30, 60, 120)
         private const val MAX_TIMES_PER_DAY = 10
     }
 
     private lateinit var reminder: Reminder
     private var isNew = true
+
+    /**
+     * The chosen date, independent of the reminder type. One-time reminders
+     * store a full date and yearly ones store month/day, so keeping the choice
+     * here means switching type no longer reads a field the user never filled
+     * in (which used to fall back to the 1 Jan defaults). Null means "not
+     * picked yet", which the 1/1 defaults could not express.
+     */
+    private var pickedDate: LocalDate? = null
 
     private lateinit var titleInput: EditText
     private lateinit var notesInput: EditText
@@ -54,6 +64,8 @@ class EditReminderActivity : AppCompatActivity() {
         val existing = existingId?.let { ReminderStore.get(this, it) }
         isNew = existing == null
         reminder = existing ?: Reminder(timesOfDay = mutableListOf("09:00"))
+        pickedDate = savedInstanceState?.getString(STATE_PICKED_DATE)?.let { LocalDate.parse(it) }
+            ?: existingDate(existing)
         title = getString(if (isNew) R.string.title_new_reminder else R.string.title_edit_reminder)
 
         titleInput = findViewById(R.id.input_title)
@@ -119,45 +131,46 @@ class EditReminderActivity : AppCompatActivity() {
         updateDateLabel()
     }
 
+    /** The date already stored on a saved reminder, or null for a new one. */
+    private fun existingDate(existing: Reminder?): LocalDate? {
+        if (existing == null) return null
+        return when (existing.type) {
+            ReminderType.ONE_TIME -> existing.oneTimeDate?.let { LocalDate.parse(it) }
+            ReminderType.YEARLY -> {
+                val year = LocalDate.now().year
+                val safeDay = minOf(existing.day, LocalDate.of(year, existing.month, 1).lengthOfMonth())
+                LocalDate.of(year, existing.month, safeDay)
+            }
+            else -> null
+        }
+    }
+
     private fun updateDateLabel() {
-        dateButton.text = when (reminder.type) {
-            ReminderType.ONE_TIME -> reminder.oneTimeDate?.let {
-                LocalDate.parse(it).format(DateTimeFormatter.ofPattern("d MMM yyyy"))
-            } ?: getString(R.string.pick_date)
-            ReminderType.YEARLY ->
-                if (reminder.month in 1..12 && reminder.day in 1..31) {
-                    String.format(
-                        Locale.getDefault(), "%d %s", reminder.day,
-                        java.time.Month.of(reminder.month)
-                            .getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault())
-                    )
-                } else getString(R.string.pick_date)
-            else -> getString(R.string.pick_date)
+        val date = pickedDate
+        dateButton.text = when {
+            date == null -> getString(R.string.pick_date)
+            // A yearly reminder repeats on the day and month, so the year is noise.
+            reminder.type == ReminderType.YEARLY ->
+                date.format(DateTimeFormatter.ofPattern("d MMM", Locale.getDefault()))
+            else -> date.format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.getDefault()))
         }
     }
 
     private fun pickDate() {
-        val today = LocalDate.now()
-        val initial = when (reminder.type) {
-            ReminderType.ONE_TIME -> reminder.oneTimeDate?.let { LocalDate.parse(it) } ?: today
-            else -> {
-                val safeDay = minOf(reminder.day, LocalDate.of(today.year, reminder.month, 1).lengthOfMonth())
-                LocalDate.of(today.year, reminder.month, safeDay)
-            }
-        }
+        val initial = pickedDate ?: LocalDate.now()
         DatePickerDialog(
             this,
             { _, year, monthZeroBased, dayOfMonth ->
-                if (reminder.type == ReminderType.ONE_TIME) {
-                    reminder.oneTimeDate = LocalDate.of(year, monthZeroBased + 1, dayOfMonth).toString()
-                } else {
-                    reminder.month = monthZeroBased + 1
-                    reminder.day = dayOfMonth
-                }
+                pickedDate = LocalDate.of(year, monthZeroBased + 1, dayOfMonth)
                 updateDateLabel()
             },
             initial.year, initial.monthValue - 1, initial.dayOfMonth
         ).show()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        pickedDate?.let { outState.putString(STATE_PICKED_DATE, it.toString()) }
     }
 
     private fun setUpWeekChecks() {
@@ -252,10 +265,22 @@ class EditReminderActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.error_time_required, Toast.LENGTH_SHORT).show()
             return
         }
+        // Commit the chosen date into whichever fields this type actually uses.
         when (reminder.type) {
-            ReminderType.ONE_TIME -> if (reminder.oneTimeDate == null) {
-                Toast.makeText(this, R.string.error_date_required, Toast.LENGTH_SHORT).show()
-                return
+            ReminderType.ONE_TIME -> {
+                val date = pickedDate ?: run {
+                    Toast.makeText(this, R.string.error_date_required, Toast.LENGTH_SHORT).show()
+                    return
+                }
+                reminder.oneTimeDate = date.toString()
+            }
+            ReminderType.YEARLY -> {
+                val date = pickedDate ?: run {
+                    Toast.makeText(this, R.string.error_date_required, Toast.LENGTH_SHORT).show()
+                    return
+                }
+                reminder.month = date.monthValue
+                reminder.day = date.dayOfMonth
             }
             ReminderType.WEEKLY -> if (reminder.daysOfWeek.isEmpty()) {
                 Toast.makeText(this, R.string.error_weekday_required, Toast.LENGTH_SHORT).show()

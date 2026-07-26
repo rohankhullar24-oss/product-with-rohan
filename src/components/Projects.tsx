@@ -34,7 +34,7 @@ const projects: Project[] = [
     tags: ["Side Project", "Android App", "AI-Built"],
     href: "https://github.com/rohankhullar24-oss/product-with-rohan/releases/download/reminder-app-latest/Reminders.apk",
     external: true,
-    linkLabel: "Download the app (latest version) →",
+    linkLabel: "Download the app →",
   },
   {
     title: "AI-Powered Document Verification for Merchant Onboarding",

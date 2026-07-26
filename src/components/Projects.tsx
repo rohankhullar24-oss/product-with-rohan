@@ -26,13 +26,15 @@ const projects: Project[] = [
     linkLabel: "Open the live app →",
   },
   {
-    title: "Free AI Course Platform",
+    title: "Reminders — The Android App That Won't Let You Forget",
     description:
-      "A work-in-progress interactive course platform teaching Applied AI concepts. Features 6 weeks of curriculum, video lessons, downloadable starter code, and progress tracking. Currently a prototype being built in public.",
+      "A native Android app for birthdays, anniversaries and tasks that rings like an alarm clock — as many times a day as you want — and keeps coming back until you confirm you've actually done it.",
     fullDescription:
-      "Building an interactive course platform to teach Applied AI concepts from first principles. The platform features a 6-week curriculum covering LLMs, autonomous agents, ML models, RAG systems, production deployment, and AI capstone projects. Each week includes structured lessons, hands-on project briefs, downloadable Python starter code, and progress tracking. Currently live as a prototype — videos and expanded content coming soon. Designed to be a practical, hands-on introduction to AI engineering.",
-    tags: ["Side Project", "WIP", "AI Education"],
-    href: "/course",
+      "Most reminder apps fire one notification you swipe away and forget. Reminders is built around a single idea: it doesn't stop until you tap Done. Set a birthday, anniversary, bill, or habit, choose how many times a day it should reach you (four or five times on the day itself is the point), and it rings your alarm tone on loop with a full-screen Done/Snooze screen over the lock screen. Ignore it and it comes back every 30 minutes — your choice of interval — indefinitely. Supports one-time, daily, weekly, monthly and yearly reminders, with exact alarms that survive reboots, time changes and timezone changes. Optional email sign-in syncs your reminders across devices so they're waiting on any phone you log into, plus automatic Google backup and manual export/import so nothing is lost if you reinstall. Built in Kotlin with AlarmManager exact alarms and a Supabase backend; APK built and published automatically on every commit.",
+    tags: ["Side Project", "Android App", "AI-Built"],
+    href: "https://github.com/rohankhullar24-oss/product-with-rohan/releases/download/reminder-app-latest/Reminders.apk",
+    external: true,
+    linkLabel: "Download the app (latest version) →",
   },
   {
     title: "AI-Powered Document Verification for Merchant Onboarding",
@@ -96,6 +98,15 @@ const projects: Project[] = [
     href: "/resume-builder",
     external: false,
     linkLabel: "Try the resume builder →",
+  },
+  {
+    title: "Free AI Course Platform",
+    description:
+      "A work-in-progress interactive course platform teaching Applied AI concepts. Features 6 weeks of curriculum, video lessons, downloadable starter code, and progress tracking. Currently a prototype being built in public.",
+    fullDescription:
+      "Building an interactive course platform to teach Applied AI concepts from first principles. The platform features a 6-week curriculum covering LLMs, autonomous agents, ML models, RAG systems, production deployment, and AI capstone projects. Each week includes structured lessons, hands-on project briefs, downloadable Python starter code, and progress tracking. Currently live as a prototype — videos and expanded content coming soon. Designed to be a practical, hands-on introduction to AI engineering.",
+    tags: ["Side Project", "WIP", "AI Education"],
+    href: "/course",
   },
 ];
 

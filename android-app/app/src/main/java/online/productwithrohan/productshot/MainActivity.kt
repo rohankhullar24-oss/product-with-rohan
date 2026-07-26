@@ -29,6 +29,13 @@ private const val SITE_HOST = "productwithrohan.online"
 private const val CONTENT_CHECK_WORK_NAME = "content_check"
 private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 100
 
+// Hosts that load inside the app's WebView instead of handing off to the
+// system browser. Product Alliance's own domain and subdomains (e.g. its
+// login redirect) are included so that link stays in-app.
+private fun isInAppHost(host: String): Boolean {
+    return host == SITE_HOST || host == "productalliance.com" || host.endsWith(".productalliance.com")
+}
+
 class MainActivity : AppCompatActivity() {
 
     companion object {
@@ -63,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val uri = request.url
-                return if (uri.host == SITE_HOST) {
+                return if (uri.host != null && isInAppHost(uri.host!!)) {
                     false // let the WebView load it
                 } else {
                     // mailto:, tel:, and any external links open in the system app instead

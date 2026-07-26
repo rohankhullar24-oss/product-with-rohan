@@ -54,6 +54,10 @@ class AlarmRingActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.alarm_notes).text = reminder?.notes.orEmpty()
         findViewById<TextView>(R.id.alarm_time).text =
             DateFormat.getTimeInstance(DateFormat.SHORT).format(Date())
+        if (reminder != null) {
+            findViewById<Button>(R.id.button_alarm_snooze).text =
+                NotificationHelper.snoozeLabel(this, reminder)
+        }
     }
 
     private fun showOverLockScreen() {

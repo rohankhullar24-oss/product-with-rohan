@@ -27,6 +27,17 @@ object NotificationHelper {
 
     fun notificationId(reminderId: String): Int = reminderId.hashCode() and 0x7FFFFFFF
 
+    /** "Snooze 30m" / "Snooze 1h", matching the reminder's own interval. */
+    fun snoozeLabel(context: Context, reminder: Reminder): String {
+        val minutes = reminder.snoozeMinutes()
+        val duration = if (minutes % 60 == 0) {
+            context.getString(R.string.duration_hours, minutes / 60)
+        } else {
+            context.getString(R.string.duration_minutes, minutes)
+        }
+        return context.getString(R.string.action_snooze, duration)
+    }
+
     fun show(context: Context, reminder: Reminder, occurrenceDay: String) {
         ensureChannel(context)
 
@@ -71,7 +82,7 @@ object NotificationHelper {
             .setAutoCancel(false)
             .setOnlyAlertOnce(false)
             .addAction(0, context.getString(R.string.action_done), doneIntent)
-            .addAction(0, context.getString(R.string.action_snooze), snoozeIntent)
+            .addAction(0, snoozeLabel(context, reminder), snoozeIntent)
             .build()
 
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

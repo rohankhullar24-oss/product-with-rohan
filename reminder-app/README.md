@@ -15,7 +15,8 @@ A native Android app for reminders that **keep nagging you until you confirm the
   reminder can instead be set to a quiet notification.
 - **Nagging**: when a reminder fires and you don't tap **Done ✓**, it re-notifies
   every 10/15/30/60/120 minutes (your choice per reminder) until you confirm.
-  **Snooze 1h** quiets it for an hour.
+  **Snooze** quiets it for that same interval and labels itself accordingly
+  ("Snooze 30m"), so it never contradicts the interval you picked.
 - Tapping **Done** on a recurring reminder silences the rest of that day's slots
   and schedules the next occurrence. A one-time reminder is finished for good.
 - Survives reboots, time changes and timezone changes (alarms are re-armed).

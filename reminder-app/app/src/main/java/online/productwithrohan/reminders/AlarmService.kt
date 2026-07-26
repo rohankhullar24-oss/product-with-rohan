@@ -132,7 +132,7 @@ class AlarmService : Service() {
             .setOngoing(true)
             .setFullScreenIntent(fullScreen, true)
             .addAction(0, getString(R.string.action_done), doneIntent)
-            .addAction(0, getString(R.string.action_snooze), snoozeIntent)
+            .addAction(0, NotificationHelper.snoozeLabel(this, reminder), snoozeIntent)
             .build()
     }
 

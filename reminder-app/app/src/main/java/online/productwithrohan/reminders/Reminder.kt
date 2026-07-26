@@ -74,6 +74,14 @@ data class Reminder(
         return null
     }
 
+    /**
+     * Snooze reuses the interval the user picked for re-reminding, so the two
+     * never contradict each other. Falls back to a default when re-reminding is
+     * switched off, since tapping Snooze still promises a later alert.
+     */
+    fun snoozeMinutes(): Int =
+        if (nagIntervalMinutes > 0) nagIntervalMinutes else DEFAULT_SNOOZE_MINUTES
+
     fun scheduleLabel(): String {
         val typeLabel = when (type) {
             ReminderType.ONE_TIME -> oneTimeDate?.let {
@@ -115,6 +123,8 @@ data class Reminder(
     }
 
     companion object {
+        const val DEFAULT_SNOOZE_MINUTES = 30
+
         fun fromJson(o: JSONObject): Reminder {
             val days = mutableSetOf<Int>()
             val daysArr = o.optJSONArray("daysOfWeek") ?: JSONArray()

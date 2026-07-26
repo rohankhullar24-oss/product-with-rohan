@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_account"
+        android:title="@string/title_account" />
+    <item
+        android:id="@+id/action_sound"
+        android:title="@string/notification_sound" />
+    <item
+        android:id="@+id/action_export"
+        android:title="@string/export_reminders" />
+    <item
+        android:id="@+id/action_import"
+        android:title="@string/import_reminders" />
+</menu>

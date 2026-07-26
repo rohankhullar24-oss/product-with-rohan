@@ -1,0 +1,49 @@
+name: Build Reminder App APK
+
+on:
+  push:
+    branches: ["master", "claude/**"]
+    paths: ["reminder-app/**", ".github/workflows/reminder-app.yml"]
+  pull_request:
+    paths: ["reminder-app/**", ".github/workflows/reminder-app.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug APK
+        working-directory: reminder-app
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: reminders-debug-apk
+          path: reminder-app/app/build/outputs/apk/debug/app-debug.apk
+
+      # Also publish the APK on a rolling prerelease so it has a stable,
+      # phone-friendly download URL (Actions artifacts require login + unzip).
+      - name: Publish APK to release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp reminder-app/app/build/outputs/apk/debug/app-debug.apk Reminders.apk
+          gh release create reminder-app-latest --prerelease \
+            --title "Reminders app (latest build)" \
+            --notes "Auto-built debug APK of reminder-app/. Download Reminders.apk on your phone and install it." \
+            || true
+          gh release upload reminder-app-latest Reminders.apk --clobber

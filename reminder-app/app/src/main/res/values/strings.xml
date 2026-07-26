@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Reminders</string>
+
+    <string name="channel_name">Reminders</string>
+    <string name="channel_description">Reminder notifications that repeat until you confirm them</string>
+
+    <string name="empty_list">No reminders yet.\nTap + to add a birthday, anniversary or task.</string>
+    <string name="add_reminder">Add reminder</string>
+
+    <string name="item_next">Next: %1$s</string>
+    <string name="item_paused">Paused</string>
+    <string name="item_completed">Completed</string>
+
+    <string name="banner_notifications">Notifications are off — reminders can\'t alert you. Tap to fix.</string>
+    <string name="banner_exact_alarms">Exact alarms are off — reminders may be late. Tap to fix.</string>
+
+    <string name="title_new_reminder">New reminder</string>
+    <string name="title_edit_reminder">Edit reminder</string>
+
+    <string name="label_title">Title</string>
+    <string name="hint_title">e.g. Mom\'s birthday</string>
+    <string name="label_notes">Notes (optional)</string>
+    <string name="hint_notes">e.g. Call her in the morning</string>
+    <string name="label_type">Repeats</string>
+    <string name="label_date">Date</string>
+    <string name="pick_date">Pick a date</string>
+    <string name="label_weekdays">On these days</string>
+    <string name="label_day_of_month">Day of month</string>
+    <string name="label_times">Reminder times</string>
+    <string name="label_times_hint">Add as many times per day as you want to be reminded (e.g. 4 or 5)</string>
+    <string name="add_time">+ Add time</string>
+    <string name="remove_time">Remove time</string>
+    <string name="label_nag">If I don\'t confirm, remind me again</string>
+
+    <string name="save">Save</string>
+    <string name="delete">Delete reminder</string>
+    <string name="delete_title">Delete reminder?</string>
+    <string name="delete_message">This reminder and its alarms will be removed.</string>
+    <string name="delete_confirm">Delete</string>
+
+    <string name="action_done">Done ✓</string>
+    <string name="action_snooze">Snooze 1h</string>
+    <string name="notification_nag_hint">Will remind again every %1$d min until you tap Done</string>
+
+    <string name="title_account">Account &amp; sync</string>
+    <string name="account_intro">Sign in to sync your reminders to the cloud. Log in on any phone with the same email and your reminders will be there. The app keeps working offline.</string>
+    <string name="account_email_hint">Your email address</string>
+    <string name="account_send_code">Send login code</string>
+    <string name="account_code_hint">6-digit code from the email</string>
+    <string name="account_verify">Verify &amp; sign in</string>
+    <string name="account_sending">Sending code…</string>
+    <string name="account_code_sent">Code sent to %1$s — check your inbox (and spam)</string>
+    <string name="account_send_failed">Couldn\'t send the code. Check the address and your connection.</string>
+    <string name="account_verifying">Verifying…</string>
+    <string name="account_verify_failed">That code didn\'t work — check it or request a new one.</string>
+    <string name="account_signed_in">Signed in — syncing your reminders</string>
+    <string name="account_signed_in_as">Signed in as %1$s</string>
+    <string name="account_last_sync">Last synced: %1$s</string>
+    <string name="account_never_synced">Not synced yet</string>
+    <string name="account_syncing">Syncing…</string>
+    <string name="account_sync_now">Sync now</string>
+    <string name="account_sign_out">Sign out</string>
+    <string name="account_signed_out">Signed out. Reminders stay on this phone.</string>
+    <string name="account_bad_email">Please enter a valid email address</string>
+
+    <string name="notification_sound">Notification sound</string>
+
+    <string name="alarm_channel_name">Ringing alarms</string>
+    <string name="alarm_channel_description">Full-screen alarm that rings until you respond</string>
+    <string name="alarm_ringing">Reminder — tap Done to stop</string>
+    <string name="label_style">How should it alert you?</string>
+    <string name="style_alarm">Ring like an alarm (full screen, until dismissed)</string>
+    <string name="style_notification">Quiet notification</string>
+    <string name="banner_full_screen">Allow full-screen alarms so reminders can ring over the lock screen. Tap to fix.</string>
+
+    <string name="export_reminders">Export backup</string>
+    <string name="import_reminders">Import backup</string>
+    <string name="export_done">Backup saved</string>
+    <string name="export_failed">Couldn\'t save the backup</string>
+    <string name="import_done">Imported %1$d reminders</string>
+    <string name="import_failed">Couldn\'t read that backup file</string>
+
+    <string name="error_title_required">Please enter a title</string>
+    <string name="error_time_required">Add at least one reminder time</string>
+    <string name="error_date_required">Please pick a date</string>
+    <string name="error_weekday_required">Pick at least one day of the week</string>
+    <string name="error_past_time">That date/time is in the past — pick a future one</string>
+    <string name="error_max_times">Maximum %1$d times per day</string>
+
+    <string-array name="reminder_types">
+        <item>One time</item>
+        <item>Daily</item>
+        <item>Weekly</item>
+        <item>Monthly</item>
+        <item>Yearly (birthday/anniversary)</item>
+    </string-array>
+
+    <string-array name="week_days">
+        <item>Mon</item>
+        <item>Tue</item>
+        <item>Wed</item>
+        <item>Thu</item>
+        <item>Fri</item>
+        <item>Sat</item>
+        <item>Sun</item>
+    </string-array>
+
+    <string-array name="nag_intervals">
+        <item>Don\'t repeat</item>
+        <item>Every 10 minutes</item>
+        <item>Every 15 minutes</item>
+        <item>Every 30 minutes</item>
+        <item>Every hour</item>
+        <item>Every 2 hours</item>
+    </string-array>
+</resources>

@@ -7,8 +7,12 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -21,6 +25,41 @@ class MainActivity : AppCompatActivity() {
     private lateinit var adapter: ReminderAdapter
     private lateinit var emptyView: TextView
     private lateinit var permissionBanner: TextView
+
+    private val exportLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+            if (uri == null) return@registerForActivityResult
+            try {
+                contentResolver.openOutputStream(uri)?.use { out ->
+                    out.write(ReminderStore.exportJson(this).toByteArray())
+                }
+                Toast.makeText(this, R.string.export_done, Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, R.string.export_failed, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    private val importLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            try {
+                val text = contentResolver.openInputStream(uri)?.use { input ->
+                    input.readBytes().decodeToString()
+                } ?: throw IllegalStateException("empty file")
+                for (old in ReminderStore.getAll(this)) {
+                    AlarmScheduler.cancelAll(this, old.id)
+                    NotificationHelper.cancel(this, old.id)
+                }
+                val imported = ReminderStore.importJson(this, text)
+                for (r in imported) {
+                    if (r.enabled && !r.completed) AlarmScheduler.scheduleNext(this, r)
+                }
+                refresh()
+                Toast.makeText(this, getString(R.string.import_done, imported.size), Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, R.string.import_failed, Toast.LENGTH_SHORT).show()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,6 +109,23 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         refresh()
         updatePermissionBanner()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.action_export -> {
+            exportLauncher.launch("reminders-backup.json")
+            true
+        }
+        R.id.action_import -> {
+            importLauncher.launch(arrayOf("*/*"))
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
     }
 
     private fun refresh() {

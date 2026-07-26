@@ -16,6 +16,10 @@ A native Android app for reminders that **keep nagging you until you confirm the
   and schedules the next occurrence. A one-time reminder is finished for good.
 - Survives reboots, time changes and timezone changes (alarms are re-armed).
 - All data stays **on the device** — no account, no server, works offline.
+- **Survives uninstall**: reminders are included in Android's Google cloud
+  backup and device-to-device transfer, and the ⋮ menu has manual
+  **Export backup / Import backup** (a JSON file you can keep in Drive,
+  Downloads, etc. and re-import after a reinstall or on a new phone).
 
 ## Tech
 

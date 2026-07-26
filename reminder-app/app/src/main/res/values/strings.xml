@@ -43,6 +43,13 @@
     <string name="action_snooze">Snooze 1h</string>
     <string name="notification_nag_hint">Will remind again every %1$d min until you tap Done</string>
 
+    <string name="export_reminders">Export backup</string>
+    <string name="import_reminders">Import backup</string>
+    <string name="export_done">Backup saved</string>
+    <string name="export_failed">Couldn\'t save the backup</string>
+    <string name="import_done">Imported %1$d reminders</string>
+    <string name="import_failed">Couldn\'t read that backup file</string>
+
     <string name="error_title_required">Please enter a title</string>
     <string name="error_time_required">Add at least one reminder time</string>
     <string name="error_date_required">Please pick a date</string>

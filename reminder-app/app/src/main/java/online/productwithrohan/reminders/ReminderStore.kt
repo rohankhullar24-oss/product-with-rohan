@@ -39,6 +39,21 @@ object ReminderStore {
         save(context, getAll(context).filter { it.id != id })
     }
 
+    /** Pretty-printed JSON of all reminders, for the user-facing backup file. */
+    fun exportJson(context: Context): String = synchronized(lock) {
+        val arr = JSONArray()
+        getAll(context).forEach { arr.put(it.toJson()) }
+        arr.toString(2)
+    }
+
+    /** Replaces the whole store with the parsed backup; throws if it's invalid. */
+    fun importJson(context: Context, text: String): List<Reminder> = synchronized(lock) {
+        val arr = JSONArray(text)
+        val list = (0 until arr.length()).map { Reminder.fromJson(arr.getJSONObject(it)) }
+        save(context, list)
+        list
+    }
+
     private fun save(context: Context, list: List<Reminder>) {
         val arr = JSONArray()
         list.forEach { arr.put(it.toJson()) }

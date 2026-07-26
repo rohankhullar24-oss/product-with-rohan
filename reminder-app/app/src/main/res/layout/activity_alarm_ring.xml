@@ -49,5 +49,5 @@
         android:layout_height="64dp"
         android:layout_marginTop="16dp"
         android:textSize="18sp"
-        android:text="@string/action_snooze" />
+        android:text="@string/action_snooze_plain" />
 </LinearLayout>

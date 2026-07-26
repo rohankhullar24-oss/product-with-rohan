@@ -10,7 +10,6 @@ class NotificationActionReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_DONE = "online.productwithrohan.reminders.DONE"
         const val ACTION_SNOOZE = "online.productwithrohan.reminders.SNOOZE"
-        const val SNOOZE_MINUTES = 60
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -42,7 +41,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 AlarmService.stop(context)
                 NotificationHelper.cancel(context, id)
                 AlarmScheduler.cancelNag(context, id)
-                AlarmScheduler.scheduleNag(context, id, occurrenceDay, SNOOZE_MINUTES)
+                AlarmScheduler.scheduleNag(context, id, occurrenceDay, reminder.snoozeMinutes())
             }
         }
     }

@@ -8,6 +8,9 @@ on:
     paths: ["reminder-app/**", ".github/workflows/reminder-app.yml"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,3 +33,17 @@ jobs:
         with:
           name: reminders-debug-apk
           path: reminder-app/app/build/outputs/apk/debug/app-debug.apk
+
+      # Also publish the APK on a rolling prerelease so it has a stable,
+      # phone-friendly download URL (Actions artifacts require login + unzip).
+      - name: Publish APK to release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp reminder-app/app/build/outputs/apk/debug/app-debug.apk Reminders.apk
+          gh release create reminder-app-latest --prerelease \
+            --title "Reminders app (latest build)" \
+            --notes "Auto-built debug APK of reminder-app/. Download Reminders.apk on your phone and install it." \
+            || true
+          gh release upload reminder-app-latest Reminders.apk --clobber

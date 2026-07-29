@@ -43,7 +43,16 @@
       "mcp__Claude_Code_Remote__unsubscribe_pr_activity",
       "Bash(cp /home/user/product-with-rohan/.claude/settings.local.json /tmp/claude-0/-home-user-product-with-rohan/7c38b8a3-ef9f-5ea8-afe0-e0f168c5410f/scratchpad/settings.local.json.bak)",
       "Bash(mkdir -p /tmp/claude-0/-home-user-product-with-rohan/7c38b8a3-ef9f-5ea8-afe0-e0f168c5410f/scratchpad)",
-      "mcp__Claude_Code_Remote__delete_trigger"
+      "mcp__Claude_Code_Remote__delete_trigger",
+      "mcp__68fe795d-055d-477a-8b2d-602129124843__COMPOSIO_MANAGE_CONNECTIONS",
+      "mcp__68fe795d-055d-477a-8b2d-602129124843__COMPOSIO_WAIT_FOR_CONNECTIONS",
+      "Bash(npm install *)",
+      "Bash(npx next *)",
+      "PowerShell(Resolve-DnsName -Name \"_dmarc.productwithrohan.online\" -Type TXT -ErrorAction Stop)",
+      "PowerShell(Resolve-DnsName -Name \"_dmarc.productwithrohan.online\" -Type TXT -Server 8.8.8.8 -ErrorAction Stop)",
+      "mcp__fa9c86a8-a8c8-47ec-a364-7432499fd737__search_threads",
+      "Skill(deep-research)",
+      "Skill(deep-research:*)"
     ]
   }
 }

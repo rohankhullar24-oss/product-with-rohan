@@ -1,15 +1,13 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import { getArticles } from "@/lib/articles/fetch-posts";
 import type { NewsItem } from "@/types/database";
+import GuestBanner from "./guest-banner";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export default async function DashboardPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const supabase = createPublicClient();
 
   const [articles, newsResult] = await Promise.all([
     getArticles(),
@@ -34,15 +32,7 @@ export default async function DashboardPage() {
           <p className="mt-2 text-slate-600 dark:text-slate-400">
             Daily practice questions + PM news for your growth
           </p>
-          {!user && (
-            <p className="mt-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-4 py-3 text-sm text-slate-600 dark:text-slate-400">
-              Browsing as a guest.{" "}
-              <Link href="/productshot/login" className="text-accent hover:underline">
-                Sign in
-              </Link>{" "}
-              to bookmark articles and shots.
-            </p>
-          )}
+          <GuestBanner />
         </div>
 
         {/* Quick Links */}

@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { NewsItem } from "@/types/database";
 import NewsClient from "./news-client";
 
 export const revalidate = 3600;
 
 export default async function NewsPage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
   const { data } = await supabase
     .from("news_items")
     .select("*")

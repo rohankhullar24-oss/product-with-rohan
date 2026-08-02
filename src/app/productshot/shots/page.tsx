@@ -1,11 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/public";
 import type { ShotQuestion } from "@/types/database";
 import ShotsClient from "./shots-client";
 
 export const revalidate = 3600;
 
 export default async function ShotsPage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data } = await supabase
     .from("shots_questions")

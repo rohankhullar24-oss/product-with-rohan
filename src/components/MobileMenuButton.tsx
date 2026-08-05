@@ -15,6 +15,18 @@ export function MobileMenuButton() {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user ? { email: data.user.email || "" } : null);
     });
+
+    // Login/logout happen via client-side navigation elsewhere on the page,
+    // so this component stays mounted across them - without this listener
+    // it would keep showing whatever it saw on its first mount until a
+    // full page reload.
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? { email: session.user.email || "" } : null);
+    });
+
+    return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
   async function handleSignOut() {

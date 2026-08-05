@@ -12,6 +12,14 @@ export default function GuestBanner() {
     supabase.auth.getUser().then(({ data }) => {
       setIsGuest(!data.user);
     });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsGuest(!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   if (!isGuest) return null;

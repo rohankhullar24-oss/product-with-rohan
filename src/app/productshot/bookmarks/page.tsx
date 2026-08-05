@@ -50,6 +50,14 @@ export default function BookmarksPage() {
     };
 
     fetchBookmarks();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      fetchBookmarks();
+    });
+
+    return () => subscription.unsubscribe();
   }, [supabase]);
 
   const removeBookmark = async (id: string) => {

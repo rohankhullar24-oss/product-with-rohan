@@ -49,6 +49,14 @@ export default function ArticlesClient({ articles }: Props) {
     };
 
     fetchBookmarks();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      fetchBookmarks();
+    });
+
+    return () => subscription.unsubscribe();
   }, [supabase]);
 
   const toggleBookmark = async (article: Article) => {

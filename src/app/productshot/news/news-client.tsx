@@ -42,6 +42,14 @@ export default function NewsClient({ items }: Props) {
     };
 
     fetchBookmarks();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      fetchBookmarks();
+    });
+
+    return () => subscription.unsubscribe();
   }, [supabase]);
 
   const toggleBookmark = async (item: NewsItem) => {

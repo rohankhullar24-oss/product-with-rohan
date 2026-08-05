@@ -18,6 +18,14 @@ export default function FilesPage() {
     supabase.auth.getUser().then(({ data }) => {
       setAuthorized(data.user?.email === OWNER_EMAIL);
     });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthorized(session?.user?.email === OWNER_EMAIL);
+    });
+
+    return () => subscription.unsubscribe();
   }, [supabase]);
 
   function refreshCurrentFile() {

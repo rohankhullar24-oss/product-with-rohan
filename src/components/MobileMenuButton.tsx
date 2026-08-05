@@ -15,6 +15,18 @@ export function MobileMenuButton() {
     supabase.auth.getUser().then(({ data }) => {
       setUser(data.user ? { email: data.user.email || "" } : null);
     });
+
+    // Login/logout happen via client-side navigation elsewhere on the page,
+    // so this component stays mounted across them - without this listener
+    // it would keep showing whatever it saw on its first mount until a
+    // full page reload.
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? { email: session.user.email || "" } : null);
+    });
+
+    return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
   async function handleSignOut() {
@@ -67,7 +79,7 @@ export function MobileMenuButton() {
 
       {/* Drawer */}
       <div
-        className={`fixed left-0 top-0 z-40 h-full w-80 transform bg-white dark:bg-slate-900 shadow-xl transition-transform duration-300 ${
+        className={`fixed left-0 top-0 z-40 flex h-full w-80 flex-col transform bg-white dark:bg-slate-900 shadow-xl transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -89,7 +101,7 @@ export function MobileMenuButton() {
         </div>
 
         {/* Menu Items */}
-        <nav className="flex flex-col divide-y divide-slate-200 dark:divide-slate-700">
+        <nav className="flex flex-1 flex-col overflow-y-auto divide-y divide-slate-200 dark:divide-slate-700">
           <Link
             href="/productshot/dashboard"
             onClick={() => setIsOpen(false)}
@@ -267,7 +279,7 @@ export function MobileMenuButton() {
         </nav>
 
         {/* Bottom Actions */}
-        <div className="absolute bottom-0 left-0 right-0 border-t border-slate-200 dark:border-slate-700">
+        <div className="shrink-0 border-t border-slate-200 dark:border-slate-700">
           {user ? (
             <button
               onClick={handleSignOut}

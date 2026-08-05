@@ -211,6 +211,27 @@ export function Sidebar() {
             </a>
           )}
 
+          {user?.email === "rohankhullar24@gmail.com" && (
+            <Link
+              href="/productshot/files"
+              onClick={() => setIsOpen(false)}
+              className="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+            >
+              <svg
+                className="h-5 w-5"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3.293 8.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L9 8.414V13a1 1 0 11-2 0V8.414L5.707 9.707a1 1 0 01-1.414 0z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              My Files
+            </Link>
+          )}
+
           <a
             href="https://productwithrohan.online/"
             target="_blank"

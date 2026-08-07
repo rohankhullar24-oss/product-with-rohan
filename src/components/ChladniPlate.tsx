@@ -34,6 +34,26 @@ const TBL: Float32Array[] = (() => {
 
 type ActiveMode = [Float32Array, Float32Array, number];
 
+// Every figure gets its own interval. The mode's two whole numbers become the
+// ratio between the two voices, folded down into one useful register: (2,1) is
+// an octave, (3,2) a fifth, (4,3) a fourth, (7,6) a grinding whole tone.
+function partialRatio(m: number, n: number) {
+  let r = m / n;
+  while (r > 2.5) r /= 2;
+  return r;
+}
+
+type Voice = {
+  ctx: AudioContext;
+  oscA: OscillatorNode;
+  oscB: OscillatorNode;
+  gainA: GainNode;
+  gainB: GainNode;
+  noiseGain: GainNode;
+  band: BiquadFilterNode;
+  master: GainNode;
+};
+
 export default function ChladniPlate() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const freqInputRef = useRef<HTMLInputElement | null>(null);
@@ -49,6 +69,12 @@ export default function ChladniPlate() {
   const [lockedIdx, setLockedIdx] = useState<number | null>(null);
   const [bowLabel, setBowLabel] = useState(50);
   const [sandLabel, setSandLabel] = useState(22000);
+  const [sound, setSound] = useState(false);
+  const [volume, setVolume] = useState(45);
+
+  const voice = useRef<Voice | null>(null);
+  const soundOn = useRef(false);
+  const vol = useRef(0.45);
 
   const sim = useRef({
     freq: 312,
@@ -61,6 +87,100 @@ export default function ChladniPlate() {
     act: [] as ActiveMode[],
     scatter: false,
   });
+
+  /* ---------------- the bow ---------------- */
+
+  // Built on the first click, never before: audio needs a user gesture, and a
+  // portfolio page that starts humming on load is a bad page.
+  const buildVoice = useCallback((): Voice | null => {
+    const Ctor =
+      window.AudioContext ??
+      (window as unknown as { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
+    if (!Ctor) return null;
+
+    const ctx = new Ctor();
+    const master = ctx.createGain();
+    master.gain.value = 0;
+
+    // plates get shrill up top, so roll the highs off before they reach anyone
+    const tame = ctx.createBiquadFilter();
+    tame.type = "lowpass";
+    tame.frequency.value = 3600;
+    tame.Q.value = 0.5;
+    tame.connect(master);
+    master.connect(ctx.destination);
+
+    const oscA = ctx.createOscillator();
+    oscA.type = "sine";
+    const gainA = ctx.createGain();
+    gainA.gain.value = 0;
+    oscA.connect(gainA).connect(tame);
+
+    const oscB = ctx.createOscillator();
+    oscB.type = "triangle";
+    oscB.detune.value = 4; // a few cents out, so the two voices beat slightly
+    const gainB = ctx.createGain();
+    gainB.gain.value = 0;
+    oscB.connect(gainB).connect(tame);
+
+    // the scrape of the bow itself
+    const buf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
+    const ch = buf.getChannelData(0);
+    for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = buf;
+    noise.loop = true;
+    const band = ctx.createBiquadFilter();
+    band.type = "bandpass";
+    band.Q.value = 6;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = 0;
+    noise.connect(band).connect(noiseGain).connect(tame);
+
+    oscA.start();
+    oscB.start();
+    noise.start();
+
+    return { ctx, oscA, oscB, gainA, gainB, noiseGain, band, master };
+  }, []);
+
+  const toggleSound = useCallback(async () => {
+    if (soundOn.current) {
+      soundOn.current = false;
+      setSound(false);
+      const v = voice.current;
+      if (v) v.master.gain.setTargetAtTime(0, v.ctx.currentTime, 0.05);
+      return;
+    }
+    if (!voice.current) voice.current = buildVoice();
+    const v = voice.current;
+    if (!v) return;
+    if (v.ctx.state === "suspended") await v.ctx.resume();
+    soundOn.current = true;
+    setSound(true);
+    v.master.gain.setTargetAtTime(vol.current, v.ctx.currentTime, 0.08);
+  }, [buildVoice]);
+
+  // leaving the tab shouldn't leave a tone running behind you
+  useEffect(() => {
+    const onVis = () => {
+      const v = voice.current;
+      if (!v) return;
+      const target = document.hidden ? 0 : soundOn.current ? vol.current : 0;
+      v.master.gain.setTargetAtTime(target, v.ctx.currentTime, 0.05);
+    };
+    document.addEventListener("visibilitychange", onVis);
+    return () => document.removeEventListener("visibilitychange", onVis);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      const v = voice.current;
+      voice.current = null;
+      if (v) void v.ctx.close();
+    };
+  }, []);
 
   /* ---------------- mode weighting ---------------- */
 
@@ -202,6 +322,23 @@ export default function ChladniPlate() {
         if (s.freq > F_MAX) s.freq = F_MIN;
         if (freqInputRef.current) freqInputRef.current.value = String(Math.round(s.freq));
         updateModes();
+      }
+
+      // The plate is the instrument: pitch follows the dial, loudness follows
+      // how hard the plate is actually responding. Between modes you hear the
+      // bow and not much else.
+      const v = voice.current;
+      if (v && soundOn.current) {
+        const t = v.ctx.currentTime;
+        const md = MODES[s.nearest];
+        const tilt = 1 - 0.35 * ((s.freq - F_MIN) / (F_MAX - F_MIN));
+        const ring = s.response;
+        v.oscA.frequency.setTargetAtTime(s.freq, t, 0.015);
+        v.oscB.frequency.setTargetAtTime(s.freq * partialRatio(md.m, md.n), t, 0.015);
+        v.band.frequency.setTargetAtTime(s.freq, t, 0.015);
+        v.gainA.gain.setTargetAtTime((0.02 + 0.16 * ring) * tilt, t, 0.03);
+        v.gainB.gain.setTargetAtTime((0.004 + 0.075 * ring) * tilt, t, 0.03);
+        v.noiseGain.gain.setTargetAtTime(0.014 * s.bow * (0.3 + 0.7 * ring), t, 0.03);
       }
 
       // Each grain hops at random, harder where the plate moves more, and only
@@ -451,6 +588,42 @@ export default function ChladniPlate() {
               />
             </div>
 
+            <div className="flex items-center gap-3">
+              <button
+                onClick={toggleSound}
+                aria-pressed={sound}
+                className={`rounded-md border px-3 py-2 font-mono text-[10px] uppercase tracking-[0.15em] transition-colors ${
+                  sound
+                    ? "border-accent bg-accent/15 text-teal-300"
+                    : "border-slate-700 text-slate-300 hover:border-accent hover:text-teal-300"
+                }`}
+              >
+                {sound ? "Sound on" : "Sound off"}
+              </button>
+              <label htmlFor="chl-vol" className="sr-only">
+                Volume
+              </label>
+              <input
+                id="chl-vol"
+                type="range"
+                min={0}
+                max={100}
+                step={1}
+                value={volume}
+                disabled={!sound}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setVolume(val);
+                  vol.current = val / 100;
+                  const v = voice.current;
+                  if (v && soundOn.current) {
+                    v.master.gain.setTargetAtTime(vol.current, v.ctx.currentTime, 0.03);
+                  }
+                }}
+                className={`chl-range flex-1 ${sound ? "" : "opacity-40"}`}
+              />
+            </div>
+
             <div className="flex gap-2">
               <button
                 onClick={toggleSweep}
@@ -510,7 +683,7 @@ export default function ChladniPlate() {
           </aside>
         </div>
 
-        <footer className="mt-12 grid gap-8 border-t border-slate-800 pt-8 sm:grid-cols-3">
+        <footer className="mt-12 grid gap-8 border-t border-slate-800 pt-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <h3 className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
               What you&apos;re looking at
@@ -541,6 +714,20 @@ export default function ChladniPlate() {
               A square plate rings at frequencies set by two whole numbers — how many half-waves fit
               across it each way. Higher pairs sit closer together, so the top of the dial is crowded
               and the figures there are hard to isolate. That is also true of real plates.
+            </p>
+          </div>
+          <div>
+            <h3 className="mb-2 font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
+              What you&apos;re hearing
+            </h3>
+            <p className="text-sm text-slate-400">
+              Turn on Sound and the dial becomes a pitch. Loudness tracks the plate&apos;s real
+              response, so between resonances you hear the bow and little else, and the tone blooms
+              as a figure forms. Each figure carries its own interval, taken from its two mode
+              numbers: <em className="text-slate-300">2,1</em> is an octave,{" "}
+              <em className="text-slate-300">3,2</em> a fifth,{" "}
+              <em className="text-slate-300">4,3</em> a fourth. The crowded high modes are the
+              dissonant ones. Run Sweep with the sound up.
             </p>
           </div>
         </footer>

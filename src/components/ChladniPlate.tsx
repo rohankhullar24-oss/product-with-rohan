@@ -14,7 +14,8 @@ const MODES: Mode[] = (() => {
   return out.sort((a, b) => a.f - b.f);
 })();
 
-const ARTICLE_URL = "https://rohankhullar.substack.com";
+const ARTICLE_URL =
+  "https://rohankhullar.substack.com/p/claude-opus-chladni-plate-no-brief";
 
 const F_MIN = 100;
 const F_MAX = 2200;

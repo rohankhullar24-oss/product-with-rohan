@@ -26,16 +26,6 @@ const projects: Project[] = [
     linkLabel: "Open the live app →",
   },
   {
-    title: "The Chladni Plate — A Physics Toy You Have to Tune",
-    description:
-      "An interactive simulation of the 1787 experiment where sand on a vibrating steel plate arranges itself into geometric figures. Hunt the dial for 21 hidden resonances and collect them.",
-    fullDescription:
-      "In 1787 Ernst Chladni sprinkled sand on a metal plate and bowed the edge. At most frequencies nothing happens. At a resonance, the grains flee the parts that are shaking and pile up along the lines that stay perfectly still — a different geometric figure at every resonant frequency. This is that experiment, simulated honestly: 22,000 grains each take a random hop every frame, hop harder where the plate moves more, and only keep the hop if they land somewhere calmer. Nothing draws the pattern. The pattern is what's left over once the grains stop moving. Twenty-one resonances are hidden between 100 and 2200 Hz, and the plate only responds near one, so finding them is the game — each figure you land on gets logged in a register with a tick mark on the dial so you can return to it. Built as a single self-contained canvas simulation with a cosine lookup table and Metropolis-style acceptance so 22,000 grains stay at 60fps in a browser tab.",
-    tags: ["Side Project", "AI-Built"],
-    href: "/projects/chladni-plate",
-    linkLabel: "Open the plate →",
-  },
-  {
     title: "Reminders — The Android App That Won't Let You Forget",
     description:
       "A native Android app for birthdays, anniversaries and tasks that rings like an alarm clock — as many times a day as you want — and keeps coming back until you confirm you've actually done it.",
@@ -97,6 +87,16 @@ const projects: Project[] = [
       "Decision Dice solves the problem of analysis paralysis by systematically evaluating your options against your stated priorities. The tool uses a simple questionnaire approach to understand what matters most to you, then applies weighted scoring to provide a clear recommendation. It's available at /projects/decision-dice with a fully interactive interface.",
     tags: ["Side Project", "Tool"],
     href: "/projects/decision-dice",
+  },
+  {
+    title: "The Chladni Plate — A Physics Toy You Have to Tune",
+    description:
+      "An interactive simulation of the 1787 experiment where sand on a vibrating steel plate arranges itself into geometric figures. Hunt the dial for 21 hidden resonances, and hear each one as its own musical interval.",
+    fullDescription:
+      "In 1787 Ernst Chladni sprinkled sand on a metal plate and bowed the edge. At most frequencies nothing happens. At a resonance, the grains flee the parts that are shaking and pile up along the lines that stay perfectly still — a different geometric figure at every resonant frequency. This is that experiment, simulated honestly: 22,000 grains each take a random hop every frame, hop harder where the plate moves more, and only keep the hop if they land somewhere calmer. Nothing draws the pattern. The pattern is what's left over once the grains stop moving. Twenty-one resonances are hidden between 100 and 2200 Hz, and the plate only responds near one, so finding them is the game — each figure you land on gets logged in a register with a tick mark on the dial so you can return to it. It is also audible: pitch follows the dial and loudness follows the plate's real response, so the tone goes quiet between resonances and blooms about nine times louder as a figure forms. Each figure carries its own interval, derived from the same two whole numbers that determine its shape — 2,1 is an octave, 3,2 a fifth, 4,3 a fourth, and the crowded high modes come out dissonant. Built as a canvas simulation with a cosine lookup table, Metropolis-style acceptance, and a Web Audio voice, holding 60fps in a browser tab.",
+    tags: ["Side Project", "AI-Built"],
+    href: "/projects/chladni-plate",
+    linkLabel: "Open the plate →",
   },
   {
     title: "Free AI Course Platform",

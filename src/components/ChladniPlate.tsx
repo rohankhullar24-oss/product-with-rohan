@@ -14,6 +14,8 @@ const MODES: Mode[] = (() => {
   return out.sort((a, b) => a.f - b.f);
 })();
 
+const ARTICLE_URL = "https://rohankhullar.substack.com";
+
 const F_MIN = 100;
 const F_MAX = 2200;
 const MAXP = 36000;
@@ -731,6 +733,35 @@ export default function ChladniPlate() {
             </p>
           </div>
         </footer>
+
+        <section className="mt-8 rounded-xl border border-slate-800 bg-slate-900/60 p-6">
+          <h2 className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
+            How this got built
+          </h2>
+          <div className="mt-3 grid gap-4 text-sm text-slate-400 md:grid-cols-2">
+            <p>
+              I asked Claude Opus for &ldquo;something fun&rdquo; and gave it nothing else. No spec,
+              no audience, no constraint. It came back with an acoustics experiment from 1787, then
+              built the colour palette out of brass instruments and picked a condensed typeface
+              because a plate is an instrument panel. None of that was in the prompt.
+            </p>
+            <p>
+              It also shipped a bug worth keeping. The first confidence meter scored the winning
+              mode as a share of all modes, so at 150 Hz it read 99.99% certain on a plate that
+              wasn&apos;t moving at all. A ratio doesn&apos;t care about scale. When I later asked
+              for sound, it derived the musical intervals from the same two whole numbers that
+              decide each figure&apos;s shape.
+            </p>
+          </div>
+          <a
+            href={ARTICLE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center font-mono text-[11px] uppercase tracking-[0.15em] text-teal-300 underline decoration-teal-300/40 underline-offset-4 transition-colors hover:decoration-teal-300"
+          >
+            Read the full build log →
+          </a>
+        </section>
       </div>
     </div>
   );

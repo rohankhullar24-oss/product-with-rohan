@@ -148,6 +148,25 @@ export function MobileMenuButton() {
           </Link>
 
           <Link
+            href="/productshot/teardowns"
+            onClick={() => setIsOpen(false)}
+            className="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6zm2 6l2.5-3 1.5 2 2-2.5L15 12H6z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Teardowns
+          </Link>
+
+          <Link
             href="/productshot/shots"
             onClick={() => setIsOpen(false)}
             className="flex items-center gap-3 px-6 py-4 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"

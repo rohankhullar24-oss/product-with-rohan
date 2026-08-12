@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      App-specific strings only. Everything shared with the Reminders app —
+      window names, countdowns, alarm and warning text, and the widget — lives
+      in usage-core.
+    -->
+    <string name="app_name">Claude Limits</string>
+
+    <!-- Main screen -->
+    <string name="action_refresh">Refresh</string>
+    <string name="action_sign_out">Sign out</string>
+    <string name="refreshing">Refreshing…</string>
+    <string name="status_signed_out">Sign in to read your limits.</string>
+    <string name="status_session_expired">Session expired — sign in again.</string>
+    <string name="status_waiting">Waiting for the first reading…</string>
+    <string name="banner_exact_alarms">Allow exact alarms so resets ring on time. Tap to fix.</string>
+    <string name="banner_battery">For the freshest numbers, set battery usage to Unrestricted. Tap to open settings.</string>
+    <string name="disclaimer">Reads the same usage data as the Claude website. Anthropic publishes no API for subscription limits, so this can break without notice.</string>
+</resources>

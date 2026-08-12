@@ -20,6 +20,8 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import online.productwithrohan.usagecore.LoginActivity
+import online.productwithrohan.usagecore.Store
 
 class MainActivity : AppCompatActivity() {
 
@@ -125,6 +127,11 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
         R.id.action_account -> {
             startActivity(Intent(this, AccountActivity::class.java))
+            true
+        }
+        R.id.action_claude_limits -> {
+            val target = if (Store.get(this).isSignedIn) ClaudeAlertsActivity::class.java else LoginActivity::class.java
+            startActivity(Intent(this, target))
             true
         }
         R.id.action_sound -> {

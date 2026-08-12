@@ -117,4 +117,14 @@
         <item>Every hour</item>
         <item>Every 2 hours</item>
     </string-array>
+
+    <!-- Claude alerts screen -->
+    <string name="claude_alerts_title">Claude alerts</string>
+    <string name="alerts_warn_title">Warn me before I run out</string>
+    <string name="alerts_warn_explainer">Notifies you once per window when usage crosses the level below. Usage is checked every 15 minutes, so the warning can arrive a few minutes after the level is passed.</string>
+    <string name="alerts_threshold_label">Warn at %1$d%% used</string>
+    <string name="alerts_ring_title">Ring when the window resets</string>
+    <string name="alerts_ring_explainer">Rings like an alarm the moment a window rolls over. Off by default: if you also have the Claude Limits app installed, it already rings, and leaving both on means two alarms.</string>
+    <string name="alerts_disclaimer">Reads the same usage data as the Claude website. Anthropic publishes no API for subscription limits, so this can break without notice.</string>
+    <string name="alerts_disconnect">Disconnect Claude</string>
 </resources>

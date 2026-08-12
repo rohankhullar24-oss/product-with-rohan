@@ -54,3 +54,10 @@ finshots-mobile-app.json
 # separate project directories
 decision-dice-app/
 src/app/projects/finshots/
+
+# Android (Gradle build now rooted here, covering usage-core + both apps)
+.gradle/
+local.properties
+**/build/
+*.iml
+.cxx

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Widget palette. The widget draws on the home screen over an unknown
+      wallpaper, so it paints its own surface rather than inheriting a theme,
+      and both apps get the same look.
+    -->
+    <color name="widget_background">#1E1B18</color>
+    <color name="widget_text">#F5F0EA</color>
+    <color name="widget_text_dim">#B8AFA5</color>
+    <color name="usage_accent">#C15F3C</color>
+</resources>

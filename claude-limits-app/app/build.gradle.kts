@@ -4,15 +4,15 @@ plugins {
 }
 
 android {
-    namespace = "online.productwithrohan.reminders"
+    namespace = "online.productwithrohan.claudelimits"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "online.productwithrohan.reminders"
+        applicationId = "online.productwithrohan.claudelimits"
         minSdk = 26
         targetSdk = 34
-        versionCode = 8
-        versionName = "3.3"
+        versionCode = 1
+        versionName = "1.0"
     }
 
     buildTypes {
@@ -32,9 +32,7 @@ android {
 }
 
 dependencies {
-    implementation("androidx.recyclerview:recyclerview:1.3.2")
-
-    // The Claude usage layer, plus the AndroidX/Material dependencies it
-    // exposes as api() — core-ktx, appcompat, material, work, security-crypto.
+    // Brings the Claude usage layer plus the AndroidX/Material dependencies it
+    // exposes as api(), so they aren't restated here.
     implementation(project(":usage-core"))
 }

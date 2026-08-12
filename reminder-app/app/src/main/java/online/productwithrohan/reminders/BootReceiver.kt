@@ -3,6 +3,10 @@ package online.productwithrohan.reminders
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import online.productwithrohan.usagecore.ResetAlarmScheduler
+import online.productwithrohan.usagecore.Store
+import online.productwithrohan.usagecore.RefreshScheduler
+import online.productwithrohan.usagecore.UsageWidgetProvider
 import java.time.LocalDate
 
 /**
@@ -12,6 +16,8 @@ import java.time.LocalDate
 class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        restoreClaudeAlerts(context)
+
         val today = LocalDate.now().toString()
         for (reminder in ReminderStore.getAll(context)) {
             if (!reminder.enabled || reminder.completed) continue
@@ -24,5 +30,18 @@ class BootReceiver : BroadcastReceiver() {
                 AlarmScheduler.scheduleNag(context, reminder.id, nagDay, 2)
             }
         }
+    }
+
+    /**
+     * The periodic usage refresh and any reset alarm are lost on reboot too.
+     * Only worth restoring once Claude is actually connected.
+     */
+    private fun restoreClaudeAlerts(context: Context) {
+        UsageWidgetProvider.refreshAll(context)
+
+        val store = Store.get(context)
+        if (!store.isSignedIn) return
+        RefreshScheduler.ensureScheduled(context)
+        if (store.ringOnResetEnabled) ResetAlarmScheduler.sync(context)
     }
 }

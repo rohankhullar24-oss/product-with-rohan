@@ -37,13 +37,15 @@ targetSdk 34.
 
 ## Building
 
-Open `reminder-app/` in Android Studio and run, or:
+Open the repository root in Android Studio and run, or:
 
 ```bash
-cd reminder-app
-./gradlew assembleDebug
-# APK at app/build/outputs/apk/debug/app-debug.apk
+./gradlew :reminder-app:assembleDebug
+# APK at reminder-app/app/build/outputs/apk/debug/app-debug.apk
 ```
+
+This app, `claude-limits-app/` and the shared `usage-core/` library are one Gradle build rooted at
+the repository, so the wrapper lives at the root and tasks are module-qualified.
 
 CI builds the APK automatically on every push touching `reminder-app/`
 (GitHub Actions → "Build Reminder App APK" → artifact `reminders-debug-apk`).

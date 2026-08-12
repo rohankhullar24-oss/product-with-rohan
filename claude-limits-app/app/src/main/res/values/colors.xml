@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget colours live in usage-core, since both apps offer the widget. -->
+    <color name="primary">#C15F3C</color>
+    <color name="ic_launcher_background">#C15F3C</color>
+</resources>

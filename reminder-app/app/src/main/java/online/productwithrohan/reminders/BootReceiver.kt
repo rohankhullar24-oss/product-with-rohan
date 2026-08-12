@@ -6,6 +6,7 @@ import android.content.Intent
 import online.productwithrohan.usagecore.ResetAlarmScheduler
 import online.productwithrohan.usagecore.Store
 import online.productwithrohan.usagecore.RefreshScheduler
+import online.productwithrohan.usagecore.UsageWidgetProvider
 import java.time.LocalDate
 
 /**
@@ -36,6 +37,8 @@ class BootReceiver : BroadcastReceiver() {
      * Only worth restoring once Claude is actually connected.
      */
     private fun restoreClaudeAlerts(context: Context) {
+        UsageWidgetProvider.refreshAll(context)
+
         val store = Store.get(context)
         if (!store.isSignedIn) return
         RefreshScheduler.ensureScheduled(context)

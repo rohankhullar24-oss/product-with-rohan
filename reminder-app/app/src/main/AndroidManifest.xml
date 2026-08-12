@@ -105,5 +105,24 @@
         <receiver
             android:name="online.productwithrohan.usagecore.ResetAlarmReceiver"
             android:exported="false" />
+
+        <!--
+          The same Claude limits widget the standalone app offers. Android's
+          widget picker groups by app, so having both installed shows one entry
+          under each rather than two indistinguishable ones.
+        -->
+        <receiver
+            android:name="online.productwithrohan.usagecore.UsageWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_title">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <!-- Sent by usage-core's RefreshWorker when a new snapshot lands. -->
+                <action android:name="online.productwithrohan.reminders.USAGE_UPDATED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/usage_widget_info" />
+        </receiver>
     </application>
 </manifest>

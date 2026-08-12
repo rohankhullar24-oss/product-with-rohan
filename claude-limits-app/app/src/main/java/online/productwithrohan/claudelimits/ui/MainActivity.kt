@@ -18,7 +18,7 @@ import online.productwithrohan.usagecore.ResetAlarmScheduler
 import online.productwithrohan.usagecore.AuthState
 import online.productwithrohan.usagecore.Store
 import online.productwithrohan.usagecore.Countdown
-import online.productwithrohan.claudelimits.widget.UsageWidgetProvider
+import online.productwithrohan.usagecore.UsageWidgetProvider
 import online.productwithrohan.usagecore.LoginActivity
 import online.productwithrohan.usagecore.RefreshScheduler
 

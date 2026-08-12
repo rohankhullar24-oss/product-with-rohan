@@ -1,4 +1,4 @@
-package online.productwithrohan.claudelimits.widget
+package online.productwithrohan.usagecore
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
@@ -8,13 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.view.View
 import android.widget.RemoteViews
-import online.productwithrohan.claudelimits.R
-import online.productwithrohan.usagecore.AuthState
-import online.productwithrohan.usagecore.Countdown
-import online.productwithrohan.usagecore.Store
-import online.productwithrohan.usagecore.UsageEvents
-import online.productwithrohan.claudelimits.ui.MainActivity
-import online.productwithrohan.usagecore.RefreshScheduler
 
 /**
  * The home-screen widget: both limit windows as bars, with reset countdowns and
@@ -23,11 +16,18 @@ import online.productwithrohan.usagecore.RefreshScheduler
  * It renders whatever the last successful fetch stored rather than fetching
  * itself — widget updates have to be quick and can arrive at any time. When the
  * session dies it collapses to a single "Tap to sign in" prompt.
+ *
+ * Lives in the library so either app can offer it. Tapping it opens whichever
+ * app is hosting it, resolved through the launcher intent rather than a named
+ * activity, since the two apps have different ones.
  */
 class UsageWidgetProvider : AppWidgetProvider() {
 
     companion object {
-        private const val ACTION_REFRESH = "online.productwithrohan.claudelimits.WIDGET_REFRESH"
+        private const val ACTION_REFRESH_SUFFIX = ".WIDGET_REFRESH"
+
+        private fun refreshAction(context: Context) =
+            context.packageName + ACTION_REFRESH_SUFFIX
 
         /** Repaint every placed widget from the stored snapshot. */
         fun refreshAll(context: Context) {
@@ -45,28 +45,12 @@ class UsageWidgetProvider : AppWidgetProvider() {
             val needsLogin = !store.isSignedIn || store.authState == AuthState.NEEDS_LOGIN
             val hasData = store.hasSnapshot
 
-            views.setOnClickPendingIntent(R.id.widget_root, openApp(context))
+            openApp(context)?.let { views.setOnClickPendingIntent(R.id.widget_root, it) }
             views.setOnClickPendingIntent(R.id.widget_refresh, requestRefresh(context))
 
             when {
-                needsLogin -> {
-                    views.setViewVisibility(R.id.widget_content, View.GONE)
-                    views.setViewVisibility(R.id.widget_message, View.VISIBLE)
-                    views.setTextViewText(
-                        R.id.widget_message,
-                        context.getString(R.string.widget_tap_to_sign_in),
-                    )
-                }
-
-                !hasData -> {
-                    views.setViewVisibility(R.id.widget_content, View.GONE)
-                    views.setViewVisibility(R.id.widget_message, View.VISIBLE)
-                    views.setTextViewText(
-                        R.id.widget_message,
-                        context.getString(R.string.widget_loading),
-                    )
-                }
-
+                needsLogin -> showMessage(context, views, R.string.widget_tap_to_sign_in)
+                !hasData -> showMessage(context, views, R.string.widget_loading)
                 else -> {
                     views.setViewVisibility(R.id.widget_message, View.GONE)
                     views.setViewVisibility(R.id.widget_content, View.VISIBLE)
@@ -100,6 +84,12 @@ class UsageWidgetProvider : AppWidgetProvider() {
             return views
         }
 
+        private fun showMessage(context: Context, views: RemoteViews, messageRes: Int) {
+            views.setViewVisibility(R.id.widget_content, View.GONE)
+            views.setViewVisibility(R.id.widget_message, View.VISIBLE)
+            views.setTextViewText(R.id.widget_message, context.getString(messageRes))
+        }
+
         private fun bindWindow(
             context: Context,
             views: RemoteViews,
@@ -127,18 +117,22 @@ class UsageWidgetProvider : AppWidgetProvider() {
             )
         }
 
-        private fun openApp(context: Context): PendingIntent = PendingIntent.getActivity(
-            context,
-            0,
-            Intent(context, MainActivity::class.java)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
+        private fun openApp(context: Context): PendingIntent? {
+            val launch = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                ?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                ?: return null
+            return PendingIntent.getActivity(
+                context,
+                0,
+                launch,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+        }
 
         private fun requestRefresh(context: Context): PendingIntent = PendingIntent.getBroadcast(
             context,
             1,
-            Intent(context, UsageWidgetProvider::class.java).setAction(ACTION_REFRESH),
+            Intent(context, UsageWidgetProvider::class.java).setAction(refreshAction(context)),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
     }
@@ -158,13 +152,11 @@ class UsageWidgetProvider : AppWidgetProvider() {
         super.onReceive(context, intent)
         when (intent.action) {
             // Tapping the widget's refresh icon.
-            ACTION_REFRESH -> {
+            refreshAction(context) -> {
                 RefreshScheduler.refreshNow(context)
                 refreshAll(context)
             }
-            // A background refresh landed a new snapshot. The library signals
-            // rather than repainting directly, since it is shared with an app
-            // that has no widget.
+            // A background refresh landed a new snapshot.
             UsageEvents.action(context) -> refreshAll(context)
         }
     }

@@ -59,8 +59,9 @@
         </receiver>
 
         <receiver
-            android:name=".widget.UsageWidgetProvider"
-            android:exported="true">
+            android:name="online.productwithrohan.usagecore.UsageWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_title">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
                 <!-- Sent by usage-core's RefreshWorker when a new snapshot lands. -->

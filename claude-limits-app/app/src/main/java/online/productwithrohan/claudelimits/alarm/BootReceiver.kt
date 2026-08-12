@@ -3,7 +3,7 @@ package online.productwithrohan.claudelimits.alarm
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import online.productwithrohan.claudelimits.widget.UsageWidgetProvider
+import online.productwithrohan.usagecore.UsageWidgetProvider
 import online.productwithrohan.usagecore.RefreshScheduler
 import online.productwithrohan.usagecore.ResetAlarmScheduler
 

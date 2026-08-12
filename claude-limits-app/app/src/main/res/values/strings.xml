@@ -2,15 +2,10 @@
 <resources>
     <!--
       App-specific strings only. Everything shared with the Reminders app —
-      window names, countdowns, alarm and warning text — lives in usage-core.
+      window names, countdowns, alarm and warning text, and the widget — lives
+      in usage-core.
     -->
     <string name="app_name">Claude Limits</string>
-
-    <!-- Widget -->
-    <string name="widget_title">Claude Limits</string>
-    <string name="widget_tap_to_sign_in">Tap to sign in</string>
-    <string name="widget_loading">Loading usage…</string>
-    <string name="widget_refresh">Refresh</string>
 
     <!-- Main screen -->
     <string name="action_refresh">Refresh</string>

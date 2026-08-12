@@ -77,7 +77,7 @@
             android:layout_height="8dp"
             android:layout_marginTop="4dp"
             android:max="100"
-            android:progressTint="@color/primary" />
+            android:progressTint="@color/usage_accent" />
 
         <TextView
             android:id="@+id/session_reset"
@@ -118,7 +118,7 @@
             android:layout_height="8dp"
             android:layout_marginTop="4dp"
             android:max="100"
-            android:progressTint="@color/primary" />
+            android:progressTint="@color/usage_accent" />
 
         <TextView
             android:id="@+id/weekly_reset"

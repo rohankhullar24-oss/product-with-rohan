@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import online.productwithrohan.usagecore.ResetAlarmScheduler
 import online.productwithrohan.usagecore.Store
+import online.productwithrohan.usagecore.UsageWidgetProvider
 
 /**
  * The two Claude alert toggles.
@@ -81,6 +82,8 @@ class ClaudeAlertsActivity : AppCompatActivity() {
         findViewById<Button>(R.id.button_sign_out_claude).setOnClickListener {
             store.signOut()
             ResetAlarmScheduler.cancelAll(this)
+            // Collapse any placed widget back to "Tap to sign in" straight away.
+            UsageWidgetProvider.refreshAll(this)
             finish()
         }
 

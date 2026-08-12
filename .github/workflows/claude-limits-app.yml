@@ -34,10 +34,11 @@ jobs:
           name: claude-limits-debug-apk
           path: claude-limits-app/app/build/outputs/apk/debug/app-debug.apk
 
-      # Also publish the APK on a rolling prerelease so it has a stable,
-      # phone-friendly download URL (Actions artifacts require login + unzip).
-      # Only master publishes, so a work-in-progress branch build never becomes
-      # the download people actually install.
+      # Publish the APK on a rolling prerelease so it has a phone-friendly
+      # download URL (Actions artifacts require a login and arrive as a zip).
+      # Two tags, kept apart on purpose: -latest is the stable download and
+      # only master writes it, so a work-in-progress branch can never replace
+      # what people actually install.
       - name: Publish APK to release
         if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         env:
@@ -49,3 +50,17 @@ jobs:
             --notes "Auto-built debug APK of claude-limits-app/. Download ClaudeLimits.apk on your phone and install it." \
             || true
           gh release upload claude-limits-app-latest ClaudeLimits.apk --clobber
+
+      # -preview is the throwaway tag for branch builds, so a work-in-progress
+      # APK can be installed on a phone without touching the stable download.
+      - name: Publish preview APK to release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/claude/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp claude-limits-app/app/build/outputs/apk/debug/app-debug.apk ClaudeLimits.apk
+          gh release create claude-limits-app-preview --prerelease \
+            --title "Claude Limits app (branch preview)" \
+            --notes "Unreviewed build from a work-in-progress branch. Overwritten by every branch push — use the claude-limits-app-latest release for the stable download." \
+            || true
+          gh release upload claude-limits-app-preview ClaudeLimits.apk --clobber

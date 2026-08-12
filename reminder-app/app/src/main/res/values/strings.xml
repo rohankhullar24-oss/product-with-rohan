@@ -118,18 +118,6 @@
         <item>Every 2 hours</item>
     </string-array>
 
-    <!-- Claude limits section -->
-    <string name="claude_section_title">Claude limits</string>
-    <string name="claude_connect">Connect Claude to track your usage limits.</string>
-    <string name="claude_session_expired">Claude session expired — tap to sign in again.</string>
-    <string name="claude_waiting">Waiting for the first reading…</string>
-    <string name="claude_window_line">%1$s · %2$d%% used · %3$s</string>
-    <string name="claude_set_up_alerts">Set up alerts</string>
-    <string name="claude_alerts_warn_on">Warn at %1$d%%</string>
-    <string name="claude_alerts_warn_off">Warning off</string>
-    <string name="claude_alerts_ring_on">reset alarm on</string>
-    <string name="claude_alerts_ring_off">reset alarm off</string>
-
     <!-- Claude alerts screen -->
     <string name="claude_alerts_title">Claude alerts</string>
     <string name="alerts_warn_title">Warn me before I run out</string>

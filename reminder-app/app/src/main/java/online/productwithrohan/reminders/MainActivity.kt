@@ -2,10 +2,7 @@ package online.productwithrohan.reminders
 
 import android.Manifest
 import android.app.NotificationManager
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -23,19 +20,14 @@ import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import online.productwithrohan.usagecore.UsageEvents
+import online.productwithrohan.usagecore.LoginActivity
+import online.productwithrohan.usagecore.Store
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var adapter: ReminderAdapter
     private lateinit var emptyView: TextView
     private lateinit var permissionBanner: TextView
-    private lateinit var claudeSection: ClaudeSection
-
-    /** Repaints the Claude strip when a background refresh lands a new snapshot. */
-    private val usageUpdatedReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) = claudeSection.render()
-    }
 
     private val exportLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -80,7 +72,6 @@ class MainActivity : AppCompatActivity() {
 
         emptyView = findViewById(R.id.empty_view)
         permissionBanner = findViewById(R.id.permission_banner)
-        claudeSection = ClaudeSection(this)
 
         adapter = ReminderAdapter(
             onClick = { reminder ->
@@ -119,27 +110,10 @@ class MainActivity : AppCompatActivity() {
         requestNotificationPermissionIfNeeded()
     }
 
-    override fun onStart() {
-        super.onStart()
-        ContextCompat.registerReceiver(
-            this,
-            usageUpdatedReceiver,
-            IntentFilter(UsageEvents.action(this)),
-            ContextCompat.RECEIVER_NOT_EXPORTED,
-        )
-    }
-
-    override fun onStop() {
-        unregisterReceiver(usageUpdatedReceiver)
-        super.onStop()
-    }
-
     override fun onResume() {
         super.onResume()
         refresh()
         updatePermissionBanner()
-        claudeSection.render()
-        claudeSection.refreshIfSignedIn()
         SyncManager.syncAsync(this) { changed ->
             if (changed) runOnUiThread { refresh() }
         }
@@ -156,7 +130,8 @@ class MainActivity : AppCompatActivity() {
             true
         }
         R.id.action_claude_limits -> {
-            startActivity(Intent(this, ClaudeAlertsActivity::class.java))
+            val target = if (Store.get(this).isSignedIn) ClaudeAlertsActivity::class.java else LoginActivity::class.java
+            startActivity(Intent(this, target))
             true
         }
         R.id.action_sound -> {

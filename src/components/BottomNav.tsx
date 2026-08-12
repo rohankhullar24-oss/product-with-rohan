@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-type Tab = "shots" | "articles" | "news" | "bookmarks";
+type Tab = "shots" | "articles" | "teardowns" | "news" | "bookmarks";
 
 const tabs: { id: Tab; label: string; href: string; icon: React.ReactNode }[] =
   [
@@ -36,6 +36,24 @@ const tabs: { id: Tab; label: string; href: string; icon: React.ReactNode }[] =
           viewBox="0 0 20 20"
         >
           <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h12a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6z" />
+        </svg>
+      ),
+    },
+    {
+      id: "teardowns",
+      label: "Teardowns",
+      href: "/productshot/teardowns",
+      icon: (
+        <svg
+          className="h-6 w-6"
+          fill="currentColor"
+          viewBox="0 0 20 20"
+        >
+          <path
+            fillRule="evenodd"
+            d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6zm2 6l2.5-3 1.5 2 2-2.5L15 12H6z"
+            clipRule="evenodd"
+          />
         </svg>
       ),
     },
@@ -75,6 +93,7 @@ export function BottomNav() {
   const getActiveTab = (): Tab => {
     if (pathname === "/shots" || pathname.startsWith("/shots/")) return "shots";
     if (pathname === "/articles" || pathname.startsWith("/articles/")) return "articles";
+    if (pathname.startsWith("/productshot/teardowns")) return "teardowns";
     if (pathname === "/news") return "news";
     if (pathname === "/bookmarks") return "bookmarks";
     if (pathname === "/" || pathname === "/dashboard") return "shots";

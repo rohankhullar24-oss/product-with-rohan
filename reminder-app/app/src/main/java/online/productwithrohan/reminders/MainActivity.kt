@@ -155,6 +155,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, AccountActivity::class.java))
             true
         }
+        R.id.action_claude_limits -> {
+            startActivity(Intent(this, ClaudeAlertsActivity::class.java))
+            true
+        }
         R.id.action_sound -> {
             NotificationHelper.ensureChannel(this)
             startActivity(

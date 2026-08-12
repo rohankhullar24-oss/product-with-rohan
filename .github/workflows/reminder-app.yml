@@ -62,3 +62,17 @@ jobs:
             --notes "Auto-built debug APK of reminder-app/. Download Reminders.apk on your phone and install it." \
             || true
           gh release upload reminder-app-latest Reminders.apk --clobber
+
+      # -preview is the throwaway tag for branch builds, so a work-in-progress
+      # APK can be installed on a phone without touching the stable download.
+      - name: Publish preview APK to release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/claude/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp reminder-app/app/build/outputs/apk/debug/*.apk Reminders.apk
+          gh release create reminder-app-preview --prerelease \
+            --title "Reminders app (branch preview)" \
+            --notes "Unreviewed build from a work-in-progress branch. Overwritten by every branch push — use the reminder-app-latest release for the stable download." \
+            || true
+          gh release upload reminder-app-preview Reminders.apk --clobber

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      This app is the dedicated limits app, so ringing on reset is its whole
+      point and stays on by default. Reminders leaves it off so the two don't
+      both ring at the same moment when both are installed.
+    -->
+    <bool name="usage_default_ring_on_reset">true</bool>
+</resources>

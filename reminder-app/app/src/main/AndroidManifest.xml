@@ -73,5 +73,37 @@
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
+        <!--
+          Claude limits. The shared components live in usage-core; this app opts
+          into the ones it uses. The reset alarm classes are separate from this
+          app's own reminder alarm stack, so the two never collide.
+        -->
+        <activity
+            android:name=".ClaudeAlertsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name="online.productwithrohan.usagecore.LoginActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name="online.productwithrohan.usagecore.AlarmRingActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:showOnLockScreen="true"
+            android:turnScreenOn="true"
+            android:taskAffinity=".AlarmRing" />
+
+        <service
+            android:name="online.productwithrohan.usagecore.AlarmService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <receiver
+            android:name="online.productwithrohan.usagecore.ResetAlarmReceiver"
+            android:exported="false" />
     </application>
 </manifest>

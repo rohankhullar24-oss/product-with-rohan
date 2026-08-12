@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Per-app alert defaults. An app overrides these by declaring the same name
+      in its own res/values, which wins during resource merging.
+
+      Warning on by default everywhere: nothing else provides it.
+      Reset alarm off by default: two installed apps ringing at the same reset
+      would fire twice, so an app has to opt in deliberately.
+    -->
+    <bool name="usage_default_warn_enabled">true</bool>
+    <bool name="usage_default_ring_on_reset">false</bool>
+</resources>

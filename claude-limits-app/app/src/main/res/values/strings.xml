@@ -1,48 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!--
+      App-specific strings only. Everything shared with the Reminders app —
+      window names, countdowns, alarm and warning text — lives in usage-core.
+    -->
     <string name="app_name">Claude Limits</string>
-
-    <!-- Window names -->
-    <string name="window_session">5-hour session</string>
-    <string name="window_weekly">Weekly</string>
 
     <!-- Widget -->
     <string name="widget_title">Claude Limits</string>
     <string name="widget_tap_to_sign_in">Tap to sign in</string>
     <string name="widget_loading">Loading usage…</string>
     <string name="widget_refresh">Refresh</string>
-    <string name="percent_used">%1$d%%</string>
-
-    <!-- Countdowns -->
-    <string name="resets_in">resets in %1$s</string>
-    <string name="reset_due">resetting now</string>
-    <string name="reset_unknown">reset time unknown</string>
-    <string name="duration_days_hours">%1$dd %2$dh</string>
-    <string name="duration_hours_minutes">%1$dh %2$dm</string>
-    <string name="duration_minutes">%1$dm</string>
-
-    <!-- Snapshot age -->
-    <string name="updated_just_now">updated just now</string>
-    <string name="updated_minutes">updated %1$dm ago</string>
-    <string name="updated_hours">updated %1$dh ago</string>
-    <string name="updated_days">updated %1$dd ago</string>
-    <string name="updated_never">no reading yet</string>
-
-    <!-- Alarm -->
-    <string name="alarm_channel_name">Limit resets</string>
-    <string name="alarm_channel_description">Rings when a Claude usage window rolls over.</string>
-    <string name="reset_notification_title">%1$s limit reset</string>
-    <string name="reset_notification_body">Your allowance is back.</string>
-    <string name="reset_headline">%1$s limit reset</string>
-    <string name="reset_body">Your allowance is back.</string>
-    <string name="action_dismiss">Dismiss</string>
 
     <!-- Main screen -->
     <string name="action_refresh">Refresh</string>
-    <string name="action_sign_in">Sign in</string>
     <string name="action_sign_out">Sign out</string>
     <string name="refreshing">Refreshing…</string>
-    <string name="signed_in">Signed in</string>
     <string name="status_signed_out">Sign in to read your limits.</string>
     <string name="status_session_expired">Session expired — sign in again.</string>
     <string name="status_waiting">Waiting for the first reading…</string>

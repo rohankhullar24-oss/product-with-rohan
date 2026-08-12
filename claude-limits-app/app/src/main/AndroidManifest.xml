@@ -1,16 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+    <!-- The rest merge in from usage-core, which needs them to do its job. -->
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
     <application
@@ -31,14 +22,15 @@
             </intent-filter>
         </activity>
 
+        <!-- Shared components live in usage-core but each app opts in here. -->
         <activity
-            android:name=".ui.LoginActivity"
+            android:name="online.productwithrohan.usagecore.LoginActivity"
             android:exported="false"
             android:label="@string/action_sign_in"
             android:parentActivityName=".ui.MainActivity" />
 
         <activity
-            android:name=".alarm.AlarmRingActivity"
+            android:name="online.productwithrohan.usagecore.AlarmRingActivity"
             android:exported="false"
             android:excludeFromRecents="true"
             android:launchMode="singleTask"
@@ -47,12 +39,12 @@
             android:taskAffinity=".AlarmRing" />
 
         <service
-            android:name=".alarm.AlarmService"
+            android:name="online.productwithrohan.usagecore.AlarmService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
         <receiver
-            android:name=".alarm.ResetAlarmReceiver"
+            android:name="online.productwithrohan.usagecore.ResetAlarmReceiver"
             android:exported="false" />
 
         <receiver
@@ -71,6 +63,8 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <!-- Sent by usage-core's RefreshWorker when a new snapshot lands. -->
+                <action android:name="online.productwithrohan.claudelimits.USAGE_UPDATED" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"

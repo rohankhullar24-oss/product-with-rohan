@@ -14,12 +14,13 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import online.productwithrohan.claudelimits.R
-import online.productwithrohan.claudelimits.alarm.ResetAlarmScheduler
-import online.productwithrohan.claudelimits.data.AuthState
-import online.productwithrohan.claudelimits.data.Store
-import online.productwithrohan.claudelimits.widget.Countdown
+import online.productwithrohan.usagecore.ResetAlarmScheduler
+import online.productwithrohan.usagecore.AuthState
+import online.productwithrohan.usagecore.Store
+import online.productwithrohan.usagecore.Countdown
 import online.productwithrohan.claudelimits.widget.UsageWidgetProvider
-import online.productwithrohan.claudelimits.work.RefreshScheduler
+import online.productwithrohan.usagecore.LoginActivity
+import online.productwithrohan.usagecore.RefreshScheduler
 
 /**
  * The full view behind the widget: both windows in detail, plus the permission

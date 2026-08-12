@@ -9,10 +9,11 @@ import android.content.Intent
 import android.view.View
 import android.widget.RemoteViews
 import online.productwithrohan.claudelimits.R
-import online.productwithrohan.claudelimits.data.AuthState
-import online.productwithrohan.claudelimits.data.Store
+import online.productwithrohan.usagecore.AuthState
+import online.productwithrohan.usagecore.Store
+import online.productwithrohan.usagecore.UsageEvents
 import online.productwithrohan.claudelimits.ui.MainActivity
-import online.productwithrohan.claudelimits.work.RefreshScheduler
+import online.productwithrohan.usagecore.RefreshScheduler
 
 /**
  * The home-screen widget: both limit windows as bars, with reset countdowns and
@@ -154,9 +155,16 @@ class UsageWidgetProvider : AppWidgetProvider() {
 
     override fun onReceive(context: Context, intent: Intent) {
         super.onReceive(context, intent)
-        if (intent.action == ACTION_REFRESH) {
-            RefreshScheduler.refreshNow(context)
-            refreshAll(context)
+        when (intent.action) {
+            // Tapping the widget's refresh icon.
+            ACTION_REFRESH -> {
+                RefreshScheduler.refreshNow(context)
+                refreshAll(context)
+            }
+            // A background refresh landed a new snapshot. The library signals
+            // rather than repainting directly, since it is shared with an app
+            // that has no widget.
+            UsageEvents.action(context) -> refreshAll(context)
         }
     }
 

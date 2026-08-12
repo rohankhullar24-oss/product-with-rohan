@@ -3,9 +3,21 @@ name: Build Reminder App APK
 on:
   push:
     branches: ["master", "claude/**"]
-    paths: ["reminder-app/**", ".github/workflows/reminder-app.yml"]
+    paths:
+      - "reminder-app/**"
+      - "usage-core/**"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - "gradle/**"
+      - ".github/workflows/reminder-app.yml"
   pull_request:
-    paths: ["reminder-app/**", ".github/workflows/reminder-app.yml"]
+    paths:
+      - "reminder-app/**"
+      - "usage-core/**"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - "gradle/**"
+      - ".github/workflows/reminder-app.yml"
   workflow_dispatch:
 
 permissions:
@@ -24,9 +36,10 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # Both apps and the shared usage-core module are one Gradle build rooted
+      # at the repo, so the task is module-qualified and runs from the root.
       - name: Build debug APK
-        working-directory: reminder-app
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew :reminder-app:assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

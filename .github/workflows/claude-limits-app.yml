@@ -3,9 +3,21 @@ name: Build Claude Limits APK
 on:
   push:
     branches: ["master", "claude/**"]
-    paths: ["claude-limits-app/**", ".github/workflows/claude-limits-app.yml"]
+    paths:
+      - "claude-limits-app/**"
+      - "usage-core/**"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - "gradle/**"
+      - ".github/workflows/claude-limits-app.yml"
   pull_request:
-    paths: ["claude-limits-app/**", ".github/workflows/claude-limits-app.yml"]
+    paths:
+      - "claude-limits-app/**"
+      - "usage-core/**"
+      - "settings.gradle.kts"
+      - "build.gradle.kts"
+      - "gradle/**"
+      - ".github/workflows/claude-limits-app.yml"
   workflow_dispatch:
 
 permissions:
@@ -24,9 +36,10 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # Both apps and the shared usage-core module are one Gradle build rooted
+      # at the repo, so the task is module-qualified and runs from the root.
       - name: Build debug APK
-        working-directory: claude-limits-app
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew :claude-limits-app:assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

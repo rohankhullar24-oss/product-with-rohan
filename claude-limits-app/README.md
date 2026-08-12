@@ -62,13 +62,18 @@ with `allowBackup="false"`. minSdk 26 (Android 8.0), targetSdk 34.
 
 ## Building
 
-Open `claude-limits-app/` in Android Studio and run, or:
+Open the repository root in Android Studio and run, or:
 
 ```bash
-cd claude-limits-app
-./gradlew assembleDebug
-# APK at app/build/outputs/apk/debug/app-debug.apk
+./gradlew :claude-limits-app:assembleDebug
+# APK at claude-limits-app/app/build/outputs/apk/debug/app-debug.apk
 ```
+
+This app, `reminder-app/` and the shared `usage-core/` library are one Gradle build rooted at the
+repository, so the wrapper lives at the root and tasks are module-qualified. The Claude usage
+layer — cookie login, the usage client, reset alarms and the threshold warning — lives in
+`usage-core/` and is shared with the Reminders app, which carries the same feature in a section of
+its own.
 
 CI builds the APK on every push touching `claude-limits-app/`
 (GitHub Actions → "Build Claude Limits APK" → artifact `claude-limits-debug-apk`).

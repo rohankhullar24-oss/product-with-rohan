@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import online.productwithrohan.claudelimits.widget.UsageWidgetProvider
-import online.productwithrohan.claudelimits.work.RefreshScheduler
+import online.productwithrohan.usagecore.RefreshScheduler
 
 /**
  * Alarms and periodic work do not survive a reboot, a package replacement, or a

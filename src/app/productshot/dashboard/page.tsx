@@ -36,7 +36,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Quick Links */}
-        <div className="mb-10 grid gap-4 sm:grid-cols-3">
+        <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             href="/productshot/shots"
             className="flex items-center justify-between rounded-lg bg-gradient-to-br from-accent to-accent/80 p-6 text-white hover:shadow-lg transition-shadow"
@@ -72,6 +72,27 @@ export default async function DashboardPage() {
               viewBox="0 0 20 20"
             >
               <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
+            </svg>
+          </Link>
+
+          <Link
+            href="/productshot/teardowns"
+            className="flex items-center justify-between rounded-lg bg-gradient-to-br from-teal-400 to-teal-500 p-6 text-white hover:shadow-lg transition-shadow"
+          >
+            <div>
+              <p className="text-sm font-medium opacity-90">Teardowns</p>
+              <p className="text-lg font-bold">Company deep dives</p>
+            </div>
+            <svg
+              className="h-8 w-8 opacity-50"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm0 2h12v8H4V6zm2 6l2.5-3 1.5 2 2-2.5L15 12H6z"
+                clipRule="evenodd"
+              />
             </svg>
           </Link>
 

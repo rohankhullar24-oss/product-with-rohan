@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: claude-limits-debug-apk
-          path: claude-limits-app/app/build/outputs/apk/debug/app-debug.apk
+          path: claude-limits-app/app/build/outputs/apk/debug/*.apk
 
       # Publish the APK on a rolling prerelease so it has a phone-friendly
       # download URL (Actions artifacts require a login and arrive as a zip).
@@ -57,7 +57,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp claude-limits-app/app/build/outputs/apk/debug/app-debug.apk ClaudeLimits.apk
+          cp claude-limits-app/app/build/outputs/apk/debug/*.apk ClaudeLimits.apk
           gh release create claude-limits-app-latest --prerelease \
             --title "Claude Limits app (latest build)" \
             --notes "Auto-built debug APK of claude-limits-app/. Download ClaudeLimits.apk on your phone and install it." \
@@ -71,7 +71,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp claude-limits-app/app/build/outputs/apk/debug/app-debug.apk ClaudeLimits.apk
+          cp claude-limits-app/app/build/outputs/apk/debug/*.apk ClaudeLimits.apk
           gh release create claude-limits-app-preview --prerelease \
             --title "Claude Limits app (branch preview)" \
             --notes "Unreviewed build from a work-in-progress branch. Overwritten by every branch push — use the claude-limits-app-latest release for the stable download." \

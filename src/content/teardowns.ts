@@ -23,15 +23,6 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/country-delight/2026-08-08-teardown.png",
     publishedDate: "2026-08-08",
   },
-  {
-    slug: "urban-company-clock-problem",
-    company: "Urban Company",
-    eyebrow: "Product Teardown · India · August 2026",
-    headline: "Urban Company has a clock problem.",
-    dek: "A prepared services marketplace is testing a 15-minute promise. The five metrics I would use before scaling it.",
-    image: "/teardowns/urban-company-clock-problem.png",
-    publishedDate: null,
-  },
 ];
 
 export function getTeardowns(): Teardown[] {

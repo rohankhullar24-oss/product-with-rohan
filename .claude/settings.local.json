@@ -52,7 +52,31 @@
       "PowerShell(Resolve-DnsName -Name \"_dmarc.productwithrohan.online\" -Type TXT -Server 8.8.8.8 -ErrorAction Stop)",
       "mcp__fa9c86a8-a8c8-47ec-a364-7432499fd737__search_threads",
       "Skill(deep-research)",
-      "Skill(deep-research:*)"
+      "Skill(deep-research:*)",
+      "Bash(powershell -Command \"\\(Get-Date '2026-08-03'\\).DayOfWeek\")",
+      "Bash(xargs -I{} sh -c 'grep -E \"^title:\" {}')",
+      "WebFetch(domain:productwithrohan.online)",
+      "Read(//c/Users/DELL/.claude/scheduled-tasks/product-shots-daily-content/checks/**)",
+      "Bash(node history.mjs summary)",
+      "Bash(cd \"C:\\\\Users\\\\DELL\\\\.claude\\\\scheduled-tasks\\\\product-shots-daily-content\" && echo \"---HINTS---\" && cat next-run-hints.md 2>&1 && echo \"---PROPOSALS---\" && cat proposals.md 2>&1 && echo \"---CTALOGS---\" && cat linkedin-cta-log.md 2>&1 && echo \"---SUBSTACK LOG---\" && cat substack-cta-log.md 2>&1)",
+      "Bash(node checks/history.mjs summary)",
+      "Bash(node check.mjs news --file \"C:\\\\Users\\\\DELL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-DELL-OneDrive-Desktop-MySite\\\\6f4d9f55-6be9-4eb0-a44e-e89bd431996f\\\\scratchpad\\\\items.json\" --existing \"C:\\\\Users\\\\DELL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-DELL-OneDrive-Desktop-MySite\\\\6f4d9f55-6be9-4eb0-a44e-e89bd431996f\\\\scratchpad\\\\existing.json\" --today 2026-08-13)",
+      "Bash(python3 -c ' *)",
+      "Bash(cp \"C:/Users/DELL/AppData/Local/Temp/claude/C--Users-DELL-OneDrive-Desktop-MySite/6f4d9f55-6be9-4eb0-a44e-e89bd431996f/scratchpad/prd-blog-draft.md\" \"C:/Users/DELL/OneDrive/Desktop/MySite/src/content/blog/how-to-write-a-prd-engineers-actually-read.md\" *)",
+      "Bash(node check.mjs blog --file \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\\\\src\\\\content\\\\blog\\\\how-to-write-a-prd-engineers-actually-read.md\" --blogdir \"C:\\\\Users\\\\DELL\\\\OneDrive\\\\Desktop\\\\MySite\\\\src\\\\content\\\\blog\" --date 2026-08-13)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://productwithrohan.online/blogs/how-to-write-a-prd-engineers-actually-read\")",
+      "Bash(node check.mjs published --url \"https://productwithrohan.online/blogs/how-to-write-a-prd-engineers-actually-read\" --expect \"The PRD Template Is Not the Problem\")",
+      "Bash(node check.mjs social --platform linkedin --file \"C:\\\\Users\\\\DELL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-DELL-OneDrive-Desktop-MySite\\\\6f4d9f55-6be9-4eb0-a44e-e89bd431996f\\\\scratchpad\\\\linkedin-draft.txt\" --ctalog \"C:\\\\Users\\\\DELL\\\\.claude\\\\scheduled-tasks\\\\product-shots-daily-content\\\\linkedin-cta-log.md\" --blogurl \"https://productwithrohan.online/blogs/how-to-write-a-prd-engineers-actually-read\")",
+      "Bash(node check.mjs social --platform substack --file \"C:\\\\Users\\\\DELL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-DELL-OneDrive-Desktop-MySite\\\\6f4d9f55-6be9-4eb0-a44e-e89bd431996f\\\\scratchpad\\\\substack-note-draft.txt\" --ctalog \"C:\\\\Users\\\\DELL\\\\.claude\\\\scheduled-tasks\\\\product-shots-daily-content\\\\substack-cta-log.md\" --blogurl \"https://productwithrohan.online/blogs/how-to-write-a-prd-engineers-actually-read\")",
+      "mcp__99d3be4a-0780-4d39-bbd0-f87770e953b3__schedule_note",
+      "Bash(node history.mjs append --file \"C:\\\\Users\\\\DELL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-DELL-OneDrive-Desktop-MySite\\\\6f4d9f55-6be9-4eb0-a44e-e89bd431996f\\\\scratchpad\\\\run-record.json\")",
+      "mcp__99d3be4a-0780-4d39-bbd0-f87770e953b3__get_user_profile",
+      "Bash(node check.mjs published --url https://productwithrohan.online/blogs/how-to-write-a-prd-engineers-actually-read --expect \"PRD Template\")",
+      "Bash(node -c check.mjs)",
+      "WebFetch(domain:linear.app)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\DELL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-DELL-OneDrive-Desktop-MySite\\\\6f4d9f55-6be9-4eb0-a44e-e89bd431996f\\\\scratchpad\\\\teardown-dryrun\" && ls \"C:\\\\Users\\\\DELL\\\\AppData\\\\Roaming\\\\Claude\\\\local-agent-mode-sessions\\\\skills-plugin\\\\70ad5b4f-bcaa-4dfc-a12e-42d588378f16\\\\9b6c05b8-a769-42fa-9385-49c67828b275\\\\skills\\\\infographic\\\\scripts\\\\\")",
+      "Bash(SKILL_DIR=\"/c/Users/DELL/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/70ad5b4f-bcaa-4dfc-a12e-42d588378f16/9b6c05b8-a769-42fa-9385-49c67828b275/skills/infographic\" *)",
+      "Bash(node -e ' *)"
     ]
   }
 }

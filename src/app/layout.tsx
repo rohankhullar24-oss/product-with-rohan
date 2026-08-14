@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
+import { GoogleTagManager } from "@next/third-parties/google";
 import { ThemeProvider } from "@/lib/theme-context";
 import StructuredData from "@/components/StructuredData";
 import "./globals.css";
@@ -63,10 +64,19 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <GoogleTagManager gtmId="GTM-NHH98FPK" />
       <head>
         <StructuredData />
       </head>
       <body className="min-h-full flex flex-col transition-colors">
+        <noscript>
+          <iframe
+            src="https://www.googletagmanager.com/ns.html?id=GTM-NHH98FPK"
+            height="0"
+            width="0"
+            style={{ display: "none", visibility: "hidden" }}
+          />
+        </noscript>
         <ThemeProvider>{children}</ThemeProvider>
         <Analytics />
       </body>

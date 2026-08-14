@@ -23,6 +23,16 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/country-delight/2026-08-08-teardown.png",
     publishedDate: "2026-08-08",
   },
+  {
+    slug: "zerodha-teardown-pm-lens",
+    company: "Zerodha",
+    eyebrow: "Product Teardown · India Fintech · August 2026",
+    headline: "Zerodha never sold trading. It sold the absence of a salesperson.",
+    dek: "India's largest stockbroker by profit, built with zero venture capital, now defending its moat as pricing stops being a differentiator.",
+    image:
+      "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/zerodha-teardown-pm-lens.png",
+    publishedDate: "2026-08-15",
+  },
 ];
 
 export function getTeardowns(): Teardown[] {

@@ -42,6 +42,16 @@
             android:parentActivityName=".MainActivity" />
 
         <activity
+            android:name=".JournalActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".JournalEditActivity"
+            android:exported="false"
+            android:parentActivityName=".JournalActivity" />
+
+        <activity
             android:name=".AlarmRingActivity"
             android:exported="false"
             android:excludeFromRecents="true"

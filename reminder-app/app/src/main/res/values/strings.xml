@@ -69,6 +69,18 @@
 
     <string name="notification_sound">Notification sound</string>
 
+    <string name="title_journal">Journal</string>
+    <string name="empty_journal">No journal entries yet.\nTap + to write your first thought.</string>
+    <string name="add_journal_entry">Add journal entry</string>
+    <string name="title_new_journal">New entry</string>
+    <string name="title_edit_journal">Edit entry</string>
+    <string name="hint_journal_text">What\'s on your mind?</string>
+    <string name="delete_journal_entry">Delete entry</string>
+    <string name="delete_journal_title">Delete entry?</string>
+    <string name="delete_journal_message">This journal entry will be removed from this device and, if signed in, from the cloud.</string>
+    <string name="journal_unlock_title">Unlock Journal</string>
+    <string name="journal_no_lock_set">Set a screen lock (PIN, pattern, fingerprint or face) in your phone\'s settings to use the Journal.</string>
+
     <string name="alarm_channel_name">Ringing alarms</string>
     <string name="alarm_channel_description">Full-screen alarm that rings until you respond</string>
     <string name="alarm_ringing">Reminder — tap Done to stop</string>

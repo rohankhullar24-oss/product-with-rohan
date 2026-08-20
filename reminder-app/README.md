@@ -24,6 +24,11 @@ A native Android app for reminders that **keep nagging you until you confirm the
   (Supabase). Signed in, your reminders sync across devices — log in on any
   phone and they're there, merged last-write-wins, with deletions propagated.
   Without an account everything still works fully offline and on-device.
+- **Journal** (⋮ → Journal): write down free-form thoughts, locked behind
+  your device's biometric or screen-lock credential every time you open it.
+  Entries are encrypted at rest on-device and follow the same offline-first
+  sync as reminders — saved locally even when signed out, and merged to the
+  cloud (separately from reminders) when signed in.
 - **Survives uninstall**: reminders are included in Android's Google cloud
   backup and device-to-device transfer, and the ⋮ menu has manual
   **Export backup / Import backup** (a JSON file you can keep in Drive,

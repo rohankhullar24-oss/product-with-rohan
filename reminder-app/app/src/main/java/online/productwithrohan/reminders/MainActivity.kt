@@ -125,6 +125,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.action_journal -> {
+            startActivity(Intent(this, JournalActivity::class.java))
+            true
+        }
         R.id.action_account -> {
             startActivity(Intent(this, AccountActivity::class.java))
             true

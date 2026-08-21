@@ -76,21 +76,21 @@ export default function FilesPage() {
 
     const { data, error } = await supabase.storage
       .from(BUCKET)
-      .download(`${SLOT_PREFIX}/${currentFileName}`);
+      .createSignedUrl(`${SLOT_PREFIX}/${currentFileName}`, 60, {
+        download: currentFileName,
+      });
 
     if (error || !data) {
       setStatus(`Download failed: ${error?.message ?? "unknown error"}`);
       return;
     }
 
-    const url = URL.createObjectURL(data);
     const a = document.createElement("a");
-    a.href = url;
+    a.href = data.signedUrl;
     a.download = currentFileName;
     document.body.appendChild(a);
     a.click();
     a.remove();
-    URL.revokeObjectURL(url);
     setStatus(null);
   }
 

@@ -2,18 +2,23 @@ package online.productwithrohan.productshot
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.DownloadManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.view.KeyEvent
 import android.webkit.CookieManager
+import android.webkit.URLUtil
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.ProgressBar
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
@@ -34,6 +39,17 @@ private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 100
 // login redirect) are included so that link stays in-app.
 private fun isInAppHost(host: String): Boolean {
     return host == SITE_HOST || host == "productalliance.com" || host.endsWith(".productalliance.com")
+}
+
+// The web app hands out Supabase Storage signed URLs (with a `download` query
+// param) for file downloads, e.g. from productshot/files. WebView has no
+// built-in download handling for these — such a URL has to be routed to
+// Android's DownloadManager explicitly instead of being loaded as a page.
+private fun isSupabaseDownloadUrl(uri: Uri): Boolean {
+    val host = uri.host ?: return false
+    return host.endsWith(".supabase.co") &&
+        uri.path?.contains("/storage/v1/object/sign/") == true &&
+        uri.getQueryParameter("download") != null
 }
 
 class MainActivity : AppCompatActivity() {
@@ -70,6 +86,10 @@ class MainActivity : AppCompatActivity() {
         webView.webViewClient = object : WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val uri = request.url
+                if (isSupabaseDownloadUrl(uri)) {
+                    startDownload(uri)
+                    return true
+                }
                 return if (uri.host != null && isInAppHost(uri.host!!)) {
                     false // let the WebView load it
                 } else {
@@ -120,6 +140,18 @@ class MainActivity : AppCompatActivity() {
     private fun urlForOpenPath(intent: Intent): String {
         val path = intent.getStringExtra(EXTRA_OPEN_PATH)
         return if (path != null) "https://$SITE_HOST$path" else HOME_URL
+    }
+
+    private fun startDownload(uri: Uri) {
+        val fileName = uri.getQueryParameter("download")?.takeIf { it.isNotBlank() }
+            ?: URLUtil.guessFileName(uri.toString(), null, null)
+        val request = DownloadManager.Request(uri)
+            .setTitle(fileName)
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+        val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        downloadManager.enqueue(request)
+        Toast.makeText(this, "Downloading $fileName…", Toast.LENGTH_SHORT).show()
     }
 
     private fun requestNotificationPermissionIfNeeded() {

@@ -83,14 +83,14 @@
 
     <string name="remove">Remove</string>
 
-    <string name="journal_action_photo">Photo</string>
-    <string name="journal_action_video">Video</string>
+    <string name="journal_action_gallery">Photos</string>
+    <string name="journal_action_camera">Camera</string>
     <string name="journal_action_record_audio">Record</string>
     <string name="journal_action_location">Location</string>
     <string name="journal_action_suggestions">Suggestions</string>
+    <string name="journal_action_done">Done</string>
     <string name="journal_take_photo">Take photo</string>
     <string name="journal_take_video">Take video</string>
-    <string name="journal_choose_gallery">Choose from gallery</string>
 
     <string name="journal_stop_recording">Stop recording</string>
     <string name="journal_recording_failed">Couldn\'t start recording</string>
@@ -108,7 +108,7 @@
 
     <string name="journal_suggestion_use_location">📍 Use current location</string>
     <string name="journal_suggestion_recent_photos">Recent photos</string>
-    <string name="journal_suggestion_no_photos">No photos available — allow photo access to see suggestions here, or add one manually with the Photo button.</string>
+    <string name="journal_suggestion_no_photos">No photos available — allow photo access to see suggestions here, or add one manually with the Photos button.</string>
 
     <string name="alarm_channel_name">Ringing alarms</string>
     <string name="alarm_channel_description">Full-screen alarm that rings until you respond</string>

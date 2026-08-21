@@ -44,6 +44,15 @@ A native Android app for reminders that **keep nagging you until you confirm the
     draw those from, so only photos and location are offered.)
   - Attachments are device-local only — they don't yet travel through cloud
     sync to a second device, only the entry's text/location does.
+  - **Cloud schema isn't in this repo**: cloud sync for Journal relies on a
+    `journal_entries` table (same shape and per-user RLS policies as
+    `reminders`: `id`, `user_id`, `payload` jsonb, `updated_at`, `deleted`)
+    that was created directly on the Supabase project via the Supabase MCP
+    tools, not via a checked-in migration — there's no `supabase/migrations`
+    directory in this repo at all, so `reminders`' table isn't documented
+    in-repo either. If you're working on Journal sync and don't have access
+    to the live project (`uksoubgwjbgjwtaafdxo`), you'll need to recreate
+    this table from the description above before sync will work.
 - **Survives uninstall**: reminders are included in Android's Google cloud
   backup and device-to-device transfer, and the ⋮ menu has manual
   **Export backup / Import backup** (a JSON file you can keep in Drive,
@@ -72,6 +81,18 @@ CI builds the APK automatically on every push touching `reminder-app/`
 Download the artifact, unzip, copy `app-debug.apk` to your phone and install
 (you'll need to allow installs from unknown sources).
 
+That artifact download requires a GitHub login and unzipping, which is
+awkward from a sandboxed agent session with no browser. There are two
+GitHub Releases with a direct, no-login `.apk` download link instead,
+both kept up to date by the same workflow:
+`releases/download/reminder-app-latest/Reminders.apk` (rebuilt on every
+`master` push — this is what the website's download button links to) and
+`releases/download/reminder-app-preview/Reminders.apk` (rebuilt on every
+`claude/**` branch push, overwritten each time). Note that plain Actions
+artifact downloads redirect to Azure Blob Storage, which a sandboxed
+agent's egress policy may block entirely — the release-asset URLs above
+download fine through that same sandbox, since they stay on github.com.
+
 ## First-run permissions
 
 1. Allow **notifications** when prompted (Android 13+).
@@ -79,3 +100,11 @@ Download the artifact, unzip, copy `app-debug.apk` to your phone and install
    "Alarms & reminders" — otherwise Android may delay reminders.
 3. For the most reliable nagging, exclude the app from battery optimisation
    (Settings → Apps → Reminders → Battery → Unrestricted).
+
+Journal asks for further permissions the first time each feature is used,
+not upfront: microphone (voice memos), location (tagging an entry or the
+"use current location" suggestion), and photo/media access (the recent-
+photos suggestions tray only — attaching a photo via the gallery picker
+needs no permission, since that goes through the system picker). Camera
+photo/video capture also needs no `CAMERA` permission declared here, since
+it's delegated to the system camera app via an implicit intent.

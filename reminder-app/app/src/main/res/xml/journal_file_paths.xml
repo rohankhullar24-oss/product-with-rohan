@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Camera photo/video captures land here before being read, encrypted
+         into journal_media/, and deleted — see JournalMediaStore. -->
+    <cache-path name="journal_camera" path="journal_camera/" />
+</paths>

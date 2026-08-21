@@ -81,6 +81,35 @@
     <string name="journal_unlock_title">Unlock Journal</string>
     <string name="journal_no_lock_set">Set a screen lock (PIN, pattern, fingerprint or face) in your phone\'s settings to use the Journal.</string>
 
+    <string name="remove">Remove</string>
+
+    <string name="journal_action_photo">Photo</string>
+    <string name="journal_action_video">Video</string>
+    <string name="journal_action_record_audio">Record</string>
+    <string name="journal_action_location">Location</string>
+    <string name="journal_action_suggestions">Suggestions</string>
+    <string name="journal_take_photo">Take photo</string>
+    <string name="journal_take_video">Take video</string>
+    <string name="journal_choose_gallery">Choose from gallery</string>
+
+    <string name="journal_stop_recording">Stop recording</string>
+    <string name="journal_recording_failed">Couldn\'t start recording</string>
+    <string name="journal_audio_permission_denied">Microphone permission is needed to record a voice memo</string>
+    <string name="journal_play_audio">Play</string>
+    <string name="journal_stop_audio">Stop</string>
+
+    <string name="journal_location_permission_denied">Location permission is needed to tag this entry</string>
+    <string name="journal_locating">Finding your location…</string>
+    <string name="journal_location_failed">Couldn\'t get your location</string>
+    <string name="journal_location_coordinates">%1$.4f, %2$.4f</string>
+
+    <string name="journal_calendar_title">Calendar</string>
+    <string name="journal_calendar_empty">No entries on this day</string>
+
+    <string name="journal_suggestion_use_location">📍 Use current location</string>
+    <string name="journal_suggestion_recent_photos">Recent photos</string>
+    <string name="journal_suggestion_no_photos">No photos available — allow photo access to see suggestions here, or add one manually with the Photo button.</string>
+
     <string name="alarm_channel_name">Ringing alarms</string>
     <string name="alarm_channel_description">Full-screen alarm that rings until you respond</string>
     <string name="alarm_ringing">Reminder — tap Done to stop</string>

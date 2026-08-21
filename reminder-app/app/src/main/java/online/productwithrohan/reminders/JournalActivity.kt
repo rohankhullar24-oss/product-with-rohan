@@ -2,6 +2,8 @@ package online.productwithrohan.reminders
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -59,6 +61,19 @@ class JournalActivity : AppCompatActivity() {
                 if (changed) runOnUiThread { refresh() }
             }
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.journal_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.action_journal_calendar -> {
+            startActivity(Intent(this, JournalCalendarActivity::class.java))
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
     }
 
     private fun authenticate() {

@@ -3,6 +3,7 @@ package online.productwithrohan.reminders
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import java.text.DateFormat
@@ -21,6 +22,7 @@ class JournalAdapter(
     }
 
     class Holder(view: View) : RecyclerView.ViewHolder(view) {
+        val thumbnail: ImageView = view.findViewById(R.id.item_thumbnail)
         val date: TextView = view.findViewById(R.id.item_date)
         val text: TextView = view.findViewById(R.id.item_text)
     }
@@ -35,9 +37,20 @@ class JournalAdapter(
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
         val entry = items[position]
+        val context = holder.itemView.context
+
+        val badges = buildString {
+            if (entry.videoFile != null) append(" 🎥")
+            if (entry.audioFile != null) append(" 🎤")
+            if (entry.hasLocation()) append(" 📍")
+            entry.placeName?.let { append(" $it") }
+        }
         holder.date.text = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
-            .format(Date(entry.updatedAt))
+            .format(Date(entry.updatedAt)) + badges
         holder.text.text = entry.text
+
+        ThumbnailLoader.load(holder.thumbnail, entry.photoFile)
+
         holder.itemView.setOnClickListener { onClick(entry) }
     }
 }

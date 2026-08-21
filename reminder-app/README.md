@@ -29,6 +29,21 @@ A native Android app for reminders that **keep nagging you until you confirm the
   Entries are encrypted at rest on-device and follow the same offline-first
   sync as reminders — saved locally even when signed out, and merged to the
   cloud (separately from reminders) when signed in.
+  - **Card feed**: each entry shows as a card with a photo thumbnail (if any),
+    a text snippet, the date, and small badges for video/audio/location.
+  - **Rich entries**: attach a photo or video (camera or gallery), record a
+    voice memo in-app, and/or tag the entry with your current location
+    (reverse-geocoded to a place name where possible). All attachments are
+    encrypted at rest, same as the entry text.
+  - **Calendar view** (Journal's own ⋮ → Calendar): jump straight to whatever
+    was written on a given day.
+  - **Suggestions**: a tray of recent photos from your device and a
+    "use current location" shortcut, so an entry doesn't have to start from a
+    blank page. (Apple Journal's version also suggests workouts and
+    now-playing songs — there's no fitness/music data source in this app to
+    draw those from, so only photos and location are offered.)
+  - Attachments are device-local only — they don't yet travel through cloud
+    sync to a second device, only the entry's text/location does.
 - **Survives uninstall**: reminders are included in Android's Google cloud
   backup and device-to-device transfer, and the ⋮ menu has manual
   **Export backup / Import backup** (a JSON file you can keep in Drive,

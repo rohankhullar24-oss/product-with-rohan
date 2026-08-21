@@ -20,6 +20,7 @@ import android.widget.MediaController
 import android.widget.TextView
 import android.widget.Toast
 import android.widget.VideoView
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -76,10 +77,6 @@ class JournalEditActivity : AppCompatActivity() {
         }
     }
 
-    private val pickPhotoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let { replacePhoto(JournalMediaStore.saveFromUri(this, it)) }
-    }
-
     private val captureVideoLauncher = registerForActivityResult(ActivityResultContracts.CaptureVideo()) { success ->
         val file = pendingCameraFile
         pendingCameraFile = null
@@ -88,8 +85,15 @@ class JournalEditActivity : AppCompatActivity() {
         }
     }
 
-    private val pickVideoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let { replaceVideo(JournalMediaStore.saveFromUri(this, it)) }
+    /** One gallery picker for either a photo or a video; routed by the picked item's mime type. */
+    private val pickMediaLauncher = registerForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        val mimeType = contentResolver.getType(uri) ?: ""
+        if (mimeType.startsWith("video")) {
+            replaceVideo(JournalMediaStore.saveFromUri(this, uri))
+        } else {
+            replacePhoto(JournalMediaStore.saveFromUri(this, uri))
+        }
     }
 
     private val recordAudioPermissionLauncher =
@@ -150,8 +154,10 @@ class JournalEditActivity : AppCompatActivity() {
         originalVideoFile = videoFile
         originalAudioFile = audioFile
 
-        findViewById<ImageButton>(R.id.button_add_photo).setOnClickListener { choosePhotoSource() }
-        findViewById<ImageButton>(R.id.button_add_video).setOnClickListener { chooseVideoSource() }
+        findViewById<ImageButton>(R.id.button_gallery).setOnClickListener {
+            pickMediaLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
+        }
+        findViewById<ImageButton>(R.id.button_camera).setOnClickListener { chooseCameraMode() }
         findViewById<ImageButton>(R.id.button_add_location).setOnClickListener { onLocationTapped() }
         findViewById<ImageButton>(R.id.button_suggestions).setOnClickListener {
             suggestionsLauncher.launch(Intent(this, JournalSuggestionsActivity::class.java))
@@ -201,15 +207,17 @@ class JournalEditActivity : AppCompatActivity() {
         JournalMediaStore.clearPlaybackCache(this)
     }
 
-    // --- Photo ---
+    // --- Camera (photo or video capture; gallery picking is a separate button) ---
 
-    private fun choosePhotoSource() {
+    private fun chooseCameraMode() {
         AlertDialog.Builder(this)
-            .setItems(arrayOf(getString(R.string.journal_take_photo), getString(R.string.journal_choose_gallery))) { _, which ->
-                if (which == 0) launchCameraPhoto() else pickPhotoLauncher.launch("image/*")
+            .setItems(arrayOf(getString(R.string.journal_take_photo), getString(R.string.journal_take_video))) { _, which ->
+                if (which == 0) launchCameraPhoto() else launchCameraVideo()
             }
             .show()
     }
+
+    // --- Photo ---
 
     private fun launchCameraPhoto() {
         val file = newCameraFile("photo", "jpg")
@@ -230,14 +238,6 @@ class JournalEditActivity : AppCompatActivity() {
     }
 
     // --- Video ---
-
-    private fun chooseVideoSource() {
-        AlertDialog.Builder(this)
-            .setItems(arrayOf(getString(R.string.journal_take_video), getString(R.string.journal_choose_gallery))) { _, which ->
-                if (which == 0) launchCameraVideo() else pickVideoLauncher.launch("video/*")
-            }
-            .show()
-    }
 
     private fun launchCameraVideo() {
         val file = newCameraFile("video", "mp4")

@@ -23,6 +23,7 @@ class JournalAdapter(
 
     class Holder(view: View) : RecyclerView.ViewHolder(view) {
         val thumbnail: ImageView = view.findViewById(R.id.item_thumbnail)
+        val title: TextView = view.findViewById(R.id.item_title)
         val date: TextView = view.findViewById(R.id.item_date)
         val text: TextView = view.findViewById(R.id.item_text)
     }
@@ -47,7 +48,18 @@ class JournalAdapter(
         }
         holder.date.text = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT)
             .format(Date(entry.updatedAt)) + badges
-        holder.text.text = entry.text
+
+        // A journal entry has no separate title field — the first line reads as
+        // one when there's more text after it, same as most notes/journal apps.
+        val newlineIndex = entry.text.indexOf('\n')
+        if (newlineIndex > 0) {
+            holder.title.visibility = View.VISIBLE
+            holder.title.text = entry.text.substring(0, newlineIndex).trim()
+            holder.text.text = entry.text.substring(newlineIndex + 1).trim()
+        } else {
+            holder.title.visibility = View.GONE
+            holder.text.text = entry.text
+        }
 
         ThumbnailLoader.load(holder.thumbnail, entry.photoFile)
 

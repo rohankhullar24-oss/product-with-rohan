@@ -139,7 +139,29 @@
         android:orientation="horizontal">
 
         <ImageButton
-            android:id="@+id/button_add_photo"
+            android:id="@+id/button_suggestions"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:scaleType="centerInside"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_suggestions"
+            android:contentDescription="@string/journal_action_suggestions" />
+
+        <ImageButton
+            android:id="@+id/button_gallery"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:scaleType="centerInside"
+            android:padding="12dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_gallery"
+            android:contentDescription="@string/journal_action_gallery" />
+
+        <ImageButton
+            android:id="@+id/button_camera"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -147,18 +169,7 @@
             android:padding="12dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_photo"
-            android:contentDescription="@string/journal_action_photo" />
-
-        <ImageButton
-            android:id="@+id/button_add_video"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:scaleType="centerInside"
-            android:padding="12dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_video"
-            android:contentDescription="@string/journal_action_video" />
+            android:contentDescription="@string/journal_action_camera" />
 
         <ImageButton
             android:id="@+id/button_record_audio"
@@ -181,16 +192,5 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@drawable/ic_location"
             android:contentDescription="@string/journal_action_location" />
-
-        <ImageButton
-            android:id="@+id/button_suggestions"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:scaleType="centerInside"
-            android:padding="12dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:src="@drawable/ic_suggestions"
-            android:contentDescription="@string/journal_action_suggestions" />
     </LinearLayout>
 </LinearLayout>

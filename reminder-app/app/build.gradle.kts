@@ -11,8 +11,8 @@ android {
         applicationId = "online.productwithrohan.reminders"
         minSdk = 26
         targetSdk = 34
-        versionCode = 8
-        versionName = "3.3"
+        versionCode = 10
+        versionName = "3.5"
     }
 
     buildTypes {
@@ -33,6 +33,9 @@ android {
 
 dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+
+    // Device biometric/lock-screen gate for the Journal section.
+    implementation("androidx.biometric:biometric:1.1.0")
 
     // The Claude usage layer, plus the AndroidX/Material dependencies it
     // exposes as api() — core-ktx, appcompat, material, work, security-crypto.

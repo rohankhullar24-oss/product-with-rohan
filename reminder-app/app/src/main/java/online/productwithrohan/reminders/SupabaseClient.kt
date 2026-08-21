@@ -113,6 +113,27 @@ object SupabaseClient {
         if (code !in 200..299) throw IOException("Push failed ($code): $resp")
     }
 
+    /** All of this user's journal rows, including tombstones. */
+    fun fetchJournalRows(context: Context): JSONArray {
+        val token = accessToken(context)
+        val (code, resp) = request(
+            "GET", "$SUPABASE_URL/rest/v1/journal_entries?select=id,payload,updated_at,deleted", null, token
+        )
+        if (code !in 200..299) throw IOException("Fetch failed ($code): $resp")
+        return JSONArray(resp)
+    }
+
+    /** Upserts journal rows (insert or overwrite by primary key). */
+    fun upsertJournalRows(context: Context, rows: JSONArray) {
+        if (rows.length() == 0) return
+        val token = accessToken(context)
+        val (code, resp) = request(
+            "POST", "$SUPABASE_URL/rest/v1/journal_entries", rows.toString(), token,
+            mapOf("Prefer" to "resolution=merge-duplicates,return=minimal")
+        )
+        if (code !in 200..299) throw IOException("Push failed ($code): $resp")
+    }
+
     private fun request(
         method: String,
         url: String,

@@ -12,6 +12,15 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
+    <!-- Journal attachments: in-app audio recording, current-location tagging,
+         and the recent-photos suggestions tray. Camera/gallery photo & video
+         capture use the system apps' own pickers and need no permission here. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
     <application
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
@@ -40,6 +49,36 @@
             android:name=".AccountActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".JournalActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".JournalEditActivity"
+            android:exported="false"
+            android:parentActivityName=".JournalActivity" />
+
+        <activity
+            android:name=".JournalSuggestionsActivity"
+            android:exported="false"
+            android:parentActivityName=".JournalEditActivity" />
+
+        <activity
+            android:name=".JournalCalendarActivity"
+            android:exported="false"
+            android:parentActivityName=".JournalActivity" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/journal_file_paths" />
+        </provider>
 
         <activity
             android:name=".AlarmRingActivity"

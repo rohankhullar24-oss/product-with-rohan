@@ -8,6 +8,9 @@ import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.TypedValue
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -22,6 +25,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import com.google.android.material.R as MaterialR
 import java.io.File
 
 /**
@@ -43,7 +47,7 @@ class JournalEditActivity : AppCompatActivity() {
     private lateinit var playAudioButton: Button
     private lateinit var rowLocation: View
     private lateinit var locationText: TextView
-    private lateinit var recordAudioButton: Button
+    private lateinit var recordAudioButton: ImageButton
 
     private var entry: JournalEntry? = null
 
@@ -146,10 +150,10 @@ class JournalEditActivity : AppCompatActivity() {
         originalVideoFile = videoFile
         originalAudioFile = audioFile
 
-        findViewById<Button>(R.id.button_add_photo).setOnClickListener { choosePhotoSource() }
-        findViewById<Button>(R.id.button_add_video).setOnClickListener { chooseVideoSource() }
-        findViewById<Button>(R.id.button_add_location).setOnClickListener { onLocationTapped() }
-        findViewById<Button>(R.id.button_suggestions).setOnClickListener {
+        findViewById<ImageButton>(R.id.button_add_photo).setOnClickListener { choosePhotoSource() }
+        findViewById<ImageButton>(R.id.button_add_video).setOnClickListener { chooseVideoSource() }
+        findViewById<ImageButton>(R.id.button_add_location).setOnClickListener { onLocationTapped() }
+        findViewById<ImageButton>(R.id.button_suggestions).setOnClickListener {
             suggestionsLauncher.launch(Intent(this, JournalSuggestionsActivity::class.java))
         }
         recordAudioButton.setOnClickListener { onRecordTapped() }
@@ -165,16 +169,28 @@ class JournalEditActivity : AppCompatActivity() {
             renderLocation()
         }
 
-        findViewById<Button>(R.id.button_save).setOnClickListener { save() }
-
-        val deleteButton = findViewById<Button>(R.id.button_delete)
-        deleteButton.visibility = if (entry == null) View.GONE else View.VISIBLE
-        deleteButton.setOnClickListener { confirmDelete() }
-
         renderPhoto()
         renderVideo()
         renderAudio()
         renderLocation()
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.journal_edit_menu, menu)
+        menu.findItem(R.id.action_delete_entry).isVisible = entry != null
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.action_save_entry -> {
+            save()
+            true
+        }
+        R.id.action_delete_entry -> {
+            confirmDelete()
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
     }
 
     override fun onDestroy() {
@@ -283,7 +299,8 @@ class JournalEditActivity : AppCompatActivity() {
                 start()
             }
             isRecording = true
-            recordAudioButton.text = getString(R.string.journal_stop_recording)
+            recordAudioButton.setColorFilter(themeColor(MaterialR.attr.colorError))
+            recordAudioButton.contentDescription = getString(R.string.journal_stop_recording)
         } catch (e: Exception) {
             recorder = null
             recordingFile = null
@@ -302,7 +319,8 @@ class JournalEditActivity : AppCompatActivity() {
         }
         recorder = null
         isRecording = false
-        recordAudioButton.text = getString(R.string.journal_action_record_audio)
+        recordAudioButton.clearColorFilter()
+        recordAudioButton.contentDescription = getString(R.string.journal_action_record_audio)
 
         val file = recordingFile
         recordingFile = null
@@ -316,6 +334,12 @@ class JournalEditActivity : AppCompatActivity() {
     @Suppress("DEPRECATION")
     private fun newMediaRecorder(): MediaRecorder =
         if (Build.VERSION.SDK_INT >= 31) MediaRecorder(this) else MediaRecorder()
+
+    private fun themeColor(attr: Int): Int {
+        val typedValue = TypedValue()
+        theme.resolveAttribute(attr, typedValue, true)
+        return typedValue.data
+    }
 
     private fun replaceAudio(filename: String?) {
         stopAudioPlayback()

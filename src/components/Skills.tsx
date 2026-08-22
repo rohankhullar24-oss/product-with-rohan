@@ -128,7 +128,7 @@ export default function Skills() {
 
         {searchQuery && (
           <p className="mt-4 text-sm text-slate dark:text-slate-400">
-            Found {allFilteredSkills} skill{allFilteredSkills !== 1 ? "s" : ""} matching "{searchQuery}"
+            Found {allFilteredSkills} skill{allFilteredSkills !== 1 ? "s" : ""} matching &quot;{searchQuery}&quot;
           </p>
         )}
 
@@ -155,7 +155,7 @@ export default function Skills() {
 
         {searchQuery && filteredSkillGroups.length === 0 && (
           <div className="mt-10 text-center text-slate dark:text-slate-400">
-            <p>No skills match "{searchQuery}".</p>
+            <p>No skills match &quot;{searchQuery}&quot;.</p>
             <button
               onClick={() => setSearchQuery("")}
               className="mt-2 text-accent hover:underline font-semibold"

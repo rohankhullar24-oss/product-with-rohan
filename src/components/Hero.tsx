@@ -9,6 +9,9 @@ export default function Hero() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Flips post-mount to trigger the CSS entrance transition; the initial
+    // render must stay unmounted for the transition to actually animate.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

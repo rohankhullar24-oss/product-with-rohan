@@ -124,18 +124,24 @@ const StockAnalyzer = () => {
     },
   };
 
-  const calculateScore = (metrics: any) => {
-    let score = 0;
-    let details: any = {};
+  type StockMetrics = (typeof stocksData)[keyof typeof stocksData];
+  type ScoreDetails = {
+    peScore: number;
+    roeScore: number;
+    debtScore: number;
+    growthScore: number;
+    marginScore: number;
+    liquidityScore: number;
+    roaScore: number;
+  };
 
+  const calculateScore = (metrics: StockMetrics) => {
     const peScore = (() => {
       if (metrics.pe < 15) return 20;
       if (metrics.pe < 25) return 16;
       if (metrics.pe < 35) return 10;
       return 5;
     })();
-    details.peScore = peScore;
-    score += peScore;
 
     const roeScore = (() => {
       if (metrics.roe >= 20) return 20;
@@ -143,8 +149,6 @@ const StockAnalyzer = () => {
       if (metrics.roe >= 10) return 10;
       return 5;
     })();
-    details.roeScore = roeScore;
-    score += roeScore;
 
     const debtScore = (() => {
       if (metrics.debtToEquity < 0.5) return 15;
@@ -152,8 +156,6 @@ const StockAnalyzer = () => {
       if (metrics.debtToEquity < 2) return 8;
       return 3;
     })();
-    details.debtScore = debtScore;
-    score += debtScore;
 
     const growthScore = (() => {
       if (metrics.revenueGrowth >= 15) return 15;
@@ -161,8 +163,6 @@ const StockAnalyzer = () => {
       if (metrics.revenueGrowth >= 5) return 9;
       return 5;
     })();
-    details.growthScore = growthScore;
-    score += growthScore;
 
     const marginScore = (() => {
       if (metrics.profitMargin >= 18) return 15;
@@ -170,8 +170,6 @@ const StockAnalyzer = () => {
       if (metrics.profitMargin >= 8) return 7;
       return 3;
     })();
-    details.marginScore = marginScore;
-    score += marginScore;
 
     const liquidityScore = (() => {
       if (metrics.currentRatio >= 1.5) return 10;
@@ -179,18 +177,26 @@ const StockAnalyzer = () => {
       if (metrics.currentRatio >= 0.8) return 4;
       return 1;
     })();
-    details.liquidityScore = liquidityScore;
-    score += liquidityScore;
 
     const roaScore = (() => {
       if (metrics.roa >= 15) return 5;
       if (metrics.roa >= 10) return 4;
       return 2;
     })();
-    details.roaScore = roaScore;
-    score += roaScore;
 
-    return { totalScore: score, details };
+    const details: ScoreDetails = {
+      peScore,
+      roeScore,
+      debtScore,
+      growthScore,
+      marginScore,
+      liquidityScore,
+      roaScore,
+    };
+    const totalScore =
+      peScore + roeScore + debtScore + growthScore + marginScore + liquidityScore + roaScore;
+
+    return { totalScore, details };
   };
 
   const getInvestmentRating = (score: number) => {
@@ -353,7 +359,7 @@ const StockAnalyzer = () => {
                       <div className="flex justify-between items-start">
                         <div className="text-left">
                           <p className="font-semibold text-white text-sm">{idx + 1}. {stock.key}</p>
-                          <p className="text-xs text-slate-400">{(stock as any).name.split(' ')[0]}</p>
+                          <p className="text-xs text-slate-400">{stock.name.split(' ')[0]}</p>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-bold text-yellow-400">{stock.score}</p>
@@ -387,7 +393,7 @@ const StockAnalyzer = () => {
           <p className="text-red-200 text-sm">
             <strong>⚠️ Important Disclaimer:</strong> This tool uses simplified metrics and historical data.
             Stock market returns are unpredictable. Always consult with a SEBI-registered financial advisor
-            before making investment decisions. Past performance doesn't guarantee future results.
+            before making investment decisions. Past performance doesn&apos;t guarantee future results.
             Diversify your portfolio and invest according to your risk profile and time horizon.
           </p>
         </div>

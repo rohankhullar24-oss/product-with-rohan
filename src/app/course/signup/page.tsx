@@ -87,11 +87,11 @@ export default function CourseSignup() {
                     className="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
                     disabled={loading}
                   />
-                  <p className="text-xs text-slate-400 mt-2">We'll send course updates here (unsubscribe anytime)</p>
+                  <p className="text-xs text-slate-400 mt-2">We&apos;ll send course updates here (unsubscribe anytime)</p>
                 </div>
 
                 <div className="bg-slate-900/50 border border-slate-700 p-4 rounded-lg space-y-3">
-                  <h3 className="font-semibold mb-3">You'll get access to:</h3>
+                  <h3 className="font-semibold mb-3">You&apos;ll get access to:</h3>
                   <div className="space-y-2">
                     {[
                       '6 weeks of interactive lessons',
@@ -127,7 +127,7 @@ export default function CourseSignup() {
                 <div className="text-sm text-slate-400 space-y-2">
                   <p><strong>No card required?</strong> Correct, this course is free forever.</p>
                   <p><strong>When does it start?</strong> Immediately after enrollment. Learn at your pace.</p>
-                  <p><strong>What if I don't finish?</strong> No pressure. Access is lifetime.</p>
+                  <p><strong>What if I don&apos;t finish?</strong> No pressure. Access is lifetime.</p>
                 </div>
               </div>
             </div>

@@ -1,0 +1,44 @@
+name: Web App CI
+
+on:
+  push:
+    branches: ["master", "claude/**"]
+    paths-ignore:
+      - "android-app/**"
+      - "reminder-app/**"
+      - "claude-limits-app/**"
+      - "usage-core/**"
+  pull_request:
+    paths-ignore:
+      - "android-app/**"
+      - "reminder-app/**"
+      - "claude-limits-app/**"
+      - "usage-core/**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # Build also runs the TypeScript check. Real secrets aren't available
+      # here, so a couple of pages that create a Supabase client during
+      # static generation need placeholder values just to get past that
+      # step - no live Supabase calls happen at build time.
+      - name: Build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "https://placeholder.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "placeholder-anon-key"
+        run: npm run build

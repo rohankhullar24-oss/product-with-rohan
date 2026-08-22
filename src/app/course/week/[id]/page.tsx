@@ -6,7 +6,27 @@ import { useEffect, useState } from 'react'
 import { ChevronLeft, CheckCircle, BookOpen, Code2, FileText, Download, Play } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-const weekContent: { [key: number]: any } = {
+interface Lesson {
+  num: number
+  title: string
+  duration: string
+  description: string
+}
+
+interface WeekContent {
+  title: string
+  description: string
+  hours: number
+  lessons: Lesson[]
+  project: {
+    title: string
+    description: string
+    starterCode: string
+    requirements: string[]
+  }
+}
+
+const weekContent: { [key: number]: WeekContent } = {
   1: {
     title: 'AI Chatbots & LLM Basics',
     description: 'Build your first AI chatbot using Claude API and learn the fundamentals of large language models.',
@@ -273,12 +293,15 @@ export default function WeekModule() {
   const weekNum = parseInt(id) || 1
   const week = weekContent[weekNum] || weekContent[1]
   const [completed, setCompleted] = useState(false)
-  const [selectedLesson, setSelectedLesson] = useState<any>(null)
+  const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null)
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
+    // localStorage isn't available during SSR, so this state can only be
+    // populated after mount — hence setState here rather than in render.
     if (id) {
       const progress = JSON.parse(localStorage.getItem('weekProgress') || '{}')
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCompleted(progress[weekNum] || false)
     }
   }, [id, weekNum])
@@ -312,7 +335,7 @@ export default function WeekModule() {
     }
   }
 
-  const handleWatchLesson = (lesson: any) => {
+  const handleWatchLesson = (lesson: Lesson) => {
     setSelectedLesson(lesson)
     setShowModal(true)
   }
@@ -349,7 +372,7 @@ export default function WeekModule() {
           </h2>
           
           <div className="space-y-4">
-            {week.lessons.map((lesson: any) => (
+            {week.lessons.map((lesson: Lesson) => (
               <div key={lesson.num} className="bg-slate-800/50 border border-slate-700 hover:border-blue-500/50 p-6 rounded-lg transition">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">

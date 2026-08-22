@@ -16,13 +16,14 @@ export default function CourseDashboard() {
   const [weekProgress, setWeekProgress] = useState<{ [key: number]: boolean }>({})
 
   useEffect(() => {
-    // Get student from localStorage
+    // localStorage isn't available during SSR, so this state can only be
+    // populated after mount — hence setState here rather than in render.
     const students = JSON.parse(localStorage.getItem('courseStudents') || '[]')
     if (students.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStudent(students[students.length - 1])
     }
 
-    // Get week progress
     const progress = JSON.parse(localStorage.getItem('weekProgress') || '{}')
     setWeekProgress(progress)
   }, [])

@@ -1,11 +1,19 @@
 import { NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { extractResumeText } from "@/lib/resume/parse";
-import { tailorResume } from "@/lib/resume/tailor";
+import { tailorResume, type TailoredResume } from "@/lib/resume/tailor";
 import { ResumePdf } from "@/lib/resume/ResumePdf";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
+
+// Kept outside the try/catch below: JSX must not be constructed inside a
+// try block since React doesn't render it synchronously (errors from the
+// element itself wouldn't be caught there) - the actual failure surface is
+// renderToBuffer(), which this still lets the caller await inside its own try.
+function renderResumePdf(resume: TailoredResume) {
+  return renderToBuffer(<ResumePdf resume={resume} />);
+}
 
 export async function POST(request: Request) {
   try {
@@ -66,7 +74,7 @@ export async function POST(request: Request) {
       targetIndustry: targetIndustry || undefined,
     });
 
-    const pdfBuffer = await renderToBuffer(<ResumePdf resume={tailored} />);
+    const pdfBuffer = await renderResumePdf(tailored);
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,

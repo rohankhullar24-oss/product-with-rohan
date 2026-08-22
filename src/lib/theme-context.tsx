@@ -13,18 +13,6 @@ export const ThemeContext = createContext<ThemeContextType | undefined>(undefine
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    // Initialize theme on mount
-    const savedTheme = localStorage.getItem("theme") as Theme | null;
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
-
-    setTheme(initialTheme);
-    applyThemeToDOM(initialTheme);
-    setMounted(true);
-  }, []);
 
   const applyThemeToDOM = (theme: Theme) => {
     // Apply dark class to HTML
@@ -44,6 +32,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.body.style.color = "#0f172a !important";
     }
   };
+
+  useEffect(() => {
+    // Theme preference lives in localStorage/matchMedia, which aren't
+    // available during SSR — hence setState here rather than in render.
+    const savedTheme = localStorage.getItem("theme") as Theme | null;
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initialTheme = savedTheme || (prefersDark ? "dark" : "light");
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTheme(initialTheme);
+    applyThemeToDOM(initialTheme);
+  }, []);
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";

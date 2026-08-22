@@ -1054,5 +1054,323 @@
     "seen": 1787399959.777624,
     "ast_hash": "900b6e6e061b213e596f44964abab2dc",
     "semantic_hash": "900b6e6e061b213e596f44964abab2dc"
+  },
+  ".github/workflows/claude-limits-app.yml": {
+    "mtime": 1787257380.2754571,
+    "seen": 1787400015.3109298,
+    "ast_hash": "a76520eaa16bac9c43a935b87f79d6c2",
+    "semantic_hash": ""
+  },
+  ".github/workflows/product-shots-app.yml": {
+    "mtime": 1787399807.761704,
+    "seen": 1787400015.3109317,
+    "ast_hash": "1d91543912ca31f9e8bbb6c0b04b4910",
+    "semantic_hash": ""
+  },
+  ".github/workflows/reminder-app.yml": {
+    "mtime": 1787257380.2758722,
+    "seen": 1787400015.3109324,
+    "ast_hash": "360a4ee3344d68859899875e620d7468",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1787257380.2758722,
+    "seen": 1787400015.3109334,
+    "ast_hash": "9e09241799026ac05be315a2f0b50055",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1787399952.02579,
+    "seen": 1787400015.310934,
+    "ast_hash": "03e3d38ba74cf8886d3d8fc322d9da8a",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1787257380.2758722,
+    "seen": 1787400015.3109345,
+    "ast_hash": "f15aaa42d5d299d091b1171097ea56ad",
+    "semantic_hash": ""
+  },
+  "SITE_SPEC.md": {
+    "mtime": 1787257380.2758722,
+    "seen": 1787400015.3109353,
+    "ast_hash": "078ad2d657156e415fb74caff793e515",
+    "semantic_hash": ""
+  },
+  "claude-limits-app/README.md": {
+    "mtime": 1787257380.2884307,
+    "seen": 1787400015.310936,
+    "ast_hash": "9e7c14df1c89d21d6623a7df48b845b3",
+    "semantic_hash": ""
+  },
+  "public/projects/week1-chatbot/requirements.txt": {
+    "mtime": 1787257380.4385223,
+    "seen": 1787400015.310937,
+    "ast_hash": "d637c8ff5d683430096ecebb5fa32fc6",
+    "semantic_hash": ""
+  },
+  "public/robots.txt": {
+    "mtime": 1787257380.4385223,
+    "seen": 1787400015.3109374,
+    "ast_hash": "3fad035bd21473ab79d2bd7ac692b2f1",
+    "semantic_hash": ""
+  },
+  "reminder-app/README.md": {
+    "mtime": 1787399807.841704,
+    "seen": 1787400015.3109381,
+    "ast_hash": "950e3059544b693db71ab90c70f90d4b",
+    "semantic_hash": ""
+  },
+  "scripts/handbook/README.md": {
+    "mtime": 1787257380.451006,
+    "seen": 1787400015.3109388,
+    "ast_hash": "5d043822ad6310363a9a8f5eae41f821",
+    "semantic_hash": ""
+  },
+  "src/content/blog/agile-methodologies-age-of-ai.md": {
+    "mtime": 1787257380.4815216,
+    "seen": 1787400015.3109396,
+    "ast_hash": "6e6fda25aa09db18b010c49ceba3926e",
+    "semantic_hash": ""
+  },
+  "src/content/blog/ai-agents-india-2026.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109405,
+    "ast_hash": "35c8a017c1fc36144a5906da1dea21f5",
+    "semantic_hash": ""
+  },
+  "src/content/blog/ai-agents-transforming-pm-roles.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.310941,
+    "ast_hash": "32b860952e807d54d262f040fc096e75",
+    "semantic_hash": ""
+  },
+  "src/content/blog/ai-boom-hidden-supply-chain-2026.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109417,
+    "ast_hash": "98c492804647bda897598b93ff638e9f",
+    "semantic_hash": ""
+  },
+  "src/content/blog/ai-efficiency-layoffs-vs-record-funding-pm-lessons.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109422,
+    "ast_hash": "951802b67d912827dd5b24ad49bc692e",
+    "semantic_hash": ""
+  },
+  "src/content/blog/ai-job-displacement-report.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.310943,
+    "ast_hash": "30dc9bb7ecd0804ae7a54a5ed73c53fb",
+    "semantic_hash": ""
+  },
+  "src/content/blog/ai-pacing-letter-frontier-labs-pm-implications.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109436,
+    "ast_hash": "45c29d48318f38272750bb772bd70f64",
+    "semantic_hash": ""
+  },
+  "src/content/blog/amazon-3-trillion-aws-capex-pm-lessons.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109443,
+    "ast_hash": "74b071f63b4051ecc428852a9c49cff1",
+    "semantic_hash": ""
+  },
+  "src/content/blog/anthropic-ipo-vendor-dependency-risk-for-pms.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109448,
+    "ast_hash": "9f3ea723a18329a4143d15b639351349",
+    "semantic_hash": ""
+  },
+  "src/content/blog/apple-openai-lawsuit-pm-lessons.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109455,
+    "ast_hash": "55c2e10735e6687f7580faeb56caf844",
+    "semantic_hash": ""
+  },
+  "src/content/blog/claude-design-pm-roles.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.310946,
+    "ast_hash": "92629da10d06ba5fc2654b21cdd43282",
+    "semantic_hash": ""
+  },
+  "src/content/blog/google-deepmind-jeff-dean-discovery-loop-pm-lessons.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109467,
+    "ast_hash": "b220ecf83cef451347c4844a6ac2ccc1",
+    "semantic_hash": ""
+  },
+  "src/content/blog/gpt-5-6-regulatory-clearance-pm-roadmap-risk.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109474,
+    "ast_hash": "47274bd8deef39c3a7540f61c3d9f210",
+    "semantic_hash": ""
+  },
+  "src/content/blog/how-to-answer-guesstimate-questions.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109481,
+    "ast_hash": "3a7cd286799e234484b255b7b9b8f008",
+    "semantic_hash": ""
+  },
+  "src/content/blog/how-to-write-a-prd-engineers-actually-read.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109488,
+    "ast_hash": "14eeaf957cd2a30b206da9df12623fd1",
+    "semantic_hash": ""
+  },
+  "src/content/blog/how-to-write-product-decision-memo.md": {
+    "mtime": 1787257380.4822228,
+    "seen": 1787400015.3109496,
+    "ast_hash": "5a95b871396695cae0e56a4246b70438",
+    "semantic_hash": ""
+  },
+  "src/content/blog/lovable-databricks-funding-build-vs-buy.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.31095,
+    "ast_hash": "3f9884fbce66e0d8265779ee6d03d734",
+    "semantic_hash": ""
+  },
+  "src/content/blog/meta-addictive-design-trial-pm-lessons.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.310951,
+    "ast_hash": "404a0da47e1c751fd487887d3081e35c",
+    "semantic_hash": ""
+  },
+  "src/content/blog/nuclear-power-ai-roadmap-constraint.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109517,
+    "ast_hash": "44e1c436cb8c3728a3776c1ff46196b2",
+    "semantic_hash": ""
+  },
+  "src/content/blog/ny-ai-data-center-moratorium-pm-roadmap.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109524,
+    "ast_hash": "b5b79bdfbc04b600f0e4acd842ad8d3c",
+    "semantic_hash": ""
+  },
+  "src/content/blog/open-weight-ai-models-vendor-lock-in-2026.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109534,
+    "ast_hash": "fea3146874468b5a5fa58624cad843f1",
+    "semantic_hash": ""
+  },
+  "src/content/blog/perplexity-amazon-cfaa-ruling-ai-agents-pm.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109543,
+    "ast_hash": "6c78ba4c6a0b1c8403b432adca8ceaef",
+    "semantic_hash": ""
+  },
+  "src/content/blog/pm-as-builder-ai-tools-opportunity.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109548,
+    "ast_hash": "a823eb7ee027aef6bd50ec569cbd3e9c",
+    "semantic_hash": ""
+  },
+  "src/content/blog/pm-industry-state-report.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109555,
+    "ast_hash": "cc77918bd28ede6fa10f9a776d841c8e",
+    "semantic_hash": ""
+  },
+  "src/content/blog/pm-interview-loop-changes-2026.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109562,
+    "ast_hash": "ab6439cdd5132eefbaa93aac0a0fa154",
+    "semantic_hash": ""
+  },
+  "src/content/blog/pm-judgment-scarce-skill-ai-era.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109567,
+    "ast_hash": "4f04f0b751941727eb1b89edb9370365",
+    "semantic_hash": ""
+  },
+  "src/content/blog/pm-promotion-scope-not-title-2026.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109577,
+    "ast_hash": "b88a55f5ee41cff17efe703bd0ea1947",
+    "semantic_hash": ""
+  },
+  "src/content/blog/pm-skill-of-saying-no.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109584,
+    "ast_hash": "91f357b4e42930e33669a5d9575a44d3",
+    "semantic_hash": ""
+  },
+  "src/content/blog/prioritization-frameworks-dont-work.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.310959,
+    "ast_hash": "f23953b2f05a0b1c2be95a6df6eb2742",
+    "semantic_hash": ""
+  },
+  "src/content/blog/product-discovery-agent.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109596,
+    "ast_hash": "dc46f8661faed561f51fc3c03ebcaf25",
+    "semantic_hash": ""
+  },
+  "src/content/blog/product-metrics-every-pm-should-know.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109605,
+    "ast_hash": "dc28a964478c21f82db3f1d15ab6a7ce",
+    "semantic_hash": ""
+  },
+  "src/content/blog/product-sense-frameworks-report.md": {
+    "mtime": 1787257380.4858177,
+    "seen": 1787400015.3109612,
+    "ast_hash": "18a3ca55c31e2db4d3427fed74cd509b",
+    "semantic_hash": ""
+  },
+  "src/content/blog/salesforce-agentforce-layoffs-pm-signal.md": {
+    "mtime": 1787257380.4898176,
+    "seen": 1787400015.310962,
+    "ast_hash": "611da4d4fb56ad7186adfc5e57827357",
+    "semantic_hash": ""
+  },
+  "src/content/blog/stakeholder-alignment-real-pm-job.md": {
+    "mtime": 1787257380.4898176,
+    "seen": 1787400015.3109624,
+    "ast_hash": "d8feff1c1a54514e52dfc35a4406a0d9",
+    "semantic_hash": ""
+  },
+  "src/content/blog/state-of-ai-agents-2026.md": {
+    "mtime": 1787257380.4898176,
+    "seen": 1787400015.3109634,
+    "ast_hash": "a868751d8e7306a30e6ea813290d6ffd",
+    "semantic_hash": ""
+  },
+  "src/content/blog/tokenization-in-ai-2026.md": {
+    "mtime": 1787257380.4898176,
+    "seen": 1787400015.310964,
+    "ast_hash": "c90255e31ff57551347edf40b3710dd4",
+    "semantic_hash": ""
+  },
+  "src/content/blog/uber-delivery-hero-consolidation-pm-lessons.md": {
+    "mtime": 1787257380.4898176,
+    "seen": 1787400015.310965,
+    "ast_hash": "c05d7021359ddf6409855cd6550300c0",
+    "semantic_hash": ""
+  },
+  "handbook-assets/The-Product-Manager-Handbook-compressed.pdf": {
+    "mtime": 1787257380.3058176,
+    "seen": 1787400015.3109658,
+    "ast_hash": "bff8a262a9b1397d4af53239499d2a73",
+    "semantic_hash": ""
+  },
+  "handbook-assets/The-Product-Manager-Handbook.pdf": {
+    "mtime": 1787257380.3498178,
+    "seen": 1787400015.3109663,
+    "ast_hash": "7497716a679455a7523c35d589164507",
+    "semantic_hash": ""
+  },
+  "public/Rohan_Khullar_Resume.pdf": {
+    "mtime": 1787257380.3658178,
+    "seen": 1787400015.310967,
+    "ast_hash": "a21d5cd0bee1eac8396ed4dfe75549a1",
+    "semantic_hash": ""
+  },
+  "android-app/app/src/main/res/drawable-nodpi/ic_launcher_foreground.png": {
+    "mtime": 1787257380.2818177,
+    "seen": 1787400015.310968,
+    "ast_hash": "4013bd64157ac23c4542572bc8c97a63",
+    "semantic_hash": ""
   }
 }

@@ -33,6 +33,16 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/zerodha-teardown-pm-lens.png",
     publishedDate: "2026-08-15",
   },
+  {
+    slug: "cred-teardown-pm-lens",
+    company: "CRED",
+    eyebrow: "Product Teardown · India Fintech · August 2026",
+    headline: "CRED built trust with India's top 1%. Two-thirds of them still don't pay for anything.",
+    dek: "FY25 revenue hit ₹2,735 Cr and operating losses fell 51%, but the RBI just removed the bill-payment hook that built CRED's user base in the first place.",
+    image:
+      "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/cred-teardown-pm-lens.png",
+    publishedDate: "2026-08-26",
+  },
 ];
 
 export function getTeardowns(): Teardown[] {

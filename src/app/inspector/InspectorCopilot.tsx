@@ -10,6 +10,7 @@ type Finding = {
   id: string;
   question: string;
   photoUrl: string;
+  thumbUrl: string;
   say: string;
   section: string;
   item: string;
@@ -39,6 +40,9 @@ const STATUS_COPY: Record<Status, string> = {
   thinking: "Checking the checklist…",
   speaking: "Answering…",
 };
+
+const SESSION_KEY = "carbecho-inspector-session-v1";
+const SESSION_CAP = 50;
 
 const MAX_IMAGE_EDGE = 1280;
 const THUMB_EDGE = 160;
@@ -74,6 +78,45 @@ async function preparePhoto(file: File): Promise<Photo> {
   };
 }
 
+type SessionState = { findings: Finding[]; turns: Turn[] };
+
+/**
+ * The session list is what the inspector reads back at the end of a car. It
+ * used to die on refresh, a crashed tab, or a phone locking mid-inspection -
+ * and if the shared-log save had failed, that was the only copy.
+ *
+ * Only the 160px thumbnail is kept, never the 1280px original: a handful of
+ * full-size photos would blow through the ~5MB localStorage budget.
+ */
+function loadSession(): SessionState {
+  if (typeof window === "undefined") return { findings: [], turns: [] };
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    if (!raw) return { findings: [], turns: [] };
+    const parsed = JSON.parse(raw) as Partial<SessionState>;
+    return {
+      findings: Array.isArray(parsed.findings) ? parsed.findings : [],
+      turns: Array.isArray(parsed.turns) ? parsed.turns : [],
+    };
+  } catch {
+    return { findings: [], turns: [] };
+  }
+}
+
+function saveSession(findings: Finding[], turns: Turn[]) {
+  if (typeof window === "undefined") return;
+  try {
+    const trimmed = findings.slice(0, SESSION_CAP).map((finding) => ({
+      ...finding,
+      photoUrl: finding.thumbUrl, // drop the full-size copy before storing
+    }));
+    window.localStorage.setItem(SESSION_KEY, JSON.stringify({ findings: trimmed, turns }));
+  } catch {
+    // Private mode, a full quota, or storage disabled. Not worth interrupting
+    // the inspector over - the shared log is the durable record.
+  }
+}
+
 export default function InspectorCopilot() {
   const [status, setStatus] = useState<Status>("idle");
   const [lang, setLang] = useState<string>("hi-IN");
@@ -100,6 +143,12 @@ export default function InspectorCopilot() {
   const listeningRef = useRef(false);
   const findingsRef = useRef<HTMLElement>(null);
   const busyRef = useRef(false);
+
+  useEffect(() => {
+    const restored = loadSession();
+    if (restored.findings.length) setFindings(restored.findings);
+    if (restored.turns.length) turnsRef.current = restored.turns;
+  }, []);
 
   useEffect(() => {
     handsFreeRef.current = handsFree;
@@ -193,6 +242,7 @@ export default function InspectorCopilot() {
           id: `${Date.now()}`,
           question: trimmed,
           photoUrl: attached?.previewUrl ?? "",
+          thumbUrl: attached?.thumb ?? "",
           say: data.say ?? "",
           section: data.section ?? "",
           item: data.item ?? "",
@@ -203,7 +253,11 @@ export default function InspectorCopilot() {
 
         const withAnswer: Turn[] = [...turnsRef.current, { role: "model", text: finding.say }];
         turnsRef.current = withAnswer.slice(-12);
-        setFindings((previous) => [finding, ...previous]);
+        setFindings((previous) => {
+          const next = [finding, ...previous];
+          saveSession(next, turnsRef.current);
+          return next;
+        });
         setPhoto(null);
         // The findings list sits below the fold on a phone; bring it up.
         requestAnimationFrame(() =>
@@ -345,6 +399,20 @@ export default function InspectorCopilot() {
       setPhoto(await preparePhoto(file));
     } catch {
       setError("Could not read that photo. Try again.");
+    }
+  }, []);
+
+  const startNewCar = useCallback(() => {
+    setFindings([]);
+    turnsRef.current = [];
+    setTranscript("");
+    setPhoto(null);
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.removeItem(SESSION_KEY);
+      } catch {
+        /* storage unavailable - nothing to clear */
+      }
     }
   }, []);
 
@@ -593,17 +661,29 @@ export default function InspectorCopilot() {
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
             Findings this session ({findings.length})
           </h2>
-          <Link
-            href="/inspector/history"
-            className="text-xs font-medium text-teal-700 hover:underline"
-          >
-            View the full log →
-          </Link>
+          <div className="flex items-center gap-4">
+            {findings.length > 0 && (
+              <button
+                type="button"
+                onClick={startNewCar}
+                className="text-xs font-medium text-slate-500 hover:underline"
+              >
+                Start a new car
+              </button>
+            )}
+            <Link
+              href="/inspector/history"
+              className="text-xs font-medium text-teal-700 hover:underline"
+            >
+              View the full log →
+            </Link>
+          </div>
         </div>
 
         {findings.length === 0 ? (
           <p className="mt-3 text-sm text-slate-500">
-            Nothing logged yet. Every answer lands here so you can copy it into the inspection app.
+            Nothing logged yet. Every answer lands here so you can copy it into the inspection app,
+            and stays put if the page reloads.
           </p>
         ) : (
           <ul className="mt-3 space-y-3">

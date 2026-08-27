@@ -93,6 +93,26 @@ export async function POST(request: NextRequest) {
     if (!response.ok) {
       const detail = await response.text();
       console.error("[inspector] gemini error", response.status, detail.slice(0, 500));
+
+      // Don't hide a rate limit behind a generic failure - the inspector needs
+      // to know it is a wait, not a break. The free tier caps this model at 20
+      // requests a minute, which a real inspection run will hit.
+      if (response.status === 429) {
+        const seconds = detail.match(/retry in ([\d.]+)s/i)?.[1];
+        const wait = seconds ? ` Try again in about ${Math.ceil(Number(seconds))} seconds.` : "";
+        return NextResponse.json(
+          { error: `Too many requests in the last minute.${wait}` },
+          { status: 429 }
+        );
+      }
+
+      if (response.status === 503) {
+        return NextResponse.json(
+          { error: "The model is overloaded right now. Ask again in a moment." },
+          { status: 503 }
+        );
+      }
+
       return NextResponse.json({ error: "The co-pilot could not reach the model." }, { status: 502 });
     }
 

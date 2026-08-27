@@ -202,9 +202,14 @@ export default function InspectorCopilot() {
           if (handsFreeRef.current) setTimeout(startListening, 350);
         });
       } catch (caught) {
-        busyRef.current = false;
-        setStatus("idle");
-        setError(caught instanceof Error ? caught.message : "Something went wrong.");
+        const message = caught instanceof Error ? caught.message : "Something went wrong.";
+        setError(message);
+        // The inspector is under a car and not looking at the screen. Say it.
+        setStatus("speaking");
+        speak(message, () => {
+          busyRef.current = false;
+          setStatus("idle");
+        });
       }
     },
     [speak, startListening]

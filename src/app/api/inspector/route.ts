@@ -101,12 +101,20 @@ export async function POST(request: NextRequest) {
       // to know it is a wait, not a break. The free tier caps this model at 20
       // requests a minute, which a real inspection run will hit.
       if (response.status === 429) {
+        // Google returns two very different limits through the same status.
+        // Saying "wait a minute" when the day's quota is gone sends the
+        // inspector back to a tool that cannot answer for hours.
+        const perDay = /PerDay|RequestsPerDay/i.test(detail);
         const seconds = detail.match(/retry in ([\d.]+)s/i)?.[1];
-        const wait = seconds ? ` Try again in about ${Math.ceil(Number(seconds))} seconds.` : "";
-        return NextResponse.json(
-          { error: `Too many requests in the last minute.${wait}` },
-          { status: 429 }
-        );
+        const cap = detail.match(/limit:\s*(\d+)/i)?.[1];
+
+        const error = perDay
+          ? `Daily quota used up${cap ? ` (${cap} requests a day on the free tier)` : ""}. It resets at midnight US Pacific — about 12:30 PM India time. Enabling billing on the API key removes the cap.`
+          : `Too many requests just now.${
+              seconds ? ` Try again in about ${Math.ceil(Number(seconds))} seconds.` : ""
+            }`;
+
+        return NextResponse.json({ error }, { status: 429 });
       }
 
       if (response.status === 503) {

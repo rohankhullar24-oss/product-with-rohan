@@ -33,7 +33,7 @@ const SEVERITY_STYLES: Record<string, string> = {
 
 const STATUS_COPY: Record<Status, string> = {
   idle: "Tap the mic and describe the fault",
-  listening: "Listening…",
+  listening: "Listening — pause when you're done",
   thinking: "Checking the checklist…",
   speaking: "Answering…",
 };
@@ -71,6 +71,7 @@ export default function InspectorCopilot() {
   const [findings, setFindings] = useState<Finding[]>([]);
   const [error, setError] = useState("");
   const [speechSupported, setSpeechSupported] = useState(true);
+  const [pauseMs, setPauseMs] = useState(2500);
 
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -78,6 +79,12 @@ export default function InspectorCopilot() {
   const photoRef = useRef<Photo | null>(null);
   const handsFreeRef = useRef(false);
   const langRef = useRef("hi-IN");
+  const askRef = useRef<(question: string) => void>(() => {});
+  const finalRef = useRef("");
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const submittingRef = useRef(false);
+  const pauseMsRef = useRef(2500);
+  const listeningRef = useRef(false);
   const findingsRef = useRef<HTMLElement>(null);
   const busyRef = useRef(false);
 
@@ -92,6 +99,10 @@ export default function InspectorCopilot() {
   useEffect(() => {
     langRef.current = lang;
   }, [lang]);
+
+  useEffect(() => {
+    pauseMsRef.current = pauseMs;
+  }, [pauseMs]);
 
   const speak = useCallback(
     (text: string, onDone: () => void) => {
@@ -121,6 +132,9 @@ export default function InspectorCopilot() {
     try {
       setTranscript("");
       setError("");
+      finalRef.current = "";
+      submittingRef.current = false;
+      listeningRef.current = true;
       recognition.lang = lang;
       recognition.start();
       setStatus("listening");
@@ -136,6 +150,7 @@ export default function InspectorCopilot() {
       if (!trimmed || busyRef.current) return;
 
       busyRef.current = true;
+      listeningRef.current = false;
       setStatus("thinking");
       setError("");
       setTranscript(trimmed);
@@ -196,6 +211,10 @@ export default function InspectorCopilot() {
   );
 
   useEffect(() => {
+    askRef.current = (question: string) => void ask(question);
+  }, [ask]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return;
     const SpeechRecognitionImpl =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -206,51 +225,90 @@ export default function InspectorCopilot() {
     }
 
     const recognition = new SpeechRecognitionImpl();
-    recognition.continuous = false;
+    // continuous: the inspector thinks mid-sentence. Chrome's default ends the
+    // whole utterance on the first short silence, which cut people off.
+    recognition.continuous = true;
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
 
-    recognition.onresult = (event: any) => {
-      let interim = "";
-      let final = "";
-      for (let i = event.resultIndex; i < event.results.length; i += 1) {
-        const result = event.results[i];
-        if (result.isFinal) final += result[0].transcript;
-        else interim += result[0].transcript;
-      }
-      setTranscript(final || interim);
-      if (final.trim()) {
-        recognition.stop();
-        void ask(final);
+    const clearSilenceTimer = () => {
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
       }
     };
 
+    // We decide when the sentence is over, not the browser: submit only after
+    // pauseMs of true silence following something worth sending.
+    const armSilenceTimer = () => {
+      clearSilenceTimer();
+      silenceTimerRef.current = setTimeout(() => {
+        const spoken = finalRef.current.trim();
+        if (!spoken || submittingRef.current) return;
+        submittingRef.current = true;
+        try {
+          recognition.stop();
+        } catch {
+          /* noop */
+        }
+        askRef.current(spoken);
+      }, pauseMsRef.current);
+    };
+
+    recognition.onresult = (event: any) => {
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i += 1) {
+        const result = event.results[i];
+        if (result.isFinal) finalRef.current += result[0].transcript;
+        else interim += result[0].transcript;
+      }
+      setTranscript((finalRef.current + interim).trim());
+      armSilenceTimer();
+    };
+
+    recognition.onspeechstart = () => clearSilenceTimer();
+
     recognition.onerror = (event: any) => {
+      if (event.error === "no-speech") return; // a pause, not a failure
+      clearSilenceTimer();
       setStatus("idle");
       if (event.error === "not-allowed") {
         setError("Microphone permission is blocked. Allow it in the browser address bar.");
-      } else if (event.error === "no-speech") {
-        setError("Didn't catch that — try again a bit closer to the mic.");
+      } else if (event.error === "aborted") {
+        return;
+      } else {
+        setError("The mic stopped unexpectedly. Tap Speak to try again.");
       }
     };
 
+    // Chrome ends the session on its own after a stretch of silence even in
+    // continuous mode. If the inspector is still mid-thought, start it again.
     recognition.onend = () => {
-      setStatus((current) => (current === "listening" ? "idle" : current));
+      if (submittingRef.current || busyRef.current || !listeningRef.current) return;
+      try {
+        recognition.start();
+      } catch {
+        listeningRef.current = false;
+        setStatus("idle");
+      }
     };
 
     recognitionRef.current = recognition;
 
     return () => {
+      listeningRef.current = false;
+      clearSilenceTimer();
       recognition.onresult = null;
       recognition.onerror = null;
       recognition.onend = null;
+      recognition.onspeechstart = null;
       try {
-        recognition.stop();
+        recognition.abort();
       } catch {
         /* noop */
       }
     };
-  }, [ask]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -270,9 +328,32 @@ export default function InspectorCopilot() {
     }
   }, []);
 
-  const stopEverything = useCallback(() => {
+  const sendNow = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    submittingRef.current = true;
+    listeningRef.current = false;
     try {
       recognitionRef.current?.stop();
+    } catch {
+      /* noop */
+    }
+    const spoken = finalRef.current.trim();
+    if (spoken) void ask(spoken);
+    else setStatus("idle");
+  }, [ask]);
+
+  const stopEverything = useCallback(() => {
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    submittingRef.current = true;
+    listeningRef.current = false;
+    try {
+      recognitionRef.current?.abort();
     } catch {
       /* noop */
     }
@@ -283,7 +364,7 @@ export default function InspectorCopilot() {
   }, []);
 
   const micLabel = useMemo(() => {
-    if (status === "listening") return "Stop";
+    if (status === "listening") return "Send";
     if (status === "thinking") return "…";
     if (status === "speaking") return "Speaking";
     return "Speak";
@@ -309,7 +390,7 @@ export default function InspectorCopilot() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => (status === "listening" ? stopEverything() : startListening())}
+              onClick={() => (status === "listening" ? sendNow() : startListening())}
               disabled={!speechSupported || status === "thinking"}
               className={`flex h-20 w-20 items-center justify-center rounded-full text-sm font-semibold text-white transition disabled:opacity-50 ${
                 status === "listening"
@@ -322,8 +403,21 @@ export default function InspectorCopilot() {
             <div>
               <p className="text-sm font-medium">{STATUS_COPY[status]}</p>
               <p className="text-xs text-slate-500">
-                {handsFree ? "Hands-free on — it keeps listening" : "Tap to talk"}
+                {status === "listening"
+                  ? "Take your time — pauses are fine"
+                  : handsFree
+                    ? "Hands-free on — it keeps listening"
+                    : "Tap to talk"}
               </p>
+              {status === "listening" && (
+                <button
+                  type="button"
+                  onClick={stopEverything}
+                  className="mt-1 text-xs font-medium text-slate-500 underline"
+                >
+                  Cancel
+                </button>
+              )}
             </div>
           </div>
 
@@ -344,6 +438,19 @@ export default function InspectorCopilot() {
                 </button>
               ))}
             </div>
+            <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
+              Pause
+              <select
+                value={pauseMs}
+                onChange={(event) => setPauseMs(Number(event.target.value))}
+                className="rounded-md border border-slate-200 bg-transparent px-1.5 py-1 dark:border-slate-700"
+              >
+                <option value={1500}>1.5s</option>
+                <option value={2500}>2.5s</option>
+                <option value={4000}>4s</option>
+                <option value={6000}>6s</option>
+              </select>
+            </label>
             <label className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
               <input
                 type="checkbox"

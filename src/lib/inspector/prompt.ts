@@ -81,7 +81,9 @@ export const RESPONSE_SCHEMA = {
     say: { type: "string", description: "The spoken reply. 2-3 short sentences, no formatting." },
     section: { type: "string", description: "Inspection section, or empty if not applicable." },
     item: { type: "string", description: "Specific checklist line item, under six words." },
-    severity: { type: "string", enum: ["Minor", "Major", "Critical", ""] },
+    // No empty-string member: Gemini rejects an empty enum value outright.
+    // severity is not in `required`, so the model can simply omit it.
+    severity: { type: "string", enum: ["Minor", "Major", "Critical"] },
     action: { type: "string", description: "What to do in the app right now. One line." },
   },
   required: ["say"],

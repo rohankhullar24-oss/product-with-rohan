@@ -71,7 +71,10 @@ export async function POST(request: NextRequest) {
           systemInstruction: { parts: [{ text: INSPECTOR_SYSTEM_PROMPT }] },
           generationConfig: {
             temperature: 0.4,
-            maxOutputTokens: 8192,
+            maxOutputTokens: 2048,
+            // Thinking costs ~10s per turn here and does not improve the call.
+            // This is a voice tool - the inspector is standing in silence while it runs.
+            thinkingConfig: { thinkingBudget: 0 },
             responseMimeType: "application/json",
             responseSchema: RESPONSE_SCHEMA,
           },

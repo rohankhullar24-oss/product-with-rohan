@@ -77,6 +77,8 @@ export default function InspectorCopilot() {
   const turnsRef = useRef<Turn[]>([]);
   const photoRef = useRef<Photo | null>(null);
   const handsFreeRef = useRef(false);
+  const langRef = useRef("hi-IN");
+  const findingsRef = useRef<HTMLElement>(null);
   const busyRef = useRef(false);
 
   useEffect(() => {
@@ -86,6 +88,10 @@ export default function InspectorCopilot() {
   useEffect(() => {
     photoRef.current = photo;
   }, [photo]);
+
+  useEffect(() => {
+    langRef.current = lang;
+  }, [lang]);
 
   const speak = useCallback(
     (text: string, onDone: () => void) => {
@@ -145,6 +151,7 @@ export default function InspectorCopilot() {
           body: JSON.stringify({
             turns: turnsRef.current,
             image: attached ? { mimeType: attached.mimeType, data: attached.base64 } : null,
+            lang: langRef.current,
           }),
         });
         const data = await response.json();
@@ -168,6 +175,10 @@ export default function InspectorCopilot() {
         turnsRef.current = withAnswer.slice(-12);
         setFindings((previous) => [finding, ...previous]);
         setPhoto(null);
+        // The findings list sits below the fold on a phone; bring it up.
+        requestAnimationFrame(() =>
+          findingsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+        );
         setStatus("speaking");
 
         speak(finding.say, () => {
@@ -450,7 +461,7 @@ export default function InspectorCopilot() {
         </div>
       </section>
 
-      <section className="mt-8">
+      <section ref={findingsRef} className="mt-8 scroll-mt-4">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
           Findings this session ({findings.length})
         </h2>

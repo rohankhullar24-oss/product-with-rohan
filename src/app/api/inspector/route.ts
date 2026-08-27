@@ -23,6 +23,7 @@ export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => null)) as {
     turns?: Turn[];
     image?: Image | null;
+    lang?: string;
   } | null;
 
   const turns = Array.isArray(body?.turns) ? body!.turns : null;
@@ -30,6 +31,13 @@ export async function POST(request: NextRequest) {
   if (!turns || turns.length === 0) {
     return NextResponse.json({ error: "No conversation turns supplied." }, { status: 400 });
   }
+
+  // The UI's language toggle is authoritative. Left to "mirror the inspector"
+  // the model answered English questions in Hinglish.
+  const languageRule =
+    body?.lang === "en-IN"
+      ? "\n\nLANGUAGE FOR THIS REPLY: answer in English only. No Hindi words."
+      : "\n\nLANGUAGE FOR THIS REPLY: answer in conversational Hinglish.";
 
   const image = body?.image ?? null;
   if (image) {
@@ -68,7 +76,7 @@ export async function POST(request: NextRequest) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents,
-          systemInstruction: { parts: [{ text: INSPECTOR_SYSTEM_PROMPT }] },
+          systemInstruction: { parts: [{ text: INSPECTOR_SYSTEM_PROMPT + languageRule }] },
           generationConfig: {
             temperature: 0.4,
             maxOutputTokens: 2048,

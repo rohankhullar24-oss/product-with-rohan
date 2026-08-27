@@ -10,6 +10,19 @@ type Image = { mimeType: string; data: string };
 
 type Part = { text: string } | { inlineData: { mimeType: string; data: string } };
 
+/**
+ * Tried in order. Gemini quota is per model, so a second model is not just a
+ * backup for outages - it doubles the free tier's daily allowance and covers
+ * the 503s the newer models throw under load.
+ *
+ * 2.5-flash leads on answer quality for this task; 3.5-flash-lite is faster
+ * (1.5s vs 2.3s measured) and rejects thinkingConfig outright, hence the flag.
+ */
+const MODELS: { name: string; disableThinking: boolean }[] = [
+  { name: "gemini-2.5-flash", disableThinking: true },
+  { name: "gemini-3.5-flash-lite", disableThinking: false },
+];
+
 const MAX_TURNS = 12;
 const MAX_CHARS = 1200;
 const MAX_IMAGE_BYTES = 4_000_000;
@@ -72,35 +85,62 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents,
-          systemInstruction: { parts: [{ text: INSPECTOR_SYSTEM_PROMPT + languageRule }] },
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 2048,
-            // Thinking costs ~10s per turn here and does not improve the call.
-            // This is a voice tool - the inspector is standing in silence while it runs.
-            thinkingConfig: { thinkingBudget: 0 },
-            responseMimeType: "application/json",
-            responseSchema: RESPONSE_SCHEMA,
-          },
-        }),
-      }
-    );
+    const generationConfig: Record<string, unknown> = {
+      temperature: 0.4,
+      maxOutputTokens: 2048,
+      responseMimeType: "application/json",
+      responseSchema: RESPONSE_SCHEMA,
+    };
 
-    if (!response.ok) {
-      const detail = await response.text();
-      console.error("[inspector] gemini error", response.status, detail.slice(0, 500));
+    let response: Response | null = null;
+    let usedModel = "";
+    let lastStatus = 0;
+    let lastDetail = "";
+
+    for (const model of MODELS) {
+      const attempt = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model.name}:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents,
+            systemInstruction: { parts: [{ text: INSPECTOR_SYSTEM_PROMPT + languageRule }] },
+            generationConfig: model.disableThinking
+              ? // Thinking costs ~10s per turn on 2.5-flash and adds nothing here.
+                { ...generationConfig, thinkingConfig: { thinkingBudget: 0 } }
+              : generationConfig,
+          }),
+        }
+      );
+
+      if (attempt.ok) {
+        response = attempt;
+        usedModel = model.name;
+        break;
+      }
+
+      lastStatus = attempt.status;
+      lastDetail = await attempt.text();
+      console.error("[inspector] %s failed", model.name, attempt.status, lastDetail.slice(0, 300));
+
+      // Only quota and overload are worth retrying elsewhere. A 400 is our bug
+      // and will fail identically on every model.
+      if (attempt.status !== 429 && attempt.status !== 503) break;
+    }
+
+    if (usedModel !== MODELS[0].name && response) {
+      console.warn("[inspector] answered by fallback model", usedModel);
+    }
+
+    if (!response) {
+      const detail = lastDetail;
+      const status = lastStatus;
 
       // Don't hide a rate limit behind a generic failure - the inspector needs
-      // to know it is a wait, not a break. The free tier caps this model at 20
-      // requests a minute, which a real inspection run will hit.
-      if (response.status === 429) {
+      // to know it is a wait, not a break. Reaching here means every model in
+      // MODELS refused, so the whole free-tier allowance is gone, not just one.
+      if (status === 429) {
         // Google returns two very different limits through the same status.
         // Saying "wait a minute" when the day's quota is gone sends the
         // inspector back to a tool that cannot answer for hours.
@@ -109,7 +149,9 @@ export async function POST(request: NextRequest) {
         const cap = detail.match(/limit:\s*(\d+)/i)?.[1];
 
         const error = perDay
-          ? `Daily quota used up${cap ? ` (${cap} requests a day on the free tier)` : ""}. It resets at midnight US Pacific — about 12:30 PM India time. Enabling billing on the API key removes the cap.`
+          ? `Daily quota used up on every model${
+              cap ? ` (${cap} requests a day each on the free tier)` : ""
+            }. It resets at midnight US Pacific — about 12:30 PM India time. Enabling billing on the API key removes the cap.`
           : `Too many requests just now.${
               seconds ? ` Try again in about ${Math.ceil(Number(seconds))} seconds.` : ""
             }`;
@@ -117,7 +159,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error }, { status: 429 });
       }
 
-      if (response.status === 503) {
+      if (status === 503) {
         return NextResponse.json(
           { error: "The model is overloaded right now. Ask again in a moment." },
           { status: 503 }
@@ -170,7 +212,7 @@ export async function POST(request: NextRequest) {
       has_photo: Boolean(image),
     });
 
-    return NextResponse.json({ ...answer, saved });
+    return NextResponse.json({ ...answer, saved, model: usedModel });
   } catch (error) {
     console.error("[inspector] request failed", error);
     return NextResponse.json({ error: "The co-pilot is unavailable right now." }, { status: 500 });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { INSPECTOR_SYSTEM_PROMPT, RESPONSE_SCHEMA } from "@/lib/inspector/prompt";
+import { saveFinding } from "@/lib/inspector/store";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -12,6 +13,7 @@ type Part = { text: string } | { inlineData: { mimeType: string; data: string } 
 const MAX_TURNS = 12;
 const MAX_CHARS = 1200;
 const MAX_IMAGE_BYTES = 4_000_000;
+const MAX_THUMB_BYTES = 60_000;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function POST(request: NextRequest) {
@@ -24,6 +26,7 @@ export async function POST(request: NextRequest) {
     turns?: Turn[];
     image?: Image | null;
     lang?: string;
+    thumb?: string | null;
   } | null;
 
   const turns = Array.isArray(body?.turns) ? body!.turns : null;
@@ -134,13 +137,32 @@ export async function POST(request: NextRequest) {
 
     const str = (value: unknown) => (typeof value === "string" ? value.trim() : "");
 
-    return NextResponse.json({
+    const answer = {
       say: str(parsed.say) || "Sir, ye samajh nahi aaya. Ek baar dobara boliye.",
       section: str(parsed.section),
       item: str(parsed.item),
       severity: str(parsed.severity),
       action: str(parsed.action),
+    };
+
+    const thumb =
+      typeof body?.thumb === "string" && body.thumb.length <= MAX_THUMB_BYTES
+        ? body.thumb
+        : null;
+
+    const saved = await saveFinding({
+      ...answer,
+      question: contents[contents.length - 1].parts
+        .filter((part): part is { text: string } => "text" in part)
+        .map((part) => part.text)
+        .join(" ")
+        .slice(0, MAX_CHARS),
+      lang: body?.lang === "en-IN" ? "en-IN" : "hi-IN",
+      thumb,
+      has_photo: Boolean(image),
     });
+
+    return NextResponse.json({ ...answer, saved });
   } catch (error) {
     console.error("[inspector] request failed", error);
     return NextResponse.json({ error: "The co-pilot is unavailable right now." }, { status: 500 });

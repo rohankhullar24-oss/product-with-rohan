@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BRAND, PHOTO_ONLY_PROMPT, STARTER_PROMPTS } from "@/lib/inspector/prompt";
 
-type Photo = { previewUrl: string; mimeType: string; base64: string };
+type Photo = { previewUrl: string; mimeType: string; base64: string; thumb: string };
 
 type Finding = {
   id: string;
@@ -14,6 +15,7 @@ type Finding = {
   item: string;
   severity: string;
   action: string;
+  saved: boolean;
 };
 
 type Turn = { role: "user" | "model"; text: string };
@@ -39,6 +41,7 @@ const STATUS_COPY: Record<Status, string> = {
 };
 
 const MAX_IMAGE_EDGE = 1280;
+const THUMB_EDGE = 160;
 
 /** Shrink and re-encode in the browser so a 6MB phone photo doesn't cross the wire. */
 async function preparePhoto(file: File): Promise<Photo> {
@@ -54,10 +57,20 @@ async function preparePhoto(file: File): Promise<Photo> {
   bitmap.close?.();
 
   const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+
+  // A separate tiny copy for the shared log, so history stays cheap to store
+  // and fast to load however many findings pile up.
+  const thumbScale = Math.min(1, THUMB_EDGE / Math.max(canvas.width, canvas.height));
+  const thumbCanvas = document.createElement("canvas");
+  thumbCanvas.width = Math.max(1, Math.round(canvas.width * thumbScale));
+  thumbCanvas.height = Math.max(1, Math.round(canvas.height * thumbScale));
+  thumbCanvas.getContext("2d")?.drawImage(canvas, 0, 0, thumbCanvas.width, thumbCanvas.height);
+
   return {
     previewUrl: dataUrl,
     mimeType: "image/jpeg",
     base64: dataUrl.slice(dataUrl.indexOf(",") + 1),
+    thumb: thumbCanvas.toDataURL("image/jpeg", 0.6),
   };
 }
 
@@ -167,6 +180,7 @@ export default function InspectorCopilot() {
             turns: turnsRef.current,
             image: attached ? { mimeType: attached.mimeType, data: attached.base64 } : null,
             lang: langRef.current,
+            thumb: attached?.thumb ?? null,
           }),
         });
         const data = await response.json();
@@ -184,6 +198,7 @@ export default function InspectorCopilot() {
           item: data.item ?? "",
           severity: data.severity ?? "",
           action: data.action ?? "",
+          saved: data.saved === true,
         };
 
         const withAnswer: Turn[] = [...turnsRef.current, { role: "model", text: finding.say }];
@@ -574,9 +589,17 @@ export default function InspectorCopilot() {
       </section>
 
       <section ref={findingsRef} className="mt-8 scroll-mt-4">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
-          Findings this session ({findings.length})
-        </h2>
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            Findings this session ({findings.length})
+          </h2>
+          <Link
+            href="/inspector/history"
+            className="text-xs font-medium text-teal-700 hover:underline"
+          >
+            View the full log →
+          </Link>
+        </div>
 
         {findings.length === 0 ? (
           <p className="mt-3 text-sm text-slate-500">
@@ -632,6 +655,12 @@ export default function InspectorCopilot() {
                 {finding.action && (
                   <p className="mt-3 border-l-2 border-teal-600 pl-3 text-xs text-slate-600 dark:text-slate-300">
                     {finding.action}
+                  </p>
+                )}
+
+                {!finding.saved && (
+                  <p className="mt-3 text-xs text-amber-700 dark:text-amber-500">
+                    Not saved to the shared log — this one is only on this screen.
                   </p>
                 )}
               </li>

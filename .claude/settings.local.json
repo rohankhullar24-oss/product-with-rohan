@@ -76,7 +76,10 @@
       "WebFetch(domain:linear.app)",
       "Bash(mkdir -p \"C:\\\\Users\\\\DELL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-DELL-OneDrive-Desktop-MySite\\\\6f4d9f55-6be9-4eb0-a44e-e89bd431996f\\\\scratchpad\\\\teardown-dryrun\" && ls \"C:\\\\Users\\\\DELL\\\\AppData\\\\Roaming\\\\Claude\\\\local-agent-mode-sessions\\\\skills-plugin\\\\70ad5b4f-bcaa-4dfc-a12e-42d588378f16\\\\9b6c05b8-a769-42fa-9385-49c67828b275\\\\skills\\\\infographic\\\\scripts\\\\\")",
       "Bash(SKILL_DIR=\"/c/Users/DELL/AppData/Roaming/Claude/local-agent-mode-sessions/skills-plugin/70ad5b4f-bcaa-4dfc-a12e-42d588378f16/9b6c05b8-a769-42fa-9385-49c67828b275/skills/infographic\" *)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Read(//c/Users/DELL/.claude/scheduled-tasks/product-shots-daily-content/**)",
+      "Bash(mkdir -p \"/c/Users/DELL/AppData/Local/Temp/claude/C--Users-DELL-OneDrive-Desktop-MySite/eac63ff1-f340-4219-b88f-3c7b402d7d79/scratchpad\")",
+      "Read(//c/Users/DELL/.claude/scheduled-tasks/**)"
     ]
   }
 }

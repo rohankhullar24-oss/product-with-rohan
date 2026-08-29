@@ -1,0 +1,25 @@
+{
+  "collection_name": "spinny_200_point_checklist",
+  "vector_dimensions": 1536,
+  "similarity_metric": "cosine",
+  "schema_fields": [
+    {"name": "checkpoint_id", "type": "string", "indexed": true},
+    {"name": "category", "type": "string", "enum": ["Engine", "Bodywork", "Undercarriage", "Tyres", "Brakes", "Electronics"]},
+    {"name": "defect_name", "type": "string"},
+    {"name": "hinglish_keywords", "type": "array", "items": "string"},
+    {"name": "severity", "type": "string", "enum": ["Minor", "Major", "Critical"]},
+    {"name": "star_rating_deduction", "type": "number"},
+    {"name": "repair_cost_estimate_inr", "type": "number"},
+    {"name": "mandatory_action", "type": "string"}
+  ],
+  "sample_document": {
+    "checkpoint_id": "ENG_042",
+    "category": "Engine",
+    "defect_name": "Carburetor / Fuel Injection Leakage",
+    "hinglish_keywords": ["carbonator", "carburetor", "petrol spill", "fuel overflow", "oil leak"],
+    "severity": "Critical",
+    "star_rating_deduction": 3.0,
+    "repair_cost_estimate_inr": 2500,
+    "mandatory_action": "Mark Major Defect under Fuel System. Set Engine Rating to 2-Star."
+  }
+}

@@ -63,11 +63,11 @@ const projects: Project[] = [
     external: true,
   },
   {
-    title: "Retailer RE-KYC Funnel Fix",
+    title: "Retailer RE-KYC Funnel Improvement",
     description:
-      "Fixed a broken retailer re-KYC flow that was failing on nearly every screen, lifting conversion from 5% to 50% and cutting shop-photo rejections from 50% to 2%.",
+      "Improved a broken retailer re-KYC flow that was failing on nearly every screen, lifting conversion from 5% to 50% and cutting shop-photo rejections from 50% to 2%.",
     fullDescription:
-      "Retailer re-KYC was a new flow riddled with bugs — blank pages, generic errors, and a shop-photo review step rejecting half of all submissions — so most cases only completed after manual intervention from sales and support. I diagnosed the failure points across the journey, fixed the underlying bugs, and re-stitched the flow so retailers could complete it unassisted. Conversion rose from 5% to 50%, and shop-photo rejections dropped from 50% to 2% through SOP changes and better visibility for the review team.",
+      "Retailer re-KYC was a new flow riddled with bugs — blank pages, generic errors, and a shop-photo review step rejecting half of all submissions — so most cases only completed after manual intervention from sales and support. I diagnosed the failure points across the journey, resolved the underlying issues, and re-stitched the flow so retailers could complete it unassisted. Conversion rose from 5% to 50%, and shop-photo rejections dropped from 50% to 2% through SOP changes and better visibility for the review team.",
     tags: ["Product Case Study"],
   },
   {
@@ -96,11 +96,11 @@ const projects: Project[] = [
     href: "/projects/stock-analyzer",
   },
   {
-    title: "Aadhaar Onboarding Flow Fix",
+    title: "Aadhaar Onboarding Flow Enhancement",
     description:
-      "Reworked the Aadhaar onboarding flow with face-auth and bug fixes, raising conversion from 50% to 85%.",
+      "Reworked the Aadhaar onboarding flow with face-auth and issue resolution, raising conversion from 50% to 73%.",
     fullDescription:
-      "The Aadhaar-based onboarding flow had several failure points — state mismatches, unclear category options, and success screens shown even after failures — that were dropping retailers before completion. I implemented face-authentication to replace a weak step and fixed the surrounding flow issues. Conversion rose from 50% to 85%.",
+      "The Aadhaar-based onboarding flow had several failure points — state mismatches, unclear category options, and success screens shown even after failures — that were dropping retailers before completion. I implemented face-authentication to replace a weak step and resolved the surrounding flow issues. Conversion rose from 50% to 73%.",
     tags: ["Product Case Study"],
   },
   {

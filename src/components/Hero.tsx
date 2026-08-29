@@ -44,25 +44,27 @@ export default function Hero() {
             transitionDelay: mounted ? "200ms" : "0ms",
           }}
         >
-          I run a B2B payments platform serving{" "}
+          I lead platform, growth and automation products at scale — delivering
+          measurable business impact through improved conversion, operational
+          efficiency and AI-led automation. I manage a B2B platform serving{" "}
           <span className="font-semibold text-navy dark:text-white">
-            600K+ retailers
+            600K+ users
           </span>{" "}
           at{" "}
           <span className="font-semibold text-navy dark:text-white">
             ₹7 Cr monthly GMV
           </span>
-. I shipped the fixes that took onboarding conversion to{" "}
+          , driving{" "}
           <span className="font-semibold text-navy dark:text-white">
-            73%
+            73% onboarding conversion
           </span>
-          , lead conversion to{" "}
+          ,{" "}
           <span className="font-semibold text-navy dark:text-white">
-            40%
+            40% lead conversion
           </span>
-          , and onboarding time down to{" "}
+          , and{" "}
           <span className="font-semibold text-navy dark:text-white">
-            15 minutes
+            15-minute B2B onboarding
           </span>
           .
         </p>

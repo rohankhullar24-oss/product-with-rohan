@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { track } from "@vercel/analytics";
 
 const anchorLinks = [
   { href: "#projects", label: "Projects" },
@@ -13,7 +12,6 @@ const anchorLinks = [
 const pageLinks = [
   { href: "/blogs", label: "Blogs" },
   { href: "/productshot", label: "Product Shots" },
-  { href: "/handbook", label: "Handbook" },
 ];
 
 export default function Navbar() {
@@ -46,11 +44,7 @@ export default function Navbar() {
           ))}
           {pageLinks.map((link) => (
             <li key={link.href}>
-              <Link
-                href={link.href}
-                onClick={() => link.href === "/handbook" && track("handbook_link_click", { source: "navbar" })}
-                className="transition-colors hover:text-accent"
-              >
+              <Link href={link.href} className="transition-colors hover:text-accent">
                 {link.label}
               </Link>
             </li>
@@ -76,10 +70,7 @@ export default function Navbar() {
               <Link
                 href={link.href}
                 className="block py-2 transition-colors hover:text-accent"
-                onClick={() => {
-                  if (link.href === "/handbook") track("handbook_link_click", { source: "navbar_mobile" });
-                  setOpen(false);
-                }}
+                onClick={() => setOpen(false)}
               >
                 {link.label}
               </Link>

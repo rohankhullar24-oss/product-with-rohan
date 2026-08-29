@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
-    "@next/third-parties": "^16.3.1",
+    "@next/third-parties": "^16.3.3",
     "@playhtml/react": "^2.0.1",
     "@react-pdf/renderer": "^4.5.1",
     "@supabase/ssr": "^0.12.0",

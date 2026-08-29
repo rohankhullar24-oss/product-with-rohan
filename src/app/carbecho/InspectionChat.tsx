@@ -260,6 +260,11 @@ export default function InspectionChat({
           ...previous,
           { id: `e${Date.now()}`, role: "bot", text: message, error: true },
         ]);
+        // Hand the inspector their question and photo back. A seller's driveway
+        // is a bad network, and losing the one photo of a defect to a dropped
+        // request means walking back to the car to take it again.
+        setTyped(question);
+        if (attached) setPhoto(attached);
         if (speakReplies) speak(message);
       } finally {
         busyRef.current = false;

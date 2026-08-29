@@ -30,7 +30,7 @@ const projects: Project[] = [
     description:
       "Led the design and rollout of an AI-driven document-verification workflow for partner KYC, cutting manual verification effort by 60% while strengthening fraud and RBI compliance controls.",
     fullDescription:
-      "This project involved designing and implementing an AI-powered document verification system to automate merchant KYC (Know Your Customer) processes. By leveraging machine learning for document classification and extraction, we reduced manual verification effort by 60%, improved compliance with RBI regulations, and created a more robust fraud detection system. This became a foundational component of the broader merchant onboarding revamp.",
+      "I designed and implemented an AI-powered document verification system to automate merchant KYC (Know Your Customer) processes. Using machine learning for document classification and extraction, I reduced manual verification effort by 60%, improved compliance with RBI regulations, and built a more robust fraud detection system. This became a foundational component of the broader merchant onboarding revamp.",
     tags: ["Product Case Study", "AI/ML"],
   },
   {
@@ -98,9 +98,9 @@ const projects: Project[] = [
   {
     title: "Aadhaar Onboarding Flow Enhancement",
     description:
-      "Reworked the Aadhaar onboarding flow with face-auth and issue resolution, raising conversion from 50% to 73%.",
+      "Reworked the onboarding flow end-to-end — face-auth, shop-photo fixes, UI cleanup, pre-filled business details, and API-based document verification to cut TAT — raising conversion from 50% to 73%.",
     fullDescription:
-      "The Aadhaar-based onboarding flow had several failure points — state mismatches, unclear category options, and success screens shown even after failures — that were dropping retailers before completion. I implemented face-authentication to replace a weak step and resolved the surrounding flow issues. Conversion rose from 50% to 73%.",
+      "The Aadhaar-based onboarding flow had several failure points — state mismatches, unclear category options, and success screens shown even after failures — that were dropping users before completion. I drove a set of fixes across the flow: face-authentication to replace a weak verification step, shop-photo capture fixes, general UI cleanup, pre-filling of business details to cut manual entry, and API-based verification of business documents to reduce turnaround time. Together these took conversion from 50% to 73%.",
     tags: ["Product Case Study"],
   },
   {

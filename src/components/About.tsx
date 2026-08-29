@@ -7,7 +7,7 @@ const highlights = [
   "4+ years leading platform, growth and automation products at scale",
   "Manage a B2B platform serving 600K+ users — ₹7 Cr monthly GMV",
   "Delivered 73% onboarding conversion, 40% lead conversion, 15-min B2B onboarding TAT",
-  "Built AI-powered automation workflows reducing manual effort by 60%",
+  "Built AI-powered document verification, cutting manual effort by 60%",
 ];
 
 const stats = [
@@ -53,7 +53,7 @@ export default function About() {
         </h3>
 
         <p className="mt-6 max-w-3xl text-slate dark:text-slate-400 leading-relaxed">
-          I lead platform, growth and automation products delivering measurable business impact through improved conversion, operational efficiency and AI-led automation. I combine market research, funnel analytics, and AI-powered workflows to solve high-leverage problems at scale. Based in Gurugram, India.
+          I diagnose why a product isn't converting, fix it, and back it up with the data. I combine market research, funnel analytics, and AI-powered workflows to solve the problems that block growth. Based in Gurugram, India.
         </p>
 
         {/* Animated Stats */}

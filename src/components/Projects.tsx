@@ -99,6 +99,39 @@ const projects: Project[] = [
     linkLabel: "Open the plate →",
   },
   {
+    title: "Retailer RE-KYC Funnel Fix",
+    description:
+      "Fixed a broken retailer re-KYC flow that was failing on nearly every screen, lifting conversion from 5% to 50% and cutting shop-photo rejections from 50% to 2%.",
+    fullDescription:
+      "Retailer re-KYC was a new flow riddled with bugs — blank pages, generic errors, and a shop-photo review step rejecting half of all submissions — so most cases only completed after manual intervention from sales and support. I diagnosed the failure points across the journey, fixed the underlying bugs, and re-stitched the flow so retailers could complete it unassisted. Conversion rose from 5% to 50%, and shop-photo rejections dropped from 50% to 2% through SOP changes and better visibility for the review team.",
+    tags: ["Product Case Study"],
+  },
+  {
+    title: "Retailer Visibility for Distributors",
+    description:
+      "Gave distributors visibility into which of their retailers had gone inactive, targeting retention of ~₹80 Cr out of ~₹200 Cr in at-risk retailer business.",
+    fullDescription:
+      "Distributors had no way to see which retailers under them were active, so they couldn't act on churn. Roughly 55-58K retailers (₹200 Cr in business) had gone dormant. I built a downloadable view giving distributors status visibility into their full retailer network, enabling targeted outreach. Modeled to retain ~40% of at-risk retailers (~₹80 Cr in business) by closing the visibility gap.",
+    tags: ["Product Case Study"],
+  },
+  {
+    title: "Aadhaar Onboarding Flow Fix",
+    description:
+      "Reworked the Aadhaar onboarding flow with face-auth and bug fixes, raising conversion from 50% to 85%.",
+    fullDescription:
+      "The Aadhaar-based onboarding flow had several failure points — state mismatches, unclear category options, and success screens shown even after failures — that were dropping retailers before completion. I implemented face-authentication to replace a weak step and fixed the surrounding flow issues. Conversion rose from 50% to 85%.",
+    tags: ["Product Case Study"],
+  },
+  {
+    title: "CarBecho — Used-Car Inspection Co-Pilot",
+    description:
+      "A field-inspector tool for used-car checklists — voice, text, and photo answers get logged straight to a 200-point inspection via an AI co-pilot, no code written manually.",
+    fullDescription:
+      "CarBecho is an interactive inspection flow for used-car field inspectors: job list → verify & pair → a 200-point checklist (8 sections, 40 rows, Yes/No only) → report. An AI chat co-pilot (Gemini) is available from every row, accepting text, voice, or photo answers and fuzzy-matching replies straight onto the checklist row with a one-tap Mark button. A companion voice-only mode lets an inspector just ask a question and get a spoken answer. Findings feed a shared log with search and severity/section/photo filters. Built with Next.js and Supabase, directed end-to-end via Claude.",
+    tags: ["Side Project", "AI-Built"],
+    href: "/carbecho",
+  },
+  {
     title: "Free AI Course Platform",
     description:
       "A work-in-progress interactive course platform teaching Applied AI concepts. Features 6 weeks of curriculum, video lessons, downloadable starter code, and progress tracking. Currently a prototype being built in public.",
@@ -106,6 +139,14 @@ const projects: Project[] = [
       "Building an interactive course platform to teach Applied AI concepts from first principles. The platform features a 6-week curriculum covering LLMs, autonomous agents, ML models, RAG systems, production deployment, and AI capstone projects. Each week includes structured lessons, hands-on project briefs, downloadable Python starter code, and progress tracking. Currently live as a prototype — videos and expanded content coming soon. Designed to be a practical, hands-on introduction to AI engineering.",
     tags: ["Side Project", "WIP", "AI Education"],
     href: "/course",
+  },
+  {
+    title: "IMS — End-to-End Device Ordering Platform",
+    description:
+      "Built and launched IMS, an end-to-end ordering platform letting retailers order devices — micro-ATMs, thermal printers, biometric devices, passbook printers, soundboxes, note-counting machines — directly through a self-serve flow.",
+    fullDescription:
+      "Led the launch of IMS (Inventory/Item Management System), a platform that took device ordering for retailers from a manual, offline process to a self-serve digital flow. Started with micro-ATM ordering, then expanded coverage to thermal printers, biometric devices, passbook printers, soundboxes, and note-counting machines. Also built employer registration into the flow and drove the security sign-off and compliance addendum work needed to get it fully live. This became the backbone for how retailers procure the hardware they need to operate.",
+    tags: ["Product Case Study"],
   },
 ];
 

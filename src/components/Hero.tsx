@@ -44,8 +44,9 @@ export default function Hero() {
             transitionDelay: mounted ? "200ms" : "0ms",
           }}
         >
-          I fix broken conversion funnels and ship AI-powered features that
-          cut manual work. I lead platform, growth and automation products.
+          I lead platform, growth and automation products. My work fixes
+          leaking conversion funnels and ships AI features that cut manual
+          work.
         </p>
 
         <div

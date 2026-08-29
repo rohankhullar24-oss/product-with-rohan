@@ -59,12 +59,12 @@ const QUICK: Record<string, string[]> = {
   "hi-IN": [
     "Is item me kya kya dekhna hai?",
     "Ye photo dekh ke batao kya issue hai",
-    "Isko Minor mark karun ya Major?",
+    "Isko No mark karun? Minor ya Major?",
   ],
   "en-IN": [
     "What exactly should I check for this item?",
     "Look at this photo and tell me the issue",
-    "Should I mark this Minor or Major?",
+    "Should I mark this No — and is it Minor or Major?",
   ],
 };
 
@@ -642,13 +642,13 @@ export default function InspectionChat({
                         onClick={() => applyMark(message, "fail")}
                         style={{ flex: 1, background: C.fail, color: "#fff", border: "none", borderRadius: 10, padding: "8px 0", fontSize: 11.5, fontWeight: 800, cursor: "pointer" }}
                       >
-                        ✕ Mark Fail · {message.reply?.severity || "Minor"}
+                        ✕ Mark No · {message.reply?.severity || "Minor"}
                       </button>
                       <button
                         onClick={() => applyMark(message, "pass")}
                         style={{ flex: 1, background: "#fff", color: C.pass, border: `1.5px solid ${C.line}`, borderRadius: 10, padding: "8px 0", fontSize: 11.5, fontWeight: 800, cursor: "pointer" }}
                       >
-                        ✓ Mark Pass
+                        ✓ Mark Yes
                       </button>
                     </div>
                   </div>

@@ -30,7 +30,7 @@ const STEPS: { title: string; body: string }[] = [
   {
     title: "4 · Mark the row from the answer",
     body:
-      "When the reply lands on a checklist item, the chat offers a one-tap Mark Fail · severity or Mark Pass. The row fills in, tagged 💬 via chat, and the reasoning is kept with it.",
+      "When the reply lands on a checklist item, the chat offers a one-tap Mark No · severity or Mark Yes. The row fills in, tagged 💬 via chat, and the reasoning is kept with it.",
   },
   {
     title: "5 · Report and trail",

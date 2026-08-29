@@ -12,8 +12,12 @@ import {
   type Job,
 } from "@/lib/inspector/flow";
 
+/**
+ * The real field app offers two answers, not three: the checklist rows are
+ * phrased as questions and the inspector says Yes or No. There is no N/A.
+ */
 type Mark = {
-  v: "pass" | "fail" | "na";
+  v: "pass" | "fail";
   byAi?: boolean;
   byChat?: boolean;
   sev?: string;
@@ -446,7 +450,7 @@ function InspectionFlow({ job, onBack }: { job: Job; onBack: () => void }) {
                           {copilot && item.ai && !mark.v && (
                             <div style={{ background: C.aiBg, borderRadius: 10, padding: "8px 10px", marginBottom: 8, display: "flex", alignItems: "center", gap: 8 }}>
                               <div style={{ flex: 1, fontSize: 11.5, color: C.purpleDark, lineHeight: 1.4 }}>
-                                ✦ Suggests <b>{item.ai.v.toUpperCase()}</b> — {item.ai.src}
+                                ✦ Suggests <b>{item.ai.v === "pass" ? "YES" : "NO"}</b> — {item.ai.src}
                               </div>
                               <button
                                 onClick={() => acceptAI(sectionIndex, itemIndex, item)}
@@ -464,30 +468,23 @@ function InspectionFlow({ job, onBack }: { job: Job; onBack: () => void }) {
                           )}
 
                           <div style={{ display: "flex", gap: 6 }}>
-                            {(["pass", "fail", "na"] as const).map((verdict) => (
+                            {(["pass", "fail"] as const).map((verdict) => (
                               <button
                                 key={verdict}
                                 onClick={() => setItem(sectionIndex, itemIndex, verdict, { byAi: false, byChat: false })}
                                 style={{
                                   flex: 1,
-                                  padding: "7px 0",
+                                  padding: "9px 0",
                                   borderRadius: 10,
-                                  fontSize: 11.5,
+                                  fontSize: 12.5,
                                   fontWeight: 800,
                                   cursor: "pointer",
                                   border: `1.5px solid ${mark.v === verdict ? "transparent" : C.line}`,
-                                  background:
-                                    mark.v === verdict
-                                      ? verdict === "pass"
-                                        ? C.pass
-                                        : verdict === "fail"
-                                          ? C.fail
-                                          : C.na
-                                      : "#fff",
+                                  background: mark.v === verdict ? (verdict === "pass" ? C.pass : C.fail) : "#fff",
                                   color: mark.v === verdict ? "#fff" : C.sub,
                                 }}
                               >
-                                {verdict === "pass" ? "✓ Pass" : verdict === "fail" ? "✕ Fail" : "N/A"}
+                                {verdict === "pass" ? "✓ Yes" : "✕ No"}
                               </button>
                             ))}
                           </div>

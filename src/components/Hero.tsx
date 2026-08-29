@@ -24,7 +24,7 @@ export default function Hero() {
             mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
           }`}
         >
-          Product Manager · Growth, Platform & Payments · AI & Automation
+          Product Manager · Growth & Platform · AI & Automation
         </p>
         <h1
           className={`mt-4 max-w-2xl text-4xl font-bold tracking-tight text-navy dark:text-white sm:text-5xl transition-all duration-700 ${
@@ -46,27 +46,7 @@ export default function Hero() {
         >
           I lead platform, growth and automation products at scale — delivering
           measurable business impact through improved conversion, operational
-          efficiency and AI-led automation. I manage a B2B platform serving{" "}
-          <span className="font-semibold text-navy dark:text-white">
-            600K+ users
-          </span>{" "}
-          at{" "}
-          <span className="font-semibold text-navy dark:text-white">
-            ₹7 Cr monthly GMV
-          </span>
-          , driving{" "}
-          <span className="font-semibold text-navy dark:text-white">
-            73% onboarding conversion
-          </span>
-          ,{" "}
-          <span className="font-semibold text-navy dark:text-white">
-            40% lead conversion
-          </span>
-          , and{" "}
-          <span className="font-semibold text-navy dark:text-white">
-            15-minute B2B onboarding
-          </span>
-          .
+          efficiency and AI-led automation.
         </p>
 
         <div

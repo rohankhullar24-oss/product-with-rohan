@@ -63,11 +63,11 @@ const projects: Project[] = [
     external: true,
   },
   {
-    title: "Retailer RE-KYC Funnel Improvement",
+    title: "RE-KYC Funnel Improvement",
     description:
-      "Improved a broken retailer re-KYC flow that was failing on nearly every screen, lifting conversion from 5% to 50% and cutting shop-photo rejections from 50% to 2%.",
+      "Improved a broken re-KYC flow that was failing on nearly every screen, lifting conversion from 5% to 50% and cutting shop-photo rejections from 50% to 2%.",
     fullDescription:
-      "Retailer re-KYC was a new flow riddled with bugs — blank pages, generic errors, and a shop-photo review step rejecting half of all submissions — so most cases only completed after manual intervention from sales and support. I diagnosed the failure points across the journey, resolved the underlying issues, and re-stitched the flow so retailers could complete it unassisted. Conversion rose from 5% to 50%, and shop-photo rejections dropped from 50% to 2% through SOP changes and better visibility for the review team.",
+      "The re-KYC flow was new and riddled with bugs — blank pages, generic errors, and a shop-photo review step rejecting half of all submissions — so most cases only completed after manual intervention from sales and support. I diagnosed the failure points across the journey, resolved the underlying issues, and re-stitched the flow so users could complete it unassisted. Conversion rose from 5% to 50%, and shop-photo rejections dropped from 50% to 2% through SOP changes and better visibility for the review team.",
     tags: ["Product Case Study"],
   },
   {
@@ -79,11 +79,11 @@ const projects: Project[] = [
     tags: ["Side Project", "AI-Built"],
   },
   {
-    title: "Retailer Visibility for Distributors",
+    title: "Retailer & Business KPI Visibility for Distributors",
     description:
-      "Gave distributors visibility into which of their retailers had gone inactive, targeting retention of ~₹80 Cr out of ~₹200 Cr in at-risk retailer business.",
+      "A business-led initiative giving distributors visibility into business KPIs and retailer status, targeting retention of ~₹80 Cr out of ~₹200 Cr in at-risk retailer business.",
     fullDescription:
-      "Distributors had no way to see which retailers under them were active, so they couldn't act on churn. Roughly 55-58K retailers (₹200 Cr in business) had gone dormant. I built a downloadable view giving distributors status visibility into their full retailer network, enabling targeted outreach. Modeled to retain ~40% of at-risk retailers (~₹80 Cr in business) by closing the visibility gap.",
+      "Started as a business-led initiative to give distributors visibility into the KPIs of the retailers and sub-distributors under them, since they had no way to track or push performance. I built downloadable KPI and status visibility, including flagging which retailers had gone inactive — roughly 55-58K retailers (₹200 Cr in business) had gone dormant with no way for distributors to see it. Modeled to retain ~40% of at-risk retailers (~₹80 Cr in business) by closing the visibility gap.",
     tags: ["Product Case Study"],
   },
   {

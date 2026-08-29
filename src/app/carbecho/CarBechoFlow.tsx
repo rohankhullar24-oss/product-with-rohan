@@ -490,12 +490,37 @@ function InspectionFlow({ job, onBack }: { job: Job; onBack: () => void }) {
                           </div>
 
                           {mark.v === "fail" && (
-                            <div style={{ marginTop: 8, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-                              <Pill bg={C.failBg} color={C.fail}>📷 Photo required</Pill>
-                              <Pill bg={C.amberBg} color={C.amber}>{mark.sev || "Minor"} severity</Pill>
-                              {mark.byAi && <Pill bg={C.aiBg} color={C.ai}>✦ AI-detected</Pill>}
-                              {mark.byChat && <Pill bg={C.aiBg} color={C.ai}>💬 via chat</Pill>}
-                            </div>
+                            <>
+                              <div style={{ marginTop: 8, display: "flex", gap: 6 }}>
+                                {(["Minor", "Major", "Critical"] as const).map((sev) => {
+                                  const active = (mark.sev || "Minor") === sev;
+                                  return (
+                                    <button
+                                      key={sev}
+                                      onClick={() => setItem(sectionIndex, itemIndex, "fail", { sev })}
+                                      style={{
+                                        flex: 1,
+                                        padding: "6px 0",
+                                        borderRadius: 8,
+                                        fontSize: 11.5,
+                                        fontWeight: 800,
+                                        cursor: "pointer",
+                                        border: `1.5px solid ${active ? "transparent" : C.line}`,
+                                        background: active ? (sev === "Minor" ? C.amber : C.fail) : "#fff",
+                                        color: active ? "#fff" : C.sub,
+                                      }}
+                                    >
+                                      {sev}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              <div style={{ marginTop: 8, display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+                                <Pill bg={C.failBg} color={C.fail}>📷 Photo required</Pill>
+                                {mark.byAi && <Pill bg={C.aiBg} color={C.ai}>✦ AI-detected</Pill>}
+                                {mark.byChat && <Pill bg={C.aiBg} color={C.ai}>💬 via chat</Pill>}
+                              </div>
+                            </>
                           )}
 
                           {mark.v && mark.v !== "fail" && (mark.byAi || mark.byChat) && (

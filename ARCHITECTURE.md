@@ -66,9 +66,37 @@ src/
   productshot auth/sessions) and split by client context in `src/lib/supabase/`.
 - **Anthropic (Claude) API** — powers resume tailoring and productshot's news
   generation, via `src/lib/anthropic.ts`.
+- **Google Gemini API** — powers the CarBecho/Inspector Co-Pilot chat, called
+  directly from `src/app/api/inspector/route.ts` (no SDK wrapper). `GEMINI_API_KEY`.
 - **Razorpay** — handbook payment checkout.
 - **Resend** — transactional email (handbook delivery, notifications).
 - **Vercel** — hosting/deploy target (see `vercel` sections implied by CI, `next.config.ts`).
+
+## CarBecho / Inspector Co-Pilot
+
+A field inspector's used-car checklist tool, unlisted (noindex, not in
+sitemap/nav). Two entry points share one backend:
+
+- **`src/app/inspector/`** — the original voice-only Co-Pilot: ask a question
+  (text/voice/photo), get one answer, spoken back if wanted. Also carries an
+  explainer above the tool linking to `/carbecho`. `history/` shows the shared
+  findings log (search + severity/section/has-photo filters).
+- **`src/app/carbecho/`** — the interactive flow: job list → verify & pair →
+  200-point checklist (8 sections, 40 rows, Yes/No only — no N/A) → report.
+  `CarBechoFlow.tsx` is the flow/checklist; `InspectionChat.tsx` is the chat
+  sheet available from every row (text + voice + photo in one composer; a
+  reply can write straight to the checklist via a one-tap Mark button).
+- **`src/lib/inspector/`** — shared logic: `flow.ts` (SECTIONS/JOBS/palette +
+  `resolveChecklistItem`, which fuzzy-matches a chat reply to a checklist row
+  when there's no row-context to bind to), `prompt.ts` (brand/section
+  constants + the Gemini system prompt), `store.ts` (writes findings to
+  Supabase via the admin/service-role client — the anon key stays read-only).
+- **`src/app/api/inspector/`** — the one route both surfaces call. Tries
+  `gemini-2.5-flash` then falls back to `gemini-3.5-flash-lite` on 429/503
+  (Gemini quota is per-model, so this also doubles the effective free-tier
+  cap); a 400 fails fast since it's a request-shape bug, not a quota issue.
+  `findings/route.ts` persists to the `inspection_findings` Supabase table
+  (thumbnail only, not the full-size photo).
 
 ## Android apps
 

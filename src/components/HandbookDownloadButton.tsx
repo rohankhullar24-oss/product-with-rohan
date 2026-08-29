@@ -69,14 +69,14 @@ export default function HandbookDownloadButton({
   if (status === "done") {
     return (
       <button type="button" onClick={handleClick} className={className}>
-        ✓ Downloaded — click to save again
+        ✓ Downloaded, click to save again
       </button>
     );
   }
 
   return (
     <button type="button" onClick={handleClick} className={className}>
-      {status === "error" ? "Download failed — tap to retry" : label}
+      {status === "error" ? "Download failed, tap to retry" : label}
     </button>
   );
 }

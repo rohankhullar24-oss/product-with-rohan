@@ -694,7 +694,7 @@ export default function ChladniPlate() {
             <p className="text-sm text-slate-400">
               Each grain takes a random hop every frame, and hops harder where the plate moves more.
               So it random-walks until it stumbles onto a{" "}
-              <em className="text-slate-300">nodal line</em> — a place with no motion — and then it
+              <em className="text-slate-300">nodal line</em> (a place with no motion) and then it
               stops. The pattern isn&apos;t drawn. It&apos;s what&apos;s left over.
             </p>
           </div>
@@ -714,7 +714,7 @@ export default function ChladniPlate() {
               The modes
             </h3>
             <p className="text-sm text-slate-400">
-              A square plate rings at frequencies set by two whole numbers — how many half-waves fit
+              A square plate rings at frequencies set by two whole numbers: how many half-waves fit
               across it each way. Higher pairs sit closer together, so the top of the dial is crowded
               and the figures there are hard to isolate. That is also true of real plates.
             </p>

@@ -24,8 +24,8 @@ const roles: Role[] = [
       "Implemented platform controls, risk-management capabilities and automation frameworks that strengthened platform reliability, improved onboarding quality and reduced operational overhead at scale.",
     ],
     awards: [
-      "Highflyer Award — Recognized for driving high-impact platform transformation initiatives",
-      "Certificate of Appreciation — launched the lead-generation flow driving higher conversion",
+      "Highflyer Award: Recognized for driving high-impact platform transformation initiatives",
+      "Certificate of Appreciation: launched the lead-generation flow driving higher conversion",
     ],
   },
   {

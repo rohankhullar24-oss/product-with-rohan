@@ -14,9 +14,9 @@ const CRITERION_LABELS: Record<Criterion, string> = {
 };
 
 const ENERGY_LABELS: Record<string, string> = {
-  low: "low — you'd rather not revisit this",
-  medium: "moderate — you could course-correct if needed",
-  high: "high — you're fine experimenting and adjusting",
+  low: "low, you'd rather not revisit this",
+  medium: "moderate, you could course-correct if needed",
+  high: "high, you're fine experimenting and adjusting",
 };
 
 function hashString(str: string): number {
@@ -103,7 +103,7 @@ export default function DecisionDice() {
         ? parts.join(", and ")
         : "it edges out the alternatives on balance";
 
-    return `Go with "${winner.name}" — ${reason}.`;
+    return `Go with "${winner.name}", ${reason}.`;
   }
 
   return (

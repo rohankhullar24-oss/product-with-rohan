@@ -115,7 +115,7 @@ export default function DateInvite() {
               When works for you?
             </h1>
             <p className="mt-1 text-center text-sm text-rose-500">
-              Pick a date and time — I&apos;ll make it special.
+              Pick a date and time, I&apos;ll make it special.
             </p>
 
             <div className="mt-6 space-y-4">

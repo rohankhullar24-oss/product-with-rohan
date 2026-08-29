@@ -5,7 +5,7 @@ import { AnimatedCounter } from "./AnimatedCounter";
 
 const highlights = [
   "4+ years leading platform, growth and automation products at scale",
-  "Manage a B2B platform serving 600K+ users — ₹7 Cr monthly GMV",
+  "Manage a B2B platform serving 600K+ users, ₹7 Cr monthly GMV",
   "Delivered 73% onboarding conversion, 40% lead conversion, 15-min B2B onboarding TAT",
   "Built AI-powered document verification, cutting manual effort by 60%",
 ];

@@ -35,7 +35,7 @@ export default function HandbookCheckout() {
         amount: order.amount,
         currency: order.currency,
         name: "The Product Manager Handbook",
-        description: "PDF + Word edition — 5 volumes, 93 chapters",
+        description: "PDF + Word edition, 5 volumes, 93 chapters",
         order_id: order.order_id,
         theme: { color: "#0d9488" },
         handler: async (response: RazorpayPaymentResponse) => {

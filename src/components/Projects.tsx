@@ -26,6 +26,14 @@ const projects: Project[] = [
     linkLabel: "Open the live app →",
   },
   {
+    title: "AI-Powered Document Verification for Merchant Onboarding",
+    description:
+      "Led the design and rollout of an AI-driven document-verification workflow for partner KYC, cutting manual verification effort by 60% while strengthening fraud and RBI compliance controls.",
+    fullDescription:
+      "This project involved designing and implementing an AI-powered document verification system to automate merchant KYC (Know Your Customer) processes. By leveraging machine learning for document classification and extraction, we reduced manual verification effort by 60%, improved compliance with RBI regulations, and created a more robust fraud detection system. This became a foundational component of the broader merchant onboarding revamp.",
+    tags: ["Product Case Study", "AI/ML"],
+  },
+  {
     title: "Reminders — The Android App That Won't Let You Forget",
     description:
       "A native Android app for birthdays, anniversaries and tasks that rings like an alarm clock — as many times a day as you want — and keeps coming back until you confirm you've actually done it.",
@@ -35,14 +43,6 @@ const projects: Project[] = [
     href: "https://github.com/rohankhullar24-oss/product-with-rohan/releases/download/reminder-app-latest/Reminders.apk",
     external: true,
     linkLabel: "Download the app →",
-  },
-  {
-    title: "AI-Powered Document Verification for Merchant Onboarding",
-    description:
-      "Led the design and rollout of an AI-driven document-verification workflow for partner KYC, cutting manual verification effort by 60% while strengthening fraud and RBI compliance controls.",
-    fullDescription:
-      "This project involved designing and implementing an AI-powered document verification system to automate merchant KYC (Know Your Customer) processes. By leveraging machine learning for document classification and extraction, we reduced manual verification effort by 60%, improved compliance with RBI regulations, and created a more robust fraud detection system. This became a foundational component of the broader merchant onboarding revamp.",
-    tags: ["Product Case Study", "AI/ML"],
   },
   {
     title: "Lead-Generation & Assignment Tool",
@@ -63,12 +63,28 @@ const projects: Project[] = [
     external: true,
   },
   {
+    title: "Retailer RE-KYC Funnel Fix",
+    description:
+      "Fixed a broken retailer re-KYC flow that was failing on nearly every screen, lifting conversion from 5% to 50% and cutting shop-photo rejections from 50% to 2%.",
+    fullDescription:
+      "Retailer re-KYC was a new flow riddled with bugs — blank pages, generic errors, and a shop-photo review step rejecting half of all submissions — so most cases only completed after manual intervention from sales and support. I diagnosed the failure points across the journey, fixed the underlying bugs, and re-stitched the flow so retailers could complete it unassisted. Conversion rose from 5% to 50%, and shop-photo rejections dropped from 50% to 2% through SOP changes and better visibility for the review team.",
+    tags: ["Product Case Study"],
+  },
+  {
     title: "This Portfolio Site — Built with AI, No Code Written",
     description:
       "Designed and shipped this entire site (Next.js + Tailwind) by directing Claude end-to-end — from spec and content to layout, styling, and deployment — without writing a single line of code myself.",
     fullDescription:
       "This entire portfolio site was built without writing any code myself. I used Claude to design the spec, create the layout, implement styling with Tailwind, and deploy to Vercel. This demonstrates how product managers can leverage AI to ship functional products independently, from concept to production—a hands-on look at how PMs can use AI to ship product themselves.",
     tags: ["Side Project", "AI-Built"],
+  },
+  {
+    title: "Retailer Visibility for Distributors",
+    description:
+      "Gave distributors visibility into which of their retailers had gone inactive, targeting retention of ~₹80 Cr out of ~₹200 Cr in at-risk retailer business.",
+    fullDescription:
+      "Distributors had no way to see which retailers under them were active, so they couldn't act on churn. Roughly 55-58K retailers (₹200 Cr in business) had gone dormant. I built a downloadable view giving distributors status visibility into their full retailer network, enabling targeted outreach. Modeled to retain ~40% of at-risk retailers (~₹80 Cr in business) by closing the visibility gap.",
+    tags: ["Product Case Study"],
   },
   {
     title: "Indian Stock Analyzer",
@@ -80,6 +96,14 @@ const projects: Project[] = [
     href: "/projects/stock-analyzer",
   },
   {
+    title: "Aadhaar Onboarding Flow Fix",
+    description:
+      "Reworked the Aadhaar onboarding flow with face-auth and bug fixes, raising conversion from 50% to 85%.",
+    fullDescription:
+      "The Aadhaar-based onboarding flow had several failure points — state mismatches, unclear category options, and success screens shown even after failures — that were dropping retailers before completion. I implemented face-authentication to replace a weak step and fixed the surrounding flow issues. Conversion rose from 50% to 85%.",
+    tags: ["Product Case Study"],
+  },
+  {
     title: "Decision Dice",
     description:
       "A lightweight tool for beating analysis paralysis: enter the options you're torn between, answer a couple of quick questions about your priorities, and get a ranked recommendation with a one-line rationale.",
@@ -87,6 +111,14 @@ const projects: Project[] = [
       "Decision Dice solves the problem of analysis paralysis by systematically evaluating your options against your stated priorities. The tool uses a simple questionnaire approach to understand what matters most to you, then applies weighted scoring to provide a clear recommendation. It's available at /projects/decision-dice with a fully interactive interface.",
     tags: ["Side Project", "Tool"],
     href: "/projects/decision-dice",
+  },
+  {
+    title: "IMS — End-to-End Device Ordering Platform",
+    description:
+      "Built and launched IMS, an end-to-end ordering platform now underpinning ~₹7 Cr in monthly GMV, letting retailers order devices — micro-ATMs, thermal printers, biometric devices, passbook printers, soundboxes, note-counting machines — directly through a self-serve flow.",
+    fullDescription:
+      "Led the launch of IMS (Inventory/Item Management System), a platform that took device ordering for retailers from a manual, offline process to a self-serve digital flow. Started with micro-ATM ordering, then expanded coverage to thermal printers, biometric devices, passbook printers, soundboxes, and note-counting machines. Also built employer registration into the flow and drove the security sign-off and compliance addendum work needed to get it fully live. The platform now underpins ~₹7 Cr in monthly GMV and is the backbone for how retailers procure the hardware they need to operate.",
+    tags: ["Product Case Study"],
   },
   {
     title: "The Chladni Plate — A Physics Toy You Have to Tune",
@@ -97,30 +129,6 @@ const projects: Project[] = [
     tags: ["Side Project", "AI-Built"],
     href: "/projects/chladni-plate",
     linkLabel: "Open the plate →",
-  },
-  {
-    title: "Retailer RE-KYC Funnel Fix",
-    description:
-      "Fixed a broken retailer re-KYC flow that was failing on nearly every screen, lifting conversion from 5% to 50% and cutting shop-photo rejections from 50% to 2%.",
-    fullDescription:
-      "Retailer re-KYC was a new flow riddled with bugs — blank pages, generic errors, and a shop-photo review step rejecting half of all submissions — so most cases only completed after manual intervention from sales and support. I diagnosed the failure points across the journey, fixed the underlying bugs, and re-stitched the flow so retailers could complete it unassisted. Conversion rose from 5% to 50%, and shop-photo rejections dropped from 50% to 2% through SOP changes and better visibility for the review team.",
-    tags: ["Product Case Study"],
-  },
-  {
-    title: "Retailer Visibility for Distributors",
-    description:
-      "Gave distributors visibility into which of their retailers had gone inactive, targeting retention of ~₹80 Cr out of ~₹200 Cr in at-risk retailer business.",
-    fullDescription:
-      "Distributors had no way to see which retailers under them were active, so they couldn't act on churn. Roughly 55-58K retailers (₹200 Cr in business) had gone dormant. I built a downloadable view giving distributors status visibility into their full retailer network, enabling targeted outreach. Modeled to retain ~40% of at-risk retailers (~₹80 Cr in business) by closing the visibility gap.",
-    tags: ["Product Case Study"],
-  },
-  {
-    title: "Aadhaar Onboarding Flow Fix",
-    description:
-      "Reworked the Aadhaar onboarding flow with face-auth and bug fixes, raising conversion from 50% to 85%.",
-    fullDescription:
-      "The Aadhaar-based onboarding flow had several failure points — state mismatches, unclear category options, and success screens shown even after failures — that were dropping retailers before completion. I implemented face-authentication to replace a weak step and fixed the surrounding flow issues. Conversion rose from 50% to 85%.",
-    tags: ["Product Case Study"],
   },
   {
     title: "CarBecho — Used-Car Inspection Co-Pilot",
@@ -139,14 +147,6 @@ const projects: Project[] = [
       "Building an interactive course platform to teach Applied AI concepts from first principles. The platform features a 6-week curriculum covering LLMs, autonomous agents, ML models, RAG systems, production deployment, and AI capstone projects. Each week includes structured lessons, hands-on project briefs, downloadable Python starter code, and progress tracking. Currently live as a prototype — videos and expanded content coming soon. Designed to be a practical, hands-on introduction to AI engineering.",
     tags: ["Side Project", "WIP", "AI Education"],
     href: "/course",
-  },
-  {
-    title: "IMS — End-to-End Device Ordering Platform",
-    description:
-      "Built and launched IMS, an end-to-end ordering platform letting retailers order devices — micro-ATMs, thermal printers, biometric devices, passbook printers, soundboxes, note-counting machines — directly through a self-serve flow.",
-    fullDescription:
-      "Led the launch of IMS (Inventory/Item Management System), a platform that took device ordering for retailers from a manual, offline process to a self-serve digital flow. Started with micro-ATM ordering, then expanded coverage to thermal printers, biometric devices, passbook printers, soundboxes, and note-counting machines. Also built employer registration into the flow and drove the security sign-off and compliance addendum work needed to get it fully live. This became the backbone for how retailers procure the hardware they need to operate.",
-    tags: ["Product Case Study"],
   },
 ];
 

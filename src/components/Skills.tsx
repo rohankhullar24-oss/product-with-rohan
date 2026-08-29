@@ -45,20 +45,15 @@ const skillGroups = [
     skills: [
       "AI agents (LangGraph, LangChain)",
       "LLM workflows",
-      "AI-powered automation",
-      "Agentic AI",
       "Prompt engineering",
-      "Rapid prototyping",
-      "AI-assisted product development",
     ],
   },
   {
     title: "Leadership",
     skills: [
-      "Stakeholder management",
+      "RBI compliance & audit closure",
       "Cross-functional collaboration",
-      "Requirement gathering",
-      "Product execution",
+      "Stakeholder management",
     ],
   },
   {

@@ -44,9 +44,9 @@ export default function Hero() {
             transitionDelay: mounted ? "200ms" : "0ms",
           }}
         >
-          I lead platform, growth and automation products. My work fixes
-          leaking conversion funnels and ships AI features that cut manual
-          work.
+          I lead platform, growth and automation products at scale,
+          delivering measurable business impact through improved conversion,
+          operational efficiency and AI-led automation.
         </p>
 
         <div

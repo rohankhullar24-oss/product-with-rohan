@@ -32,6 +32,8 @@ const projects: Project[] = [
     fullDescription:
       "I designed and implemented an AI-powered document verification system to automate merchant KYC (Know Your Customer) processes. Using machine learning for document classification and extraction, I reduced manual verification effort by 60%, improved compliance with RBI regulations, and built a more robust fraud detection system. This became a foundational component of the broader merchant onboarding revamp.",
     tags: ["Product Case Study", "AI/ML"],
+    href: "/projects/ai-doc-verification",
+    linkLabel: "View detailed case study →",
   },
   {
     title: "Reminders: The Android App That Won't Let You Forget",

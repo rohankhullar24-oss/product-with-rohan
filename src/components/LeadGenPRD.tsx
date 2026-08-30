@@ -8,18 +8,18 @@ function Wireframes({
   images: { src: string; alt: string }[];
 }) {
   return (
-    <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+    <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
       {images.map((img) => (
         <div
           key={img.src}
-          className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
+          className="flex h-72 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700"
         >
           <Image
             src={img.src}
             alt={img.alt}
-            width={600}
-            height={700}
-            className="h-auto w-full"
+            width={918}
+            height={613}
+            className="h-full w-full object-contain"
           />
         </div>
       ))}

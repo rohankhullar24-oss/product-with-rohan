@@ -73,6 +73,7 @@ const projects: Project[] = [
     fullDescription:
       "The re-KYC flow was new and riddled with bugs: blank pages, generic errors, and a shop-photo review step rejecting half of all submissions. Most cases only completed after manual intervention from sales and support. I diagnosed the failure points across the journey, resolved the underlying issues, and re-stitched the flow so users could complete it unassisted. Conversion rose from 5% to 50%, and shop-photo rejections dropped from 50% to 2% through SOP changes and better visibility for the review team.",
     tags: ["Product Case Study"],
+    href: "/projects/rekyc-funnel",
   },
   {
     title: "This Portfolio Site: Built with AI, No Code Written",

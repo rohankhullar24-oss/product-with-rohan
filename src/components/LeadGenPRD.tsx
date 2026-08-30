@@ -1,5 +1,32 @@
 "use client";
 
+import Image from "next/image";
+
+function Wireframes({
+  images,
+}: {
+  images: { src: string; alt: string }[];
+}) {
+  return (
+    <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
+      {images.map((img) => (
+        <div
+          key={img.src}
+          className="overflow-hidden rounded-lg border border-slate-200 dark:border-slate-700"
+        >
+          <Image
+            src={img.src}
+            alt={img.alt}
+            width={600}
+            height={700}
+            className="h-auto w-full"
+          />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Section({
   title,
   eyebrow,
@@ -126,6 +153,26 @@ export default function LeadGenPRD() {
             <Field>Configurable search radius by role (a promoter/distributor-level agent might search 25km, a zonal manager 100km).</Field>
             <Field>A generalized "remark" system: any outcome (not interested, converted via another number, follow-up needed) maps to a target lead state, and that mapping — plus the description text captured with it — is configurable rather than hardcoded per remark.</Field>
           </ul>
+          <Wireframes
+            images={[
+              {
+                src: "/projects/lead-gen-prd/milestone1-dashboard.png",
+                alt: "Lead dashboard wireframes: map view, list view, and distance filter",
+              },
+              {
+                src: "/projects/lead-gen-prd/milestone1-lead-detail.png",
+                alt: "Accepted lead detail screen with call/direction actions and remarks flow",
+              },
+              {
+                src: "/projects/lead-gen-prd/milestone1-statuses.png",
+                alt: "Rejected and Converted lead status views",
+              },
+            ]}
+          />
+          <p className="text-xs text-slate-500 dark:text-slate-500">
+            Wireframes from the ranger training deck built alongside this
+            milestone. Names shown are demo/placeholder data.
+          </p>
         </Section>
 
         <Section eyebrow="Milestone 2" title="Self-Serve Lead Creation In-App">
@@ -143,6 +190,14 @@ export default function LeadGenPRD() {
             <Field>A four-stage progress tracker (registration → sales visit → application submitted → onboarding complete) so the lead always knows where they stand, including failure states with next steps (resubmit, contact support) rather than dead ends.</Field>
             <Field>Leads originating from this in-app flow surface to field agents as "hot leads," visually distinguished from and prioritized over standard web leads.</Field>
           </ul>
+          <a
+            href="https://www.youtube.com/watch?v=CSGc7xvyJ88"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center text-sm font-semibold text-accent hover:underline"
+          >
+            Watch a walkthrough of this flow →
+          </a>
         </Section>
 
         <Section eyebrow="Milestone 3" title="Charging & Refunds">

@@ -88,6 +88,21 @@ export default async function BlogPostPage({
             {post.content}
           </ReactMarkdown>
         </div>
+
+        <div className="mt-12 flex items-start gap-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-6">
+          <div>
+            <p className="font-semibold text-navy dark:text-white">Rohan Khullar</p>
+            <p className="mt-1 text-sm text-slate dark:text-slate-400">
+              Product Manager building growth, platform, and AI-led automation products in fintech.
+            </p>
+            <Link
+              href="/#projects"
+              className="mt-3 inline-flex items-center text-sm font-semibold text-accent hover:underline"
+            >
+              See my product work →
+            </Link>
+          </div>
+        </div>
       </article>
     </main>
   );

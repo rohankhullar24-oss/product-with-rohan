@@ -5,21 +5,21 @@ import Image from "next/image";
 function Wireframes({
   images,
 }: {
-  images: { src: string; alt: string }[];
+  images: { src: string; alt: string; width: number; height: number }[];
 }) {
   return (
-    <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+    <div className="mt-4 flex flex-col gap-4">
       {images.map((img) => (
         <div
           key={img.src}
-          className="flex h-72 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700"
+          className="overflow-hidden rounded-lg border border-slate-200 bg-white dark:border-slate-700"
         >
           <Image
             src={img.src}
             alt={img.alt}
-            width={918}
-            height={613}
-            className="h-full w-full object-contain"
+            width={img.width}
+            height={img.height}
+            className="h-auto w-full"
           />
         </div>
       ))}
@@ -158,14 +158,20 @@ export default function LeadGenPRD() {
               {
                 src: "/projects/lead-gen-prd/milestone1-dashboard.png",
                 alt: "Lead dashboard wireframes: map view, list view, and distance filter",
+                width: 918,
+                height: 613,
               },
               {
                 src: "/projects/lead-gen-prd/milestone1-lead-detail.png",
                 alt: "Accepted lead detail screen with call/direction actions and remarks flow",
+                width: 886,
+                height: 562,
               },
               {
                 src: "/projects/lead-gen-prd/milestone1-statuses.png",
                 alt: "Rejected and Converted lead status views",
+                width: 568,
+                height: 562,
               },
             ]}
           />

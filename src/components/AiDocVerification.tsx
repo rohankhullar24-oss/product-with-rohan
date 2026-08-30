@@ -31,7 +31,7 @@ const CHECKS: CheckRow[] = [
   { check: "Is a shop", field: "isShop", required: "Yes", rule: "Image must depict a shop", rejects: "“The uploaded photo does not appear to be of a shop.”" },
   { check: "Shop front visible", field: "shopFrontPresent", required: "Yes", rule: "Front must be clearly shown", rejects: "“Shop front is not clearly visible.”" },
   { check: "Shop inside visible", field: "shopInsidePresent", required: "Yes", rule: "Inside must be clearly shown", rejects: "“Shop inside area is not clearly visible.”" },
-  { check: "Inside image valid", field: "shopInsideValid", required: "Yes", rule: "Passes Hyperverge's internal validity check", rejects: "“Inside shop photo is not valid.”" },
+  { check: "Inside image valid", field: "shopInsideValid", required: "Yes", rule: "Passes the internal ML tool's validity check", rejects: "“Inside shop photo is not valid.”" },
   { check: "Shop open", field: "shopOpen", required: "Yes", rule: "Shop must be operational at capture time", rejects: "“Shop appears to be closed.”" },
   { check: "Shop type", field: "shopType", required: "Yes", rule: "Must be a permanent structure", rejects: "“This shop setup is not eligible for onboarding.”" },
   { check: "Inside/outside match", field: "interImageNobMatch", required: "Yes", rule: "Both photos must belong to the same shop", rejects: "“Inside and outside shop photos do not appear to belong to the same shop.”" },
@@ -116,8 +116,10 @@ export default function AiDocVerification() {
         <Section title="The Verification Model">
           <p>
             We moved shop-photo review from a mostly manual spot-check to an
-            automated decision engine built on Hyperverge. It scores every
-            submission against a fixed rule set before a human ever sees it.
+            automated decision engine built on an internal ML tool, trained on
+            two years of the company's own manual shop-photo verification
+            calls. It scores every submission against a fixed rule set before
+            a human ever sees it.
           </p>
           <CheckTable />
         </Section>

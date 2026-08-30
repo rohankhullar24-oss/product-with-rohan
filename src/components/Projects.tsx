@@ -51,6 +51,8 @@ const projects: Project[] = [
     fullDescription:
       "Designed and launched a lead-generation and intelligent assignment tool that processes 25,000 leads monthly into the merchant onboarding pipeline. Used activation-trend analysis to identify untapped service opportunities (micro-ATM, biometric authentication) and expanded the retailer services catalog through third-party provider integrations. This tool became a key driver of merchant acquisition growth.",
     tags: ["Product Case Study"],
+    href: "/projects/lead-gen-prd",
+    linkLabel: "View detailed PRD →",
   },
   {
     title: "Prototype Merchant App",

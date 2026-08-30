@@ -799,6 +799,15 @@ export default function CarBechoFlow() {
           <Link href="/inspector" style={{ color: C.purple, fontWeight: 700 }}>
             How this flow works →
           </Link>
+          <br />
+          <a
+            href="https://claude.ai/code/artifact/0502a061-7a51-4111-9e7a-65cb782b6bf4"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: C.sub, fontWeight: 600 }}
+          >
+            See the design wireframes →
+          </a>
         </div>
       </div>
     </Shell>

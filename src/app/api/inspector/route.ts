@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { INSPECTOR_SYSTEM_PROMPT, RESPONSE_SCHEMA } from "@/lib/inspector/prompt";
 import { saveFinding } from "@/lib/inspector/store";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -30,6 +31,10 @@ const MAX_THUMB_BYTES = 60_000;
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function POST(request: NextRequest) {
+  if (isRateLimited(request, "inspector", 20, 60_000)) {
+    return NextResponse.json({ error: "Too many requests. Please slow down." }, { status: 429 });
+  }
+
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: "GEMINI_API_KEY is not configured." }, { status: 500 });

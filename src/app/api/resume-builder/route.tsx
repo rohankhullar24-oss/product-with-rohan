@@ -1,13 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { extractResumeText } from "@/lib/resume/parse";
 import { tailorResume } from "@/lib/resume/tailor";
 import { ResumePdf } from "@/lib/resume/ResumePdf";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-export async function POST(request: Request) {
+const MAX_RESUME_BYTES = 8 * 1024 * 1024;
+
+export async function POST(request: NextRequest) {
+  if (isRateLimited(request, "resume-builder", 5, 60_000)) {
+    return NextResponse.json({ error: "Too many requests. Please slow down." }, { status: 429 });
+  }
+
   try {
     const formData = await request.formData();
 
@@ -48,7 +55,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const resumeText = await extractResumeText(file);
+    if (file.size > MAX_RESUME_BYTES) {
+      return NextResponse.json(
+        { error: "That resume file is too large (max 8MB)." },
+        { status: 413 }
+      );
+    }
+
+    let resumeText: string;
+    try {
+      resumeText = await extractResumeText(file);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Couldn't read the uploaded resume.";
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
     if (!resumeText.trim()) {
       return NextResponse.json(
         { error: "Couldn't extract any text from the uploaded resume." },
@@ -77,7 +98,9 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("resume-builder error:", error);
-    const message = error instanceof Error ? error.message : "Something went wrong.";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Something went wrong while building your resume. Please try again." },
+      { status: 500 }
+    );
   }
 }

@@ -1,8 +1,13 @@
 import { randomUUID } from "crypto";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getRazorpay, HANDBOOK_PRICE_INR } from "@/lib/razorpay";
+import { isRateLimited } from "@/lib/rate-limit";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  if (isRateLimited(request, "create-order", 10, 60_000)) {
+    return NextResponse.json({ error: "Too many requests. Please slow down." }, { status: 429 });
+  }
+
   try {
     const razorpay = getRazorpay();
     const order = await razorpay.orders.create({

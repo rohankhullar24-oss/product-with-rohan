@@ -242,11 +242,36 @@
     <!-- Auto Reply -->
     <string name="auto_reply_title">WhatsApp Auto Reply</string>
     <string name="auto_reply_enable">Auto-reply to WhatsApp messages</string>
-    <string name="auto_reply_explainer">While on, every incoming WhatsApp message gets this reply. It\'s a single reply for everyone, not per-contact.</string>
-    <string name="auto_reply_message_hint">Reply message</string>
+    <string name="auto_reply_explainer">While on, incoming WhatsApp messages get this reply, subject to who it applies to and the conditions below. Set a custom message per sender under \"Per-sender rules\".</string>
+    <string name="auto_reply_message_hint">Default reply message</string>
     <string name="auto_reply_message_required">Enter a reply message</string>
     <string name="auto_reply_sent_title">Auto-reply sent</string>
     <string name="auto_reply_sent_text">A WhatsApp auto-reply was sent</string>
+    <string name="auto_reply_manage_rules">Per-sender rules</string>
+    <string name="auto_reply_who_replies_to">Who this replies to</string>
+    <string name="auto_reply_filter_everyone">Everyone</string>
+    <string name="auto_reply_filter_specific">Specific people only</string>
+    <string name="auto_reply_allowed_senders_hint">Sender names to reply to, one per line</string>
+    <string name="auto_reply_ignored_senders_hint">Never reply to (one per line, overrides the above)</string>
+    <string name="auto_reply_include_groups">Also reply in group chats</string>
+    <string name="auto_reply_delay_hint">Delay before replying (seconds, 0 = instant)</string>
+    <string name="auto_reply_conditions_title">Only reply when</string>
+    <string name="auto_reply_condition_screen_locked">Screen is locked</string>
+    <string name="auto_reply_condition_charging">Phone is charging</string>
+    <string name="auto_reply_condition_silent_or_dnd">Silent mode or Do Not Disturb is on</string>
+    <string name="auto_reply_condition_bluetooth_on">Bluetooth is on</string>
+    <string name="auto_reply_reply_to_missed_call">Also reply to missed WhatsApp calls</string>
+
+    <!-- Per-sender Auto Reply rules -->
+    <string name="auto_reply_rules_title">Per-sender reply rules</string>
+    <string name="auto_reply_rules_empty">No custom rules yet. Everyone gets the default reply.</string>
+    <string name="auto_reply_rule_title_new">New reply rule</string>
+    <string name="auto_reply_rule_title_edit">Edit reply rule</string>
+    <string name="auto_reply_rule_explainer">This sender gets this message instead of the default reply. The sender name must match how it appears in their WhatsApp notification.</string>
+    <string name="auto_reply_rule_sender_hint">Sender name</string>
+    <string name="auto_reply_rule_sender_required">Enter a sender name</string>
+    <string name="auto_reply_rule_delete_title">Delete this rule?</string>
+    <string name="auto_reply_rule_delete_message">This sender will go back to getting the default reply.</string>
 
     <!-- Auto Forward -->
     <string name="auto_forward_title">WhatsApp Auto Forward</string>

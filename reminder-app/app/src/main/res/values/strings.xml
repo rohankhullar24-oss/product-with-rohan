@@ -168,4 +168,109 @@
     <string name="alerts_ring_explainer">Rings like an alarm the moment a window rolls over. Off by default: if you also have the Claude Limits app installed, it already rings, and leaving both on means two alarms.</string>
     <string name="alerts_disclaimer">Reads the same usage data as the Claude website. Anthropic publishes no API for subscription limits, so this can break without notice.</string>
     <string name="alerts_disconnect">Disconnect Claude</string>
+
+    <!-- Auto Scheduler -->
+    <string name="title_auto_scheduler">Auto Scheduler</string>
+    <string name="auto_tab_pending">Pending</string>
+    <string name="auto_tab_done">Done</string>
+    <string name="auto_tab_failed">Failed</string>
+    <string name="auto_empty_list">No tasks.\nTap + to schedule an SMS, call or reminder.</string>
+    <string name="auto_add_task">Add task</string>
+    <string name="auto_pick_channel">Schedule</string>
+    <string name="auto_channel_coming_soon">%1$s (coming soon)</string>
+    <string name="auto_channel_coming_soon_toast">This channel isn\'t wired up yet</string>
+    <string name="auto_channel_label">Schedule %1$s</string>
+    <string name="auto_task_subtitle">%1$s · %2$s</string>
+    <string name="auto_task_status_pending">Pending</string>
+    <string name="auto_task_status_done">Sent</string>
+    <string name="auto_task_status_failed">Failed</string>
+    <string name="auto_title_new">New scheduled task</string>
+    <string name="auto_title_edit">Edit scheduled task</string>
+    <string name="auto_label_title">Title</string>
+    <string name="auto_label_recipient">Recipient phone number</string>
+    <string name="auto_label_message">Message</string>
+    <string name="auto_label_notes">Notes (optional)</string>
+    <string name="auto_label_when">When</string>
+    <string name="auto_pick_date">Pick date</string>
+    <string name="auto_pick_time">Pick time</string>
+    <string name="auto_error_recipient_required">Please enter a recipient number</string>
+    <string name="auto_error_message_required">Please enter a message</string>
+    <string name="auto_permission_denied">Permission denied — can\'t schedule this task</string>
+    <string name="auto_delete_title">Delete task?</string>
+    <string name="auto_delete_message">This scheduled task will be cancelled and removed.</string>
+    <string name="auto_pick_recipient_list">Use recipient list</string>
+    <string name="auto_pick_template">Use template</string>
+    <string name="auto_error_call_single_recipient">A call can only have one recipient</string>
+    <string name="auto_accessibility_needed_title">Accessibility permission needed</string>
+    <string name="auto_accessibility_needed_message">Auto Scheduler needs Accessibility access to tap Send in WhatsApp on your behalf. Find \"Auto Scheduler\" (part of Reminders) in the next screen and turn it on.</string>
+    <string name="auto_open_settings">Open settings</string>
+    <string name="accessibility_service_description">Lets Auto Scheduler tap Send in WhatsApp after opening a pre-filled chat for a scheduled message. Only watches WhatsApp, and only while a scheduled WhatsApp task is pending.</string>
+
+    <!-- Recipient lists -->
+    <string name="title_recipient_lists">Recipients</string>
+    <string name="recipient_list_empty">No recipient lists yet.\nTap + to create a reusable group.</string>
+    <string name="recipient_list_member_count">%1$d member(s)</string>
+    <string name="recipient_list_title_new">New recipient list</string>
+    <string name="recipient_list_title_edit">Edit recipient list</string>
+    <string name="recipient_list_label_name">List name</string>
+    <string name="recipient_list_members">Members</string>
+    <string name="recipient_list_add_member">+ Add member</string>
+    <string name="recipient_entry_name">Name</string>
+    <string name="recipient_entry_phone">Phone number</string>
+    <string name="recipient_list_error_empty">Add at least one member with a phone number</string>
+    <string name="recipient_list_delete_title">Delete recipient list?</string>
+    <string name="recipient_list_delete_message">This recipient list will be removed.</string>
+    <string name="recipient_list_none_yet">No recipient lists yet — create one from the 3-dot menu</string>
+
+    <!-- Templates -->
+    <string name="title_templates">Templates</string>
+    <string name="template_empty_list">No templates yet.\nTap + to save a reusable message.</string>
+    <string name="template_title_new">New template</string>
+    <string name="template_title_edit">Edit template</string>
+    <string name="template_label_name">Template name</string>
+    <string name="template_delete_title">Delete template?</string>
+    <string name="template_delete_message">This template will be removed.</string>
+    <string name="template_none_yet">No templates yet — create one from the 3-dot menu</string>
+
+    <string name="auto_task_type_schedule">Schedule</string>
+    <string name="auto_task_type_reply">Auto Reply</string>
+    <string name="auto_task_type_forward">Auto Forward</string>
+    <string name="auto_notify_on_send">Notify me when it\'s sent</string>
+    <string name="auto_notification_access_needed_message">Notification access is needed to see incoming WhatsApp messages. Tap to fix.</string>
+    <string name="auto_text_events_channel">Auto Scheduler events</string>
+
+    <!-- Auto Reply -->
+    <string name="auto_reply_title">WhatsApp Auto Reply</string>
+    <string name="auto_reply_enable">Auto-reply to WhatsApp messages</string>
+    <string name="auto_reply_explainer">While on, every incoming WhatsApp message gets this reply. It\'s a single reply for everyone, not per-contact.</string>
+    <string name="auto_reply_message_hint">Reply message</string>
+    <string name="auto_reply_message_required">Enter a reply message</string>
+    <string name="auto_reply_sent_title">Auto-reply sent</string>
+    <string name="auto_reply_sent_text">A WhatsApp auto-reply was sent</string>
+
+    <!-- Auto Forward -->
+    <string name="auto_forward_title">WhatsApp Auto Forward</string>
+    <string name="auto_forward_enable">Forward WhatsApp messages</string>
+    <string name="auto_forward_explainer">While on, every incoming WhatsApp message gets relayed to this number.</string>
+    <string name="auto_forward_to_hint">Forward to phone number</string>
+    <string name="auto_forward_to_required">Enter a phone number to forward to</string>
+    <string name="auto_forward_sent_title">Message forwarded</string>
+    <string name="auto_forward_sent_text">A WhatsApp message was auto-forwarded</string>
+    <string name="auto_forward_message_format">Fwd from %1$s: %2$s</string>
+
+    <string name="auto_label_caller_name">Caller name to show</string>
+
+    <!-- Fake Call -->
+    <string name="fake_call_incoming">Incoming call…</string>
+    <string name="fake_call_accept">Accept</string>
+    <string name="fake_call_decline">Decline</string>
+    <string name="fake_call_unknown_caller">Unknown</string>
+
+    <!-- Auto Scheduler settings -->
+    <string name="title_auto_scheduler_settings">Auto Scheduler settings</string>
+    <string name="settings_sms_delay_hint">Bulk SMS: delay between messages (seconds)</string>
+    <string name="settings_sms_delay_explainer">Applied between recipients when one task has more than one SMS number. Capped at 5 seconds.</string>
+    <string name="settings_sms_signature_enable">Add signature to SMS</string>
+    <string name="settings_whatsapp_signature_enable">Add signature to WhatsApp messages</string>
+    <string name="settings_signature_hint">Signature text</string>
 </resources>

@@ -138,6 +138,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, target))
             true
         }
+        R.id.action_auto_scheduler -> {
+            startActivity(Intent(this, AutoSchedulerActivity::class.java))
+            true
+        }
         R.id.action_sound -> {
             NotificationHelper.ensureChannel(this)
             startActivity(

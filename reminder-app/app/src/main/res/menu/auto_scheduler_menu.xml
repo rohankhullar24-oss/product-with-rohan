@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_recipient_lists"
+        android:title="@string/title_recipient_lists" />
+    <item
+        android:id="@+id/action_templates"
+        android:title="@string/title_templates" />
+    <item
+        android:id="@+id/action_auto_scheduler_settings"
+        android:title="@string/title_auto_scheduler_settings" />
+</menu>

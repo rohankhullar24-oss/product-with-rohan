@@ -12,6 +12,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
+    <!-- Auto Scheduler: SMS/CALL channels only so far (see AutoTaskAlarmReceiver). -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+
     <!-- Journal attachments: in-app audio recording, current-location tagging,
          and the recent-photos suggestions tray. Camera/gallery photo & video
          capture use the system apps' own pickers and need no permission here. -->
@@ -121,6 +125,88 @@
             android:name=".ClaudeAlertsActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
+
+        <!-- Auto Scheduler: schedules a one-off SMS/call/reminder for a future time. -->
+        <activity
+            android:name=".AutoSchedulerActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".EditAutoTaskActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <activity
+            android:name=".RecipientListActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <activity
+            android:name=".EditRecipientListActivity"
+            android:exported="false"
+            android:parentActivityName=".RecipientListActivity" />
+
+        <activity
+            android:name=".TemplateActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <activity
+            android:name=".EditTemplateActivity"
+            android:exported="false"
+            android:parentActivityName=".TemplateActivity" />
+
+        <activity
+            android:name=".AutoReplySettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <activity
+            android:name=".AutoForwardSettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <activity
+            android:name=".AutoSchedulerSettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <activity
+            android:name=".FakeCallActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=".FakeCall" />
+
+        <service
+            android:name=".AutoTextNotificationListenerService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".AutoTaskAlarmReceiver"
+            android:exported="false" />
+
+        <receiver
+            android:name=".PendingActionWatchdogReceiver"
+            android:exported="false" />
+
+        <service
+            android:name=".AutoTextAccessibilityService"
+            android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
 
         <activity
             android:name="online.productwithrohan.usagecore.LoginActivity"

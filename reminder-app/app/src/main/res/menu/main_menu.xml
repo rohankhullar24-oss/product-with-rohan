@@ -10,6 +10,9 @@
         android:id="@+id/action_claude_limits"
         android:title="@string/claude_alerts_title" />
     <item
+        android:id="@+id/action_auto_scheduler"
+        android:title="@string/title_auto_scheduler" />
+    <item
         android:id="@+id/action_sound"
         android:title="@string/notification_sound" />
     <item

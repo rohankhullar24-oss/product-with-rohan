@@ -104,5 +104,6 @@ object AutoReplySettings {
             .putBoolean(KEY_INCLUDE_TELEGRAM, includeTelegram)
             .putBoolean(KEY_REPLY_TO_SMS, replyToSms)
             .apply()
+        SettingsSyncMeta.touch(context, PREFS)
     }
 }

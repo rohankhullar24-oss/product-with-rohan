@@ -67,6 +67,7 @@ class AutoForwardSettingsActivity : AppCompatActivity() {
             return
         }
         AutoForwardSettings.save(this, enabledSwitch.isChecked, forwardTo, notifySwitch.isChecked)
+        AutoSchedulerSyncManager.syncAsync(this)
         finish()
     }
 }

@@ -41,5 +41,6 @@ object CallReplySettings {
             .putBoolean(KEY_REPLY_TO_ENDED, replyToEnded)
             .putBoolean(KEY_NOTIFY, notifyOnSend)
             .apply()
+        SettingsSyncMeta.touch(context, PREFS)
     }
 }

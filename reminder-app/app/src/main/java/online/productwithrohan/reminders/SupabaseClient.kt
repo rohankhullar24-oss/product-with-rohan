@@ -134,6 +134,34 @@ object SupabaseClient {
         if (code !in 200..299) throw IOException("Push failed ($code): $resp")
     }
 
+    /**
+     * All of this user's rows for one Auto Scheduler data set, including tombstones.
+     * [kind] discriminates the shared `auto_scheduler_rows` table (e.g. "auto_task",
+     * "recipient_list", "template", "auto_reply_rule", "settings") — see [RowSyncEngine].
+     */
+    fun fetchAutoSchedulerRows(context: Context, kind: String): JSONArray {
+        val token = accessToken(context)
+        val encodedKind = java.net.URLEncoder.encode(kind, "UTF-8")
+        val (code, resp) = request(
+            "GET",
+            "$SUPABASE_URL/rest/v1/auto_scheduler_rows?kind=eq.$encodedKind&select=id,payload,updated_at,deleted",
+            null, token,
+        )
+        if (code !in 200..299) throw IOException("Fetch failed ($code): $resp")
+        return JSONArray(resp)
+    }
+
+    /** Upserts Auto Scheduler rows across any [kind] (insert or overwrite by the user_id/kind/id key). */
+    fun upsertAutoSchedulerRows(context: Context, rows: JSONArray) {
+        if (rows.length() == 0) return
+        val token = accessToken(context)
+        val (code, resp) = request(
+            "POST", "$SUPABASE_URL/rest/v1/auto_scheduler_rows?on_conflict=user_id,kind,id", rows.toString(), token,
+            mapOf("Prefer" to "resolution=merge-duplicates,return=minimal")
+        )
+        if (code !in 200..299) throw IOException("Push failed ($code): $resp")
+    }
+
     private fun request(
         method: String,
         url: String,

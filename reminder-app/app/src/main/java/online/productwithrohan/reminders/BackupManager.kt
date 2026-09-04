@@ -1,7 +1,6 @@
 package online.productwithrohan.reminders
 
 import android.content.Context
-import android.content.SharedPreferences
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -48,7 +47,7 @@ object BackupManager {
 
         val prefs = JSONObject()
         for (name in PREF_FILES) {
-            prefs.put(name, prefsToJson(context.getSharedPreferences(name, Context.MODE_PRIVATE)))
+            prefs.put(name, PrefsJson.toJson(context.getSharedPreferences(name, Context.MODE_PRIVATE)))
         }
         root.put("prefs", prefs)
 
@@ -68,7 +67,7 @@ object BackupManager {
         val prefs = root.optJSONObject("prefs") ?: JSONObject()
         for (name in PREF_FILES) {
             val obj = prefs.optJSONObject(name) ?: continue
-            jsonToPrefs(obj, context.getSharedPreferences(name, Context.MODE_PRIVATE))
+            PrefsJson.applyTo(obj, context.getSharedPreferences(name, Context.MODE_PRIVATE))
         }
     }
 
@@ -82,41 +81,4 @@ object BackupManager {
         }
     }
 
-    private fun prefsToJson(prefs: SharedPreferences): JSONObject {
-        val obj = JSONObject()
-        for ((key, value) in prefs.all) {
-            when (value) {
-                is Boolean, is Int, is Long, is String -> obj.put(key, value)
-                is Float -> obj.put(key, value.toDouble())
-                is Set<*> -> {
-                    val arr = JSONArray()
-                    value.forEach { arr.put(it.toString()) }
-                    obj.put(key, arr)
-                }
-                else -> {}
-            }
-        }
-        return obj
-    }
-
-    private fun jsonToPrefs(obj: JSONObject, prefs: SharedPreferences) {
-        val editor = prefs.edit().clear()
-        val keys = obj.keys()
-        while (keys.hasNext()) {
-            val key = keys.next()
-            when (val value = obj.get(key)) {
-                is Boolean -> editor.putBoolean(key, value)
-                is Int -> editor.putInt(key, value)
-                is Long -> editor.putLong(key, value)
-                is Double -> editor.putFloat(key, value.toFloat())
-                is String -> editor.putString(key, value)
-                is JSONArray -> {
-                    val set = mutableSetOf<String>()
-                    for (i in 0 until value.length()) set.add(value.getString(i))
-                    editor.putStringSet(key, set)
-                }
-            }
-        }
-        editor.apply()
-    }
 }

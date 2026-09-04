@@ -53,6 +53,7 @@ class EditTemplateActivity : AppCompatActivity() {
         template.name = name
         template.message = message
         TemplateStore.upsert(this, template)
+        AutoSchedulerSyncManager.syncAsync(this)
         finish()
     }
 
@@ -61,7 +62,9 @@ class EditTemplateActivity : AppCompatActivity() {
             .setTitle(R.string.template_delete_title)
             .setMessage(R.string.template_delete_message)
             .setPositiveButton(R.string.delete_confirm) { _, _ ->
+                RowSyncEngine.recordDeletion(this, "template", template.id)
                 TemplateStore.delete(this, template.id)
+                AutoSchedulerSyncManager.syncAsync(this)
                 finish()
             }
             .setNegativeButton(android.R.string.cancel, null)

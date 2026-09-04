@@ -146,6 +146,7 @@ class AccountActivity : AppCompatActivity() {
         Thread {
             try {
                 SupabaseClient.verifyOtp(this, email, code)
+                AutoSchedulerSyncManager.syncAsync(this)
                 SyncManager.syncAsync(this) {
                     runOnUiThread {
                         Toast.makeText(this, R.string.account_signed_in, Toast.LENGTH_SHORT).show()
@@ -161,6 +162,7 @@ class AccountActivity : AppCompatActivity() {
 
     private fun syncNow() {
         lastSync.text = getString(R.string.account_syncing)
+        AutoSchedulerSyncManager.syncAsync(this)
         SyncManager.syncAsync(this) {
             runOnUiThread { render() }
         }

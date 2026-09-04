@@ -443,6 +443,7 @@ class EditAutoTaskActivity : AppCompatActivity() {
         task.updatedAt = System.currentTimeMillis()
         AutoTaskStore.upsert(this, task)
         AutoTaskAlarmScheduler.schedule(this, task)
+        AutoSchedulerSyncManager.syncAsync(this)
         if (pendingSendNow) {
             // Same broadcast the real alarm fires — goes through the exact same dispatch path.
             sendBroadcast(
@@ -461,7 +462,9 @@ class EditAutoTaskActivity : AppCompatActivity() {
             .setPositiveButton(R.string.delete_confirm) { _, _ ->
                 AutoTaskAlarmScheduler.cancel(this, task.id)
                 AutoTaskLockRetryReceiver.cancel(this, task.id)
+                RowSyncEngine.recordDeletion(this, "auto_task", task.id)
                 AutoTaskStore.delete(this, task.id)
+                AutoSchedulerSyncManager.syncAsync(this)
                 finish()
             }
             .setNegativeButton(android.R.string.cancel, null)

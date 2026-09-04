@@ -26,5 +26,6 @@ object ForwardCallSettings {
             .putString(KEY_FORWARD_TO, forwardTo)
             .putBoolean(KEY_NOTIFY, notifyOnSend)
             .apply()
+        SettingsSyncMeta.touch(context, PREFS)
     }
 }

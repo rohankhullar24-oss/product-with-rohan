@@ -27,12 +27,18 @@ object TemplateStore {
         getAll(context).firstOrNull { it.id == id }
 
     fun upsert(context: Context, template: Template) = synchronized(lock) {
+        template.updatedAt = System.currentTimeMillis()
         val all = getAll(context).filter { it.id != template.id } + template
         save(context, all)
     }
 
     fun delete(context: Context, id: String) = synchronized(lock) {
         save(context, getAll(context).filter { it.id != id })
+    }
+
+    /** Replaces the whole store, e.g. with a merged list after a cloud sync. */
+    fun replaceAll(context: Context, list: List<Template>) = synchronized(lock) {
+        save(context, list)
     }
 
     private fun save(context: Context, list: List<Template>) {

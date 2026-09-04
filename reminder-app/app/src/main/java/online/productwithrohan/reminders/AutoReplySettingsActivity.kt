@@ -182,6 +182,7 @@ class AutoReplySettingsActivity : AppCompatActivity() {
             includeTelegram = includeTelegramSwitch.isChecked,
             replyToSms = replyToSmsSwitch.isChecked,
         )
+        AutoSchedulerSyncManager.syncAsync(this)
         finish()
     }
 }

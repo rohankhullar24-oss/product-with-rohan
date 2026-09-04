@@ -27,12 +27,18 @@ object RecipientListStore {
         getAll(context).firstOrNull { it.id == id }
 
     fun upsert(context: Context, list: RecipientList) = synchronized(lock) {
+        list.updatedAt = System.currentTimeMillis()
         val all = getAll(context).filter { it.id != list.id } + list
         save(context, all)
     }
 
     fun delete(context: Context, id: String) = synchronized(lock) {
         save(context, getAll(context).filter { it.id != id })
+    }
+
+    /** Replaces the whole store, e.g. with a merged list after a cloud sync. */
+    fun replaceAll(context: Context, list: List<RecipientList>) = synchronized(lock) {
+        save(context, list)
     }
 
     private fun save(context: Context, list: List<RecipientList>) {

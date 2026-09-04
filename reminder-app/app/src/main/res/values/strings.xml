@@ -67,6 +67,14 @@
     <string name="account_signed_out">Signed out. Reminders stay on this phone.</string>
     <string name="account_bad_email">Please enter a valid email address</string>
     <string name="account_app_version">Version %1$s (build %2$d)</string>
+    <string name="account_full_backup_title">Backup and restore</string>
+    <string name="account_full_backup_subtitle">Saves reminders, auto tasks, recipient lists, templates and every Auto Reply/Forward/Call setting to one file.</string>
+    <string name="account_full_backup_export">Backup</string>
+    <string name="account_full_backup_import">Restore</string>
+    <string name="account_full_backup_done">Backup saved</string>
+    <string name="account_full_backup_failed">Couldn\'t save the backup</string>
+    <string name="account_full_restore_done">Restored. Restart the app to reload every screen.</string>
+    <string name="account_full_restore_failed">Couldn\'t read that backup file</string>
 
     <string name="notification_sound">Notification sound</string>
 
@@ -317,6 +325,7 @@
     <string name="auto_label_repeat">Repeat</string>
     <string name="auto_recurrence_daily_at">Every day at %1$s</string>
     <string name="auto_recurrence_weekdays_at">Weekdays at %1$s</string>
+    <string name="auto_recurrence_custom_days_at">%1$s at %2$s</string>
     <string name="auto_task_last_fired">Last: %1$s (%2$s)</string>
 
     <string name="auto_retry_title">This task failed</string>
@@ -328,7 +337,18 @@
         <item>Once</item>
         <item>Every day</item>
         <item>Weekdays (Mon–Fri)</item>
+        <item>Custom days</item>
     </string-array>
+
+    <string name="auto_label_custom_days">Repeat on</string>
+    <string name="auto_error_custom_days_required">Pick at least one day</string>
+    <string name="auto_day_mon">Mon</string>
+    <string name="auto_day_tue">Tue</string>
+    <string name="auto_day_wed">Wed</string>
+    <string name="auto_day_thu">Thu</string>
+    <string name="auto_day_fri">Fri</string>
+    <string name="auto_day_sat">Sat</string>
+    <string name="auto_day_sun">Sun</string>
 
     <string name="auto_retry_on_failure">Retry automatically if it fails</string>
     <string name="auto_retry_on_failure_explainer">Retries every minute, up to 5 times, before giving up.</string>

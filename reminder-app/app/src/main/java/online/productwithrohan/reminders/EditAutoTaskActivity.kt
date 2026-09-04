@@ -13,6 +13,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.ToggleButton
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -57,8 +58,12 @@ class EditAutoTaskActivity : AppCompatActivity() {
     private lateinit var retryExplainer: View
     private lateinit var retrySwitch: MaterialSwitch
     private lateinit var sendNowButton: Button
+    private lateinit var rowCustomDays: View
+    private lateinit var dayToggles: List<ToggleButton>
 
-    private val recurrenceOrder = listOf(AutoRecurrence.ONE_TIME, AutoRecurrence.DAILY, AutoRecurrence.WEEKDAYS)
+    private val recurrenceOrder = listOf(
+        AutoRecurrence.ONE_TIME, AutoRecurrence.DAILY, AutoRecurrence.WEEKDAYS, AutoRecurrence.CUSTOM_DAYS
+    )
 
     /** Set by whichever button (Save / Send Now) triggered validation, read back in saveInternal(). */
     private var pendingSendNow = false
@@ -123,6 +128,16 @@ class EditAutoTaskActivity : AppCompatActivity() {
         retryExplainer = findViewById(R.id.text_retry_explainer)
         retrySwitch = findViewById(R.id.switch_retry_on_failure)
         sendNowButton = findViewById(R.id.button_send_now)
+        rowCustomDays = findViewById(R.id.row_custom_days)
+        dayToggles = listOf(
+            findViewById(R.id.toggle_day_mon), findViewById(R.id.toggle_day_tue),
+            findViewById(R.id.toggle_day_wed), findViewById(R.id.toggle_day_thu),
+            findViewById(R.id.toggle_day_fri), findViewById(R.id.toggle_day_sat),
+            findViewById(R.id.toggle_day_sun),
+        )
+        dayToggles.forEachIndexed { index, toggle ->
+            toggle.isChecked = (task.customDays and (1 shl index)) != 0
+        }
 
         channelText.text = channelLabel(task.channel)
         labelInput.setText(task.label)
@@ -198,6 +213,7 @@ class EditAutoTaskActivity : AppCompatActivity() {
         val isOneTime = recurrence == AutoRecurrence.ONE_TIME
         rowDate.visibility = if (isOneTime) View.VISIBLE else View.GONE
         timeOnlyButton.visibility = if (isOneTime) View.GONE else View.VISIBLE
+        rowCustomDays.visibility = if (recurrence == AutoRecurrence.CUSTOM_DAYS) View.VISIBLE else View.GONE
         // A recurring task already reschedules itself regardless of outcome, and REMINDER can't fail.
         val showRetry = isOneTime && task.channel != AutoTaskChannel.REMINDER
         retryRow.visibility = if (showRetry) View.VISIBLE else View.GONE
@@ -286,6 +302,15 @@ class EditAutoTaskActivity : AppCompatActivity() {
             task.scheduledAt = scheduled.toInstant().toEpochMilli()
         } else {
             task.timeOfDay = pickedTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+            if (recurrence == AutoRecurrence.CUSTOM_DAYS) {
+                task.customDays = dayToggles.foldIndexed(0) { index, mask, toggle ->
+                    if (toggle.isChecked) mask or (1 shl index) else mask
+                }
+                if (task.customDays == 0) {
+                    Toast.makeText(this, R.string.auto_error_custom_days_required, Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
             val next = task.nextOccurrence(java.time.ZonedDateTime.now())
             if (next == null) {
                 Toast.makeText(this, R.string.error_past_time, Toast.LENGTH_SHORT).show()

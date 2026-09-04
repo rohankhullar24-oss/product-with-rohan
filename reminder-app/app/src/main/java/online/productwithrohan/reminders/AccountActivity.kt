@@ -6,6 +6,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import java.text.DateFormat
 import java.util.Date
@@ -25,6 +26,33 @@ class AccountActivity : AppCompatActivity() {
     private lateinit var accountEmail: TextView
     private lateinit var lastSync: TextView
 
+    private val fullBackupLauncher =
+        registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+            if (uri == null) return@registerForActivityResult
+            try {
+                contentResolver.openOutputStream(uri)?.use { out ->
+                    out.write(BackupManager.exportAll(this).toByteArray())
+                }
+                Toast.makeText(this, R.string.account_full_backup_done, Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, R.string.account_full_backup_failed, Toast.LENGTH_SHORT).show()
+            }
+        }
+
+    private val fullRestoreLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            try {
+                val text = contentResolver.openInputStream(uri)?.use { input ->
+                    input.readBytes().decodeToString()
+                } ?: throw IllegalStateException("empty file")
+                BackupManager.importAll(this, text)
+                Toast.makeText(this, R.string.account_full_restore_done, Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, R.string.account_full_restore_failed, Toast.LENGTH_SHORT).show()
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_account)
@@ -43,6 +71,12 @@ class AccountActivity : AppCompatActivity() {
         findViewById<Button>(R.id.button_verify).setOnClickListener { verifyCode() }
         findViewById<Button>(R.id.button_sync_now).setOnClickListener { syncNow() }
         findViewById<Button>(R.id.button_sign_out).setOnClickListener { signOut() }
+        findViewById<Button>(R.id.button_full_backup).setOnClickListener {
+            fullBackupLauncher.launch("auto-scheduler-backup.json")
+        }
+        findViewById<Button>(R.id.button_full_restore).setOnClickListener {
+            fullRestoreLauncher.launch(arrayOf("*/*"))
+        }
 
         showAppVersion()
         render()

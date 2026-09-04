@@ -11,8 +11,12 @@ android {
         applicationId = "online.productwithrohan.reminders"
         minSdk = 26
         targetSdk = 34
-        versionCode = 12
-        versionName = "3.7"
+        // CI's run number for this workflow only ever increases, so every published
+        // build gets a genuinely higher versionCode automatically — no more manual
+        // bumps, and no more every build silently sharing the same version.
+        // Local (non-CI) builds fall back to a fixed baseline above the last manual value.
+        versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 13
+        versionName = "3.8"
     }
 
     buildTypes {

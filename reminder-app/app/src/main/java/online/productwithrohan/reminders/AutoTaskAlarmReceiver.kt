@@ -48,17 +48,9 @@ class AutoTaskAlarmReceiver : BroadcastReceiver() {
 
                 when (val result = dispatch(context, task)) {
                     is DispatchResult.Async -> return@Thread
-                    is DispatchResult.Success -> {
-                        task.status = AutoTaskStatus.DONE
-                        task.failureReason = null
-                    }
-                    is DispatchResult.Failure -> {
-                        task.status = AutoTaskStatus.FAILED
-                        task.failureReason = result.reason
-                    }
+                    is DispatchResult.Success -> AutoTaskFireRecorder.recordFire(context, task, true, null)
+                    is DispatchResult.Failure -> AutoTaskFireRecorder.recordFire(context, task, false, result.reason)
                 }
-                task.updatedAt = System.currentTimeMillis()
-                AutoTaskStore.upsert(context, task)
             } finally {
                 pendingResult.finish()
             }

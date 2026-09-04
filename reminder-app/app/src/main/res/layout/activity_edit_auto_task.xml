@@ -75,10 +75,25 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:text="@string/auto_label_repeat"
+            android:textAppearance="?attr/textAppearanceLabelLarge" />
+
+        <Spinner
+            android:id="@+id/spinner_recurrence"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:entries="@array/auto_recurrence_options" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="@string/auto_label_when"
             android:textAppearance="?attr/textAppearanceLabelLarge" />
 
         <LinearLayout
+            android:id="@+id/row_date"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -102,6 +117,15 @@
                 android:layout_marginStart="4dp"
                 android:text="@string/auto_pick_time" />
         </LinearLayout>
+
+        <Button
+            android:id="@+id/button_time_only"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/auto_pick_time"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/button_save"

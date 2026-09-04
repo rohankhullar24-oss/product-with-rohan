@@ -61,10 +61,7 @@ class AutoTextAccessibilityService : AccessibilityService() {
         if (pending.kind == PendingActionKind.TASK && pending.taskId != null) {
             AutoTaskStore.get(this, pending.taskId)?.let { task ->
                 if (task.status == AutoTaskStatus.PENDING) {
-                    task.status = AutoTaskStatus.DONE
-                    task.failureReason = null
-                    task.updatedAt = System.currentTimeMillis()
-                    AutoTaskStore.upsert(this, task)
+                    AutoTaskFireRecorder.recordFire(this, task, true, null)
                 }
             }
         }

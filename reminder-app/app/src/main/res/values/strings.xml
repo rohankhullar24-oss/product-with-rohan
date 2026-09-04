@@ -273,4 +273,14 @@
     <string name="settings_sms_signature_enable">Add signature to SMS</string>
     <string name="settings_whatsapp_signature_enable">Add signature to WhatsApp messages</string>
     <string name="settings_signature_hint">Signature text</string>
+
+    <string name="auto_label_repeat">Repeat</string>
+    <string name="auto_recurrence_daily_at">Every day at %1$s</string>
+    <string name="auto_recurrence_weekdays_at">Weekdays at %1$s</string>
+    <string name="auto_task_last_fired">Last: %1$s (%2$s)</string>
+    <string-array name="auto_recurrence_options">
+        <item>Once</item>
+        <item>Every day</item>
+        <item>Weekdays (Mon–Fri)</item>
+    </string-array>
 </resources>

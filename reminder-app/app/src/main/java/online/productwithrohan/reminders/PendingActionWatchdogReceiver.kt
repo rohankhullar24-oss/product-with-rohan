@@ -26,10 +26,9 @@ class PendingActionWatchdogReceiver : BroadcastReceiver() {
         if (pending.kind == PendingActionKind.TASK && pending.taskId != null) {
             AutoTaskStore.get(context, pending.taskId)?.let { task ->
                 if (task.status == AutoTaskStatus.PENDING) {
-                    task.status = AutoTaskStatus.FAILED
-                    task.failureReason = "Couldn't find WhatsApp's Send button in time"
-                    task.updatedAt = System.currentTimeMillis()
-                    AutoTaskStore.upsert(context, task)
+                    AutoTaskFireRecorder.recordFire(
+                        context, task, false, "Couldn't find WhatsApp's Send button in time"
+                    )
                 }
             }
         }

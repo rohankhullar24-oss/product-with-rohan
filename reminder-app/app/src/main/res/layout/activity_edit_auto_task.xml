@@ -127,6 +127,34 @@
             android:text="@string/auto_pick_time"
             android:visibility="gone" />
 
+        <LinearLayout
+            android:id="@+id/row_retry"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/auto_retry_on_failure" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_retry_on_failure"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/text_retry_explainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/auto_retry_on_failure_explainer"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?android:attr/textColorSecondary" />
+
         <Button
             android:id="@+id/button_save"
             android:layout_width="match_parent"

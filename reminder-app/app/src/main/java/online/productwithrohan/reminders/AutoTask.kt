@@ -47,6 +47,10 @@ data class AutoTask(
     var lastFiredAt: Long? = null,
     /** "Sent" or a failure reason from the last fire, recurring tasks only. */
     var lastResult: String? = null,
+    /** ONE_TIME only: on failure, keep retrying (see [AutoTaskFireRecorder]) instead of going terminal. */
+    var retryOnFailure: Boolean = false,
+    /** How many auto-retries have happened so far, capped at [AutoTaskFireRecorder.MAX_AUTO_RETRIES]. */
+    var retryCount: Int = 0,
     var updatedAt: Long = System.currentTimeMillis(),
 ) {
 
@@ -81,6 +85,8 @@ data class AutoTask(
         put("failureReason", failureReason ?: JSONObject.NULL)
         put("lastFiredAt", lastFiredAt ?: JSONObject.NULL)
         put("lastResult", lastResult ?: JSONObject.NULL)
+        put("retryOnFailure", retryOnFailure)
+        put("retryCount", retryCount)
         put("updatedAt", updatedAt)
     }
 
@@ -99,6 +105,8 @@ data class AutoTask(
             failureReason = if (o.isNull("failureReason")) null else o.optString("failureReason"),
             lastFiredAt = if (o.isNull("lastFiredAt") || !o.has("lastFiredAt")) null else o.optLong("lastFiredAt"),
             lastResult = if (o.isNull("lastResult") || !o.has("lastResult")) null else o.optString("lastResult"),
+            retryOnFailure = o.optBoolean("retryOnFailure", false),
+            retryCount = o.optInt("retryCount", 0),
             updatedAt = o.optLong("updatedAt", 0L),
         )
     }

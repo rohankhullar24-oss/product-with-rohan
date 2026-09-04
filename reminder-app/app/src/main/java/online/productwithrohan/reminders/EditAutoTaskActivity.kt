@@ -16,6 +16,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import java.time.LocalDate
@@ -49,6 +50,9 @@ class EditAutoTaskActivity : AppCompatActivity() {
     private lateinit var timeOnlyButton: Button
     private lateinit var pickRecipientListButton: Button
     private lateinit var pickTemplateButton: Button
+    private lateinit var retryRow: View
+    private lateinit var retryExplainer: View
+    private lateinit var retrySwitch: MaterialSwitch
 
     private val recurrenceOrder = listOf(AutoRecurrence.ONE_TIME, AutoRecurrence.DAILY, AutoRecurrence.WEEKDAYS)
 
@@ -95,11 +99,15 @@ class EditAutoTaskActivity : AppCompatActivity() {
         timeOnlyButton = findViewById(R.id.button_time_only)
         pickRecipientListButton = findViewById(R.id.button_pick_recipient_list)
         pickTemplateButton = findViewById(R.id.button_pick_template)
+        retryRow = findViewById(R.id.row_retry)
+        retryExplainer = findViewById(R.id.text_retry_explainer)
+        retrySwitch = findViewById(R.id.switch_retry_on_failure)
 
         channelText.text = channelLabel(task.channel)
         labelInput.setText(task.label)
         recipientInput.setText(task.recipient)
         messageInput.setText(task.message)
+        retrySwitch.isChecked = task.retryOnFailure
 
         applyChannelVisibility(task.channel)
         recurrenceSpinner.setSelection(recurrenceOrder.indexOf(task.recurrence).coerceAtLeast(0))
@@ -150,6 +158,10 @@ class EditAutoTaskActivity : AppCompatActivity() {
         val isOneTime = recurrence == AutoRecurrence.ONE_TIME
         rowDate.visibility = if (isOneTime) View.VISIBLE else View.GONE
         timeOnlyButton.visibility = if (isOneTime) View.GONE else View.VISIBLE
+        // A recurring task already reschedules itself regardless of outcome, and REMINDER can't fail.
+        val showRetry = isOneTime && task.channel != AutoTaskChannel.REMINDER
+        retryRow.visibility = if (showRetry) View.VISIBLE else View.GONE
+        retryExplainer.visibility = if (showRetry) View.VISIBLE else View.GONE
     }
 
     /** For CALL, only the first member of a picked list is usable — a call has one recipient. */
@@ -301,6 +313,8 @@ class EditAutoTaskActivity : AppCompatActivity() {
     }
 
     private fun saveInternal() {
+        task.retryOnFailure = retrySwitch.isChecked
+        task.retryCount = 0
         task.status = AutoTaskStatus.PENDING
         task.failureReason = null
         task.updatedAt = System.currentTimeMillis()

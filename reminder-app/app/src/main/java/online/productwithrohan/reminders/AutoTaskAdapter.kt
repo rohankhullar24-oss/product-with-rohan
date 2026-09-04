@@ -51,10 +51,13 @@ class AutoTaskAdapter(
         holder.status.text = when {
             task.status == AutoTaskStatus.FAILED -> task.failureReason ?: context.getString(R.string.auto_task_status_failed)
             task.status == AutoTaskStatus.DONE -> context.getString(R.string.auto_task_status_done)
-            task.recurrence != AutoRecurrence.ONE_TIME && task.lastFiredAt != null -> {
+            task.lastFiredAt != null -> {
                 val lastTime = Instant.ofEpochMilli(task.lastFiredAt!!).atZone(ZoneId.systemDefault())
                     .format(DateTimeFormatter.ofPattern("d MMM, HH:mm"))
-                context.getString(R.string.auto_task_last_fired, task.lastResult, lastTime)
+                val base = context.getString(R.string.auto_task_last_fired, task.lastResult, lastTime)
+                if (task.recurrence == AutoRecurrence.ONE_TIME && task.retryOnFailure && task.retryCount > 0) {
+                    base + context.getString(R.string.auto_task_retry_suffix, task.retryCount, AutoTaskFireRecorder.MAX_AUTO_RETRIES)
+                } else base
             }
             else -> context.getString(R.string.auto_task_status_pending)
         }

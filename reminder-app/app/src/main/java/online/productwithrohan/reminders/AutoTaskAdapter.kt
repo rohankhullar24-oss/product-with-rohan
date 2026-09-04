@@ -45,6 +45,9 @@ class AutoTaskAdapter(
                 .format(DateTimeFormatter.ofPattern("EEE d MMM, HH:mm"))
             AutoRecurrence.DAILY -> context.getString(R.string.auto_recurrence_daily_at, task.timeOfDay)
             AutoRecurrence.WEEKDAYS -> context.getString(R.string.auto_recurrence_weekdays_at, task.timeOfDay)
+            AutoRecurrence.CUSTOM_DAYS -> context.getString(
+                R.string.auto_recurrence_custom_days_at, customDaysLabel(context, task.customDays), task.timeOfDay
+            )
         }
         holder.subtitle.text = context.getString(R.string.auto_task_subtitle, channelLabel(task), whenText)
 
@@ -76,4 +79,14 @@ class AutoTaskAdapter(
 
     private fun channelLabel(task: AutoTask): String = task.channel.name.lowercase()
         .replaceFirstChar { it.uppercase() }
+
+    /** Bit order matches [EditAutoTaskActivity]'s day toggles: Monday = bit 0 .. Sunday = bit 6. */
+    private fun customDaysLabel(context: android.content.Context, customDays: Int): String {
+        val labels = listOf(
+            R.string.auto_day_mon, R.string.auto_day_tue, R.string.auto_day_wed, R.string.auto_day_thu,
+            R.string.auto_day_fri, R.string.auto_day_sat, R.string.auto_day_sun,
+        )
+        return labels.filterIndexed { index, _ -> (customDays and (1 shl index)) != 0 }
+            .joinToString(", ") { context.getString(it) }
+    }
 }

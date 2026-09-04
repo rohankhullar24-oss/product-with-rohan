@@ -16,8 +16,12 @@ enum class AutoTaskChannel { SMS, WHATSAPP, TELEGRAM, EMAIL, REMINDER, CALL, FAK
 
 enum class AutoTaskStatus { PENDING, DONE, FAILED }
 
-/** ONE_TIME fires once and goes terminal (DONE/FAILED); DAILY/WEEKDAYS keep firing at [timeOfDay]. */
-enum class AutoRecurrence { ONE_TIME, DAILY, WEEKDAYS }
+/**
+ * ONE_TIME fires once and goes terminal (DONE/FAILED); DAILY/WEEKDAYS/
+ * CUSTOM_DAYS keep firing at [timeOfDay]. CUSTOM_DAYS fires only on the days
+ * set in [AutoTask.customDays] (any subset of the week, not just weekdays).
+ */
+enum class AutoRecurrence { ONE_TIME, DAILY, WEEKDAYS, CUSTOM_DAYS }
 
 /**
  * A scheduled action (message, call, or reminder) fired by
@@ -33,6 +37,12 @@ data class AutoTask(
     var recipient: String = "",
     /** SMS/WhatsApp body or reminder notes, depending on channel. */
     var message: String = "",
+    /**
+     * A persisted-permission content:// URI to attach, WHATSAPP/TELEGRAM
+     * only (see [AutoTaskAlarmReceiver.sendViaChatApp]) — null for no
+     * attachment.
+     */
+    var attachmentUri: String? = null,
     /** Reminder title / fake-caller name; also shown as the task's label. */
     var label: String = "",
     /** Epoch millis this task is next due to fire. */
@@ -40,6 +50,12 @@ data class AutoTask(
     var recurrence: AutoRecurrence = AutoRecurrence.ONE_TIME,
     /** "HH:mm", only meaningful when [recurrence] != ONE_TIME. */
     var timeOfDay: String? = null,
+    /**
+     * Bitmask of [java.time.DayOfWeek] this task fires on, bit `dayOfWeek.value - 1`
+     * (Monday = bit 0 .. Sunday = bit 6). Only meaningful when [recurrence] ==
+     * CUSTOM_DAYS.
+     */
+    var customDays: Int = 0,
     var status: AutoTaskStatus = AutoTaskStatus.PENDING,
     /** Set when status == FAILED (ONE_TIME only), shown in the list. */
     var failureReason: String? = null,
@@ -66,21 +82,26 @@ data class AutoTask(
             if (recurrence == AutoRecurrence.WEEKDAYS &&
                 (date.dayOfWeek == DayOfWeek.SATURDAY || date.dayOfWeek == DayOfWeek.SUNDAY)
             ) continue
+            if (recurrence == AutoRecurrence.CUSTOM_DAYS && !isCustomDay(date.dayOfWeek)) continue
             val candidate = ZonedDateTime.of(date, time, from.zone)
             if (candidate.isAfter(from)) return candidate
         }
         return null
     }
 
+    private fun isCustomDay(day: DayOfWeek): Boolean = (customDays and (1 shl (day.value - 1))) != 0
+
     fun toJson(): JSONObject = JSONObject().apply {
         put("id", id)
         put("channel", channel.name)
         put("recipient", recipient)
         put("message", message)
+        put("attachmentUri", attachmentUri ?: JSONObject.NULL)
         put("label", label)
         put("scheduledAt", scheduledAt)
         put("recurrence", recurrence.name)
         put("timeOfDay", timeOfDay ?: JSONObject.NULL)
+        put("customDays", customDays)
         put("status", status.name)
         put("failureReason", failureReason ?: JSONObject.NULL)
         put("lastFiredAt", lastFiredAt ?: JSONObject.NULL)
@@ -96,11 +117,13 @@ data class AutoTask(
             channel = AutoTaskChannel.valueOf(o.optString("channel", AutoTaskChannel.SMS.name)),
             recipient = o.optString("recipient"),
             message = o.optString("message"),
+            attachmentUri = if (o.isNull("attachmentUri") || !o.has("attachmentUri")) null else o.optString("attachmentUri"),
             label = o.optString("label"),
             scheduledAt = o.optLong("scheduledAt", 0L),
             recurrence = runCatching { AutoRecurrence.valueOf(o.optString("recurrence", AutoRecurrence.ONE_TIME.name)) }
                 .getOrDefault(AutoRecurrence.ONE_TIME),
             timeOfDay = if (o.isNull("timeOfDay") || !o.has("timeOfDay")) null else o.optString("timeOfDay"),
+            customDays = o.optInt("customDays", 0),
             status = AutoTaskStatus.valueOf(o.optString("status", AutoTaskStatus.PENDING.name)),
             failureReason = if (o.isNull("failureReason")) null else o.optString("failureReason"),
             lastFiredAt = if (o.isNull("lastFiredAt") || !o.has("lastFiredAt")) null else o.optLong("lastFiredAt"),

@@ -84,6 +84,41 @@
             android:layout_gravity="end"
             android:text="@string/auto_pick_template" />
 
+        <LinearLayout
+            android:id="@+id/row_attachment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="8dp">
+
+            <TextView
+                android:id="@+id/text_attachment_name"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="middle"
+                android:singleLine="true"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?android:attr/textColorSecondary" />
+
+            <Button
+                android:id="@+id/button_pick_attachment"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/auto_attach_file" />
+
+            <ImageButton
+                android:id="@+id/button_remove_attachment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/auto_remove_attachment"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:visibility="gone" />
+        </LinearLayout>
+
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -97,6 +132,91 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:entries="@array/auto_recurrence_options" />
+
+        <LinearLayout
+            android:id="@+id/row_custom_days"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/auto_label_custom_days"
+                android:textAppearance="?attr/textAppearanceLabelLarge" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <ToggleButton
+                    android:id="@+id/toggle_day_mon"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textOn="@string/auto_day_mon"
+                    android:textOff="@string/auto_day_mon"
+                    android:text="@string/auto_day_mon" />
+
+                <ToggleButton
+                    android:id="@+id/toggle_day_tue"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textOn="@string/auto_day_tue"
+                    android:textOff="@string/auto_day_tue"
+                    android:text="@string/auto_day_tue" />
+
+                <ToggleButton
+                    android:id="@+id/toggle_day_wed"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textOn="@string/auto_day_wed"
+                    android:textOff="@string/auto_day_wed"
+                    android:text="@string/auto_day_wed" />
+
+                <ToggleButton
+                    android:id="@+id/toggle_day_thu"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textOn="@string/auto_day_thu"
+                    android:textOff="@string/auto_day_thu"
+                    android:text="@string/auto_day_thu" />
+
+                <ToggleButton
+                    android:id="@+id/toggle_day_fri"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textOn="@string/auto_day_fri"
+                    android:textOff="@string/auto_day_fri"
+                    android:text="@string/auto_day_fri" />
+
+                <ToggleButton
+                    android:id="@+id/toggle_day_sat"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textOn="@string/auto_day_sat"
+                    android:textOff="@string/auto_day_sat"
+                    android:text="@string/auto_day_sat" />
+
+                <ToggleButton
+                    android:id="@+id/toggle_day_sun"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textOn="@string/auto_day_sun"
+                    android:textOff="@string/auto_day_sun"
+                    android:text="@string/auto_day_sun" />
+            </LinearLayout>
+        </LinearLayout>
 
         <TextView
             android:layout_width="match_parent"

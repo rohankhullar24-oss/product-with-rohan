@@ -193,6 +193,11 @@
             android:parentActivityName=".AutoSchedulerActivity" />
 
         <activity
+            android:name=".CallReplySettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <activity
             android:name=".AutoSchedulerSettingsActivity"
             android:exported="false"
             android:parentActivityName=".AutoSchedulerActivity" />
@@ -229,6 +234,16 @@
              so exported="false" still reaches it (same as BootReceiver above). -->
         <receiver
             android:name=".ForwardCallReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.PHONE_STATE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Call Auto Reply: same PHONE_STATE broadcast as ForwardCallReceiver,
+             so exported="false" still reaches it (same as BootReceiver above). -->
+        <receiver
+            android:name=".CallReplyReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.PHONE_STATE" />

@@ -6,13 +6,17 @@ import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.provider.OpenableColumns
 import android.provider.Settings
 import android.view.View
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.Spinner
 import android.widget.TextView
+import android.widget.ToggleButton
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -57,8 +61,16 @@ class EditAutoTaskActivity : AppCompatActivity() {
     private lateinit var retryExplainer: View
     private lateinit var retrySwitch: MaterialSwitch
     private lateinit var sendNowButton: Button
+    private lateinit var rowCustomDays: View
+    private lateinit var dayToggles: List<ToggleButton>
+    private lateinit var rowAttachment: View
+    private lateinit var attachmentNameText: TextView
+    private lateinit var pickAttachmentButton: Button
+    private lateinit var removeAttachmentButton: ImageButton
 
-    private val recurrenceOrder = listOf(AutoRecurrence.ONE_TIME, AutoRecurrence.DAILY, AutoRecurrence.WEEKDAYS)
+    private val recurrenceOrder = listOf(
+        AutoRecurrence.ONE_TIME, AutoRecurrence.DAILY, AutoRecurrence.WEEKDAYS, AutoRecurrence.CUSTOM_DAYS
+    )
 
     /** Set by whichever button (Save / Send Now) triggered validation, read back in saveInternal(). */
     private var pendingSendNow = false
@@ -80,6 +92,19 @@ class EditAutoTaskActivity : AppCompatActivity() {
                     if (numberIndex >= 0) recipientInput.setText(cursor.getString(numberIndex))
                 }
             }
+        }
+
+    private val attachmentPickerLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            try {
+                contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            } catch (e: SecurityException) {
+                // Some providers don't support persistable grants; the attachment still
+                // works for this session, just not after the app process restarts.
+            }
+            task.attachmentUri = uri.toString()
+            updateAttachmentUi()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -123,6 +148,21 @@ class EditAutoTaskActivity : AppCompatActivity() {
         retryExplainer = findViewById(R.id.text_retry_explainer)
         retrySwitch = findViewById(R.id.switch_retry_on_failure)
         sendNowButton = findViewById(R.id.button_send_now)
+        rowCustomDays = findViewById(R.id.row_custom_days)
+        dayToggles = listOf(
+            findViewById(R.id.toggle_day_mon), findViewById(R.id.toggle_day_tue),
+            findViewById(R.id.toggle_day_wed), findViewById(R.id.toggle_day_thu),
+            findViewById(R.id.toggle_day_fri), findViewById(R.id.toggle_day_sat),
+            findViewById(R.id.toggle_day_sun),
+        )
+        dayToggles.forEachIndexed { index, toggle ->
+            toggle.isChecked = (task.customDays and (1 shl index)) != 0
+        }
+        rowAttachment = findViewById(R.id.row_attachment)
+        attachmentNameText = findViewById(R.id.text_attachment_name)
+        pickAttachmentButton = findViewById(R.id.button_pick_attachment)
+        removeAttachmentButton = findViewById(R.id.button_remove_attachment)
+        updateAttachmentUi()
 
         channelText.text = channelLabel(task.channel)
         labelInput.setText(task.label)
@@ -150,6 +190,11 @@ class EditAutoTaskActivity : AppCompatActivity() {
             contactPickerLauncher.launch(Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI))
         }
         pickTemplateButton.setOnClickListener { pickTemplate() }
+        pickAttachmentButton.setOnClickListener { attachmentPickerLauncher.launch("*/*") }
+        removeAttachmentButton.setOnClickListener {
+            task.attachmentUri = null
+            updateAttachmentUi()
+        }
 
         findViewById<Button>(R.id.button_save).setOnClickListener {
             pendingSendNow = false
@@ -192,12 +237,40 @@ class EditAutoTaskActivity : AppCompatActivity() {
         pickTemplateButton.visibility = if (hasMessage) View.VISIBLE else View.GONE
         messageLayout.hint = if (channel == AutoTaskChannel.REMINDER)
             getString(R.string.auto_label_notes) else getString(R.string.auto_label_message)
+        // Attachments are sent via the system share sheet targeting the chat app directly
+        // (see AutoTaskAlarmReceiver.sendViaChatApp) -- SMS has no equivalent MMS API here.
+        val hasAttachment = channel == AutoTaskChannel.WHATSAPP || channel == AutoTaskChannel.TELEGRAM
+        rowAttachment.visibility = if (hasAttachment) View.VISIBLE else View.GONE
+    }
+
+    /** File name resolved via [OpenableColumns.DISPLAY_NAME] where the provider supports it, else the URI itself. */
+    private fun updateAttachmentUi() {
+        val uri = task.attachmentUri
+        if (uri.isNullOrBlank()) {
+            attachmentNameText.text = ""
+            removeAttachmentButton.visibility = View.GONE
+            return
+        }
+        removeAttachmentButton.visibility = View.VISIBLE
+        attachmentNameText.text = displayNameForUri(Uri.parse(uri)) ?: uri
+    }
+
+    private fun displayNameForUri(uri: Uri): String? = try {
+        contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst()) {
+                val index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (index >= 0) cursor.getString(index) else null
+            } else null
+        }
+    } catch (e: Exception) {
+        null
     }
 
     private fun applyRecurrenceVisibility(recurrence: AutoRecurrence) {
         val isOneTime = recurrence == AutoRecurrence.ONE_TIME
         rowDate.visibility = if (isOneTime) View.VISIBLE else View.GONE
         timeOnlyButton.visibility = if (isOneTime) View.GONE else View.VISIBLE
+        rowCustomDays.visibility = if (recurrence == AutoRecurrence.CUSTOM_DAYS) View.VISIBLE else View.GONE
         // A recurring task already reschedules itself regardless of outcome, and REMINDER can't fail.
         val showRetry = isOneTime && task.channel != AutoTaskChannel.REMINDER
         retryRow.visibility = if (showRetry) View.VISIBLE else View.GONE
@@ -286,6 +359,15 @@ class EditAutoTaskActivity : AppCompatActivity() {
             task.scheduledAt = scheduled.toInstant().toEpochMilli()
         } else {
             task.timeOfDay = pickedTime.format(DateTimeFormatter.ofPattern("HH:mm"))
+            if (recurrence == AutoRecurrence.CUSTOM_DAYS) {
+                task.customDays = dayToggles.foldIndexed(0) { index, mask, toggle ->
+                    if (toggle.isChecked) mask or (1 shl index) else mask
+                }
+                if (task.customDays == 0) {
+                    Toast.makeText(this, R.string.auto_error_custom_days_required, Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
             val next = task.nextOccurrence(java.time.ZonedDateTime.now())
             if (next == null) {
                 Toast.makeText(this, R.string.error_past_time, Toast.LENGTH_SHORT).show()

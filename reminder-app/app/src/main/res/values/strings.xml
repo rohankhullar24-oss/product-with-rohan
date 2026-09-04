@@ -278,6 +278,12 @@
     <string name="auto_recurrence_daily_at">Every day at %1$s</string>
     <string name="auto_recurrence_weekdays_at">Weekdays at %1$s</string>
     <string name="auto_task_last_fired">Last: %1$s (%2$s)</string>
+
+    <string name="auto_retry_title">This task failed</string>
+    <string name="auto_retry_yes">Retry</string>
+    <string name="auto_retry_no">No</string>
+    <string name="auto_retry_edit">Edit</string>
+    <string name="auto_retry_scheduled">Retrying in 1 minute</string>
     <string-array name="auto_recurrence_options">
         <item>Once</item>
         <item>Every day</item>

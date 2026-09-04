@@ -41,10 +41,7 @@ class AutoSchedulerActivity : AppCompatActivity() {
         tabs = findViewById(R.id.tabs)
 
         adapter = AutoTaskAdapter(onClick = { task ->
-            startActivity(
-                Intent(this, EditAutoTaskActivity::class.java)
-                    .putExtra(EditAutoTaskActivity.EXTRA_TASK_ID, task.id)
-            )
+            if (task.status == AutoTaskStatus.FAILED) promptRetry(task) else openEdit(task)
         })
 
         val recycler = findViewById<RecyclerView>(R.id.recycler)
@@ -87,6 +84,36 @@ class AutoSchedulerActivity : AppCompatActivity() {
             true
         }
         else -> super.onOptionsItemSelected(item)
+    }
+
+    private fun openEdit(task: AutoTask) {
+        startActivity(
+            Intent(this, EditAutoTaskActivity::class.java)
+                .putExtra(EditAutoTaskActivity.EXTRA_TASK_ID, task.id)
+        )
+    }
+
+    /** A failed task's own tap target: retry it right away, edit it, or leave it as-is. */
+    private fun promptRetry(task: AutoTask) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_retry_title)
+            .setMessage(task.failureReason ?: getString(R.string.auto_task_status_failed))
+            .setPositiveButton(R.string.auto_retry_yes) { _, _ -> retryNow(task) }
+            .setNeutralButton(R.string.auto_retry_edit) { _, _ -> openEdit(task) }
+            .setNegativeButton(R.string.auto_retry_no, null)
+            .show()
+    }
+
+    /** Reschedules the task ~1 minute out and puts it back in Pending. */
+    private fun retryNow(task: AutoTask) {
+        task.status = AutoTaskStatus.PENDING
+        task.failureReason = null
+        task.scheduledAt = System.currentTimeMillis() + 60_000L
+        task.updatedAt = System.currentTimeMillis()
+        AutoTaskStore.upsert(this, task)
+        AutoTaskAlarmScheduler.schedule(this, task)
+        refresh()
+        Toast.makeText(this, R.string.auto_retry_scheduled, Toast.LENGTH_SHORT).show()
     }
 
     private fun refresh() {

@@ -1,6 +1,8 @@
 package online.productwithrohan.reminders
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -9,7 +11,9 @@ import android.widget.Button
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.textfield.TextInputEditText
 
@@ -30,8 +34,22 @@ class AutoReplySettingsActivity : AppCompatActivity() {
     private lateinit var requireSilentOrDndSwitch: MaterialSwitch
     private lateinit var requireBluetoothOnSwitch: MaterialSwitch
     private lateinit var replyToMissedCallSwitch: MaterialSwitch
+    private lateinit var includeTelegramSwitch: MaterialSwitch
+    private lateinit var replyToSmsSwitch: MaterialSwitch
 
     private val filterModes = AutoReplyFilterMode.entries.toList()
+
+    private val smsPermissions = arrayOf(Manifest.permission.RECEIVE_SMS, Manifest.permission.SEND_SMS)
+
+    private val smsPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+            if (results.values.all { it }) {
+                saveInternal()
+            } else {
+                Toast.makeText(this, R.string.auto_permission_denied, Toast.LENGTH_SHORT).show()
+                replyToSmsSwitch.isChecked = false
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,6 +71,8 @@ class AutoReplySettingsActivity : AppCompatActivity() {
         requireSilentOrDndSwitch = findViewById(R.id.switch_require_silent_or_dnd)
         requireBluetoothOnSwitch = findViewById(R.id.switch_require_bluetooth_on)
         replyToMissedCallSwitch = findViewById(R.id.switch_reply_to_missed_call)
+        includeTelegramSwitch = findViewById(R.id.switch_include_telegram)
+        replyToSmsSwitch = findViewById(R.id.switch_reply_to_sms)
 
         val filterLabels = filterModes.map {
             when (it) {
@@ -83,6 +103,8 @@ class AutoReplySettingsActivity : AppCompatActivity() {
         requireSilentOrDndSwitch.isChecked = AutoReplySettings.requireSilentOrDnd(this)
         requireBluetoothOnSwitch.isChecked = AutoReplySettings.requireBluetoothOn(this)
         replyToMissedCallSwitch.isChecked = AutoReplySettings.replyToMissedCall(this)
+        includeTelegramSwitch.isChecked = AutoReplySettings.includeTelegram(this)
+        replyToSmsSwitch.isChecked = AutoReplySettings.replyToSms(this)
 
         findViewById<Button>(R.id.button_manage_rules).setOnClickListener {
             startActivity(Intent(this, AutoReplyRuleListActivity::class.java))
@@ -126,6 +148,19 @@ class AutoReplySettingsActivity : AppCompatActivity() {
             Toast.makeText(this, R.string.auto_reply_message_required, Toast.LENGTH_SHORT).show()
             return
         }
+        if (replyToSmsSwitch.isChecked && !hasSmsPermissions()) {
+            smsPermissionLauncher.launch(smsPermissions)
+            return
+        }
+        saveInternal()
+    }
+
+    private fun hasSmsPermissions(): Boolean = smsPermissions.all {
+        ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun saveInternal() {
+        val message = messageInput.text?.toString()?.trim().orEmpty()
         val selectedFilterMode = filterModes[filterModeSpinner.selectedItemPosition.coerceIn(0, filterModes.lastIndex)]
         val delay = delayInput.text?.toString()?.toIntOrNull() ?: 0
 
@@ -144,6 +179,8 @@ class AutoReplySettingsActivity : AppCompatActivity() {
             requireSilentOrDnd = requireSilentOrDndSwitch.isChecked,
             requireBluetoothOn = requireBluetoothOnSwitch.isChecked,
             replyToMissedCall = replyToMissedCallSwitch.isChecked,
+            includeTelegram = includeTelegramSwitch.isChecked,
+            replyToSms = replyToSmsSwitch.isChecked,
         )
         finish()
     }

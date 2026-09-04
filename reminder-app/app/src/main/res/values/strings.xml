@@ -66,6 +66,7 @@
     <string name="account_sign_out">Sign out</string>
     <string name="account_signed_out">Signed out. Reminders stay on this phone.</string>
     <string name="account_bad_email">Please enter a valid email address</string>
+    <string name="account_app_version">Version %1$s (build %2$d)</string>
 
     <string name="notification_sound">Notification sound</string>
 
@@ -235,6 +236,7 @@
     <string name="auto_task_type_schedule">Schedule</string>
     <string name="auto_task_type_reply">Auto Reply</string>
     <string name="auto_task_type_forward">Auto Forward</string>
+    <string name="auto_task_type_forward_call">Forward Call</string>
     <string name="auto_notify_on_send">Notify me when it\'s sent</string>
     <string name="auto_notification_access_needed_message">Notification access is needed to see incoming WhatsApp messages. Tap to fix.</string>
     <string name="auto_text_events_channel">Auto Scheduler events</string>
@@ -261,6 +263,8 @@
     <string name="auto_reply_condition_silent_or_dnd">Silent mode or Do Not Disturb is on</string>
     <string name="auto_reply_condition_bluetooth_on">Bluetooth is on</string>
     <string name="auto_reply_reply_to_missed_call">Also reply to missed WhatsApp calls</string>
+    <string name="auto_reply_include_telegram">Also watch Telegram messages</string>
+    <string name="auto_reply_reply_to_sms">Also reply to SMS</string>
 
     <!-- Per-sender Auto Reply rules -->
     <string name="auto_reply_rules_title">Per-sender reply rules</string>
@@ -282,6 +286,17 @@
     <string name="auto_forward_sent_title">Message forwarded</string>
     <string name="auto_forward_sent_text">A WhatsApp message was auto-forwarded</string>
     <string name="auto_forward_message_format">Fwd from %1$s: %2$s</string>
+
+    <!-- Forward Call -->
+    <string name="forward_call_title">Forward Call</string>
+    <string name="forward_call_enable">Forward missed calls</string>
+    <string name="forward_call_explainer">While on, a missed call\'s number gets sent as an SMS to this number.</string>
+    <string name="forward_call_to_hint">Forward to phone number</string>
+    <string name="forward_call_to_required">Enter a phone number to forward to</string>
+    <string name="forward_call_permission_needed_message">Forward Call needs Phone State, Call Log, and SMS permissions to detect and forward a missed call. Tap to grant.</string>
+    <string name="forward_call_message_format">Missed call from %1$s</string>
+    <string name="forward_call_sent_title">Missed call forwarded</string>
+    <string name="forward_call_sent_text">A missed call was forwarded by SMS</string>
 
     <string name="auto_label_caller_name">Caller name to show</string>
 

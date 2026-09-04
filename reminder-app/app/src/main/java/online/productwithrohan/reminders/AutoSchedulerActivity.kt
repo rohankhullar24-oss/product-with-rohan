@@ -157,12 +157,13 @@ class AutoSchedulerActivity : AppCompatActivity() {
         emptyView.visibility = if (tasks.isEmpty()) View.VISIBLE else View.GONE
     }
 
-    /** Matches the reference app's "Select a task" sheet: Schedule / Auto Reply / Auto Forward. */
+    /** Matches the reference app's "Select a task" sheet: Schedule / Auto Reply / Auto Forward / Forward Call. */
     private fun showTaskTypePicker() {
         val options = arrayOf(
             getString(R.string.auto_task_type_schedule),
             getString(R.string.auto_task_type_reply),
             getString(R.string.auto_task_type_forward),
+            getString(R.string.auto_task_type_forward_call),
         )
         AlertDialog.Builder(this)
             .setTitle(R.string.auto_add_task)
@@ -171,6 +172,7 @@ class AutoSchedulerActivity : AppCompatActivity() {
                     0 -> showChannelPicker()
                     1 -> startActivity(Intent(this, AutoReplySettingsActivity::class.java))
                     2 -> startActivity(Intent(this, AutoForwardSettingsActivity::class.java))
+                    3 -> startActivity(Intent(this, ForwardCallSettingsActivity::class.java))
                 }
             }
             .show()

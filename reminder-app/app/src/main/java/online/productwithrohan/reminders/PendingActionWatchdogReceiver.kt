@@ -1,6 +1,7 @@
 package online.productwithrohan.reminders
 
 import android.app.AlarmManager
+import android.app.KeyguardManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -10,11 +11,12 @@ import android.content.Intent
  * Fires ~25s after something hands a WhatsApp action off to
  * [AutoTextAccessibilityService] (a scheduled send, an auto-reply, or an
  * auto-forward). Accessibility events aren't guaranteed — WhatsApp's UI can
- * change, a permission dialog can steal focus, the phone can be locked — so
- * without this a stuck action would stay pending forever. A TASK action also
- * gets marked FAILED in [AutoTaskStore] so it shows up in the Failed tab;
- * REPLY/FORWARD have no task record, so timing them out just clears the
- * pending marker.
+ * change, a permission dialog can steal focus — so without this a stuck
+ * action would stay pending forever. If the device is locked, a TASK action
+ * is queued on [AutoTaskLockRetryReceiver] instead of failing (WhatsApp just
+ * can't be driven right now, not a real failure); otherwise it's marked
+ * FAILED in [AutoTaskStore] so it shows up in the Failed tab. REPLY/FORWARD
+ * have no task record, so timing them out just clears the pending marker.
  */
 class PendingActionWatchdogReceiver : BroadcastReceiver() {
 
@@ -26,10 +28,14 @@ class PendingActionWatchdogReceiver : BroadcastReceiver() {
         if (pending.kind == PendingActionKind.TASK && pending.taskId != null) {
             AutoTaskStore.get(context, pending.taskId)?.let { task ->
                 if (task.status == AutoTaskStatus.PENDING) {
-                    task.status = AutoTaskStatus.FAILED
-                    task.failureReason = "Couldn't find WhatsApp's Send button in time"
-                    task.updatedAt = System.currentTimeMillis()
-                    AutoTaskStore.upsert(context, task)
+                    val keyguard = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+                    if (keyguard.isKeyguardLocked) {
+                        AutoTaskLockRetryReceiver.scheduleRetry(context, task.id)
+                    } else {
+                        AutoTaskFireRecorder.recordFire(
+                            context, task, false, "Couldn't find WhatsApp's Send button in time"
+                        )
+                    }
                 }
             }
         }

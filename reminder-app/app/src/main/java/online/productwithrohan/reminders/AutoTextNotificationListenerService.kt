@@ -12,7 +12,7 @@ import androidx.core.app.NotificationManagerCompat
  * settings in [AutoReplySettings] / [AutoForwardSettings], triggers an
  * auto-reply (types into the sender's already-open chat, via the
  * notification's own tap intent) or an auto-forward (relays the text to a
- * fixed number via [WhatsAppSender]).
+ * fixed number via [ChatAppSender]).
  *
  * Heuristic by nature — WhatsApp doesn't publish a message-notification
  * contract, so this reads the same MessagingStyle/extras any notification
@@ -80,7 +80,7 @@ class AutoTextNotificationListenerService : NotificationListenerService() {
         val forwardTo = AutoForwardSettings.forwardTo(this)
         if (forwardTo.isBlank()) return
         val forwarded = getString(R.string.auto_forward_message_format, sender, incomingText)
-        WhatsAppSender.sendPrefilled(this, forwardTo, forwarded, PendingActionKind.FORWARD)
+        ChatAppSender.sendPrefilled(this, ChatApp.WHATSAPP, forwardTo, forwarded, PendingActionKind.FORWARD)
     }
 
     companion object {

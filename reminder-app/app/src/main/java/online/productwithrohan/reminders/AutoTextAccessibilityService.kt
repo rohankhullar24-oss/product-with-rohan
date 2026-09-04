@@ -8,15 +8,15 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import java.util.UUID
 
-/** What kind of pending WhatsApp action this service is waiting to finish. */
+/** What kind of pending chat-app action this service is waiting to finish. */
 enum class PendingActionKind { TASK, REPLY, FORWARD }
 
 /**
- * One outstanding "do something in the WhatsApp window that's about to
+ * One outstanding "do something in the chat-app window that's about to
  * open" request. [typeText] is null when the message was already pre-filled
- * via a wa.me deep link (scheduled sends, forwards); non-null means this
- * service must type it into the compose box itself (auto-reply, since we
- * only have the sender's open notification, not their number).
+ * via a deep link (scheduled sends, forwards); non-null means this service
+ * must type it into the compose box itself (auto-reply, since we only have
+ * the sender's open notification, not their number).
  */
 data class PendingAction(
     val token: String,
@@ -26,18 +26,19 @@ data class PendingAction(
 )
 
 /**
- * Finishes a WhatsApp send that something else started: [AutoTaskAlarmReceiver]
- * for scheduled sends/forwards (message already pre-filled via wa.me — just tap
- * Send), or [AutoTextNotificationListenerService] for auto-replies (type the
+ * Finishes a WhatsApp/Telegram send that something else started:
+ * [AutoTaskAlarmReceiver] for scheduled sends/forwards (message already
+ * pre-filled via a deep link — just tap Send), or
+ * [AutoTextNotificationListenerService] for WhatsApp auto-replies (type the
  * reply into the sender's already-open chat, then tap Send). Deliberately
- * narrow in scope (see accessibility_service_config.xml — WhatsApp only)
- * since UI-automating a chat app's contact picker would be far more fragile
- * than these two steps.
+ * narrow in scope (see accessibility_service_config.xml — WhatsApp and
+ * Telegram only) since UI-automating a chat app's contact picker would be
+ * far more fragile than these two steps.
  */
 class AutoTextAccessibilityService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        if (event.packageName != "com.whatsapp") return
+        if (event.packageName?.toString() !in SUPPORTED_PACKAGES) return
         val pending = currentPending(this) ?: return
         val root = rootInActiveWindow ?: return
 
@@ -61,10 +62,7 @@ class AutoTextAccessibilityService : AccessibilityService() {
         if (pending.kind == PendingActionKind.TASK && pending.taskId != null) {
             AutoTaskStore.get(this, pending.taskId)?.let { task ->
                 if (task.status == AutoTaskStatus.PENDING) {
-                    task.status = AutoTaskStatus.DONE
-                    task.failureReason = null
-                    task.updatedAt = System.currentTimeMillis()
-                    AutoTaskStore.upsert(this, task)
+                    AutoTaskFireRecorder.recordFire(this, task, true, null)
                 }
             }
         }
@@ -78,6 +76,11 @@ class AutoTextAccessibilityService : AccessibilityService() {
         PendingActionWatchdogReceiver.cancel(this, pending.token)
     }
 
+    /**
+     * WhatsApp's long-standing send-button id, else a content-description
+     * fallback — the same fallback is all Telegram gets, since it doesn't
+     * expose a stable resource id for its send button.
+     */
     private fun findSendButton(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
         val byId = node.findAccessibilityNodeInfosByViewId("com.whatsapp:id/send")
         val direct = byId.firstOrNull { it.isClickable }
@@ -85,7 +88,7 @@ class AutoTextAccessibilityService : AccessibilityService() {
         return findByDescription(node, "Send")
     }
 
-    /** WhatsApp's long-standing compose-box id; falls back to the first editable field. */
+    /** WhatsApp's long-standing compose-box id; falls back to the first editable field (also Telegram's path). */
     private fun findComposeBox(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
         val byId = node.findAccessibilityNodeInfosByViewId("com.whatsapp:id/entry")
         byId.firstOrNull()?.let { return it }
@@ -115,6 +118,7 @@ class AutoTextAccessibilityService : AccessibilityService() {
     override fun onInterrupt() {}
 
     companion object {
+        private val SUPPORTED_PACKAGES = ChatApp.entries.map { it.packageName }.toSet()
         private const val PREFS = "auto_text_pending"
         private const val KEY_TOKEN = "pending_token"
         private const val KEY_KIND = "pending_kind"

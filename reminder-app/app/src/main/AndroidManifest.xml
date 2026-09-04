@@ -196,6 +196,10 @@
             android:name=".PendingActionWatchdogReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".AutoTaskLockRetryReceiver"
+            android:exported="false" />
+
         <service
             android:name=".AutoTextAccessibilityService"
             android:exported="true"

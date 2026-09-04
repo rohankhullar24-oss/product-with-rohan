@@ -41,10 +41,11 @@ class AutoSchedulerActivity : AppCompatActivity() {
         tabs = findViewById(R.id.tabs)
 
         adapter = AutoTaskAdapter(onClick = { task ->
-            startActivity(
-                Intent(this, EditAutoTaskActivity::class.java)
-                    .putExtra(EditAutoTaskActivity.EXTRA_TASK_ID, task.id)
-            )
+            when (task.status) {
+                AutoTaskStatus.FAILED -> promptRetry(task)
+                AutoTaskStatus.PENDING -> promptPendingAction(task)
+                AutoTaskStatus.DONE -> openEdit(task)
+            }
         })
 
         val recycler = findViewById<RecyclerView>(R.id.recycler)
@@ -89,6 +90,64 @@ class AutoSchedulerActivity : AppCompatActivity() {
         else -> super.onOptionsItemSelected(item)
     }
 
+    private fun openEdit(task: AutoTask) {
+        startActivity(
+            Intent(this, EditAutoTaskActivity::class.java)
+                .putExtra(EditAutoTaskActivity.EXTRA_TASK_ID, task.id)
+        )
+    }
+
+    /** A failed task's own tap target: retry it right away, edit it, or leave it as-is. */
+    private fun promptRetry(task: AutoTask) {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_retry_title)
+            .setMessage(task.failureReason ?: getString(R.string.auto_task_status_failed))
+            .setPositiveButton(R.string.auto_retry_yes) { _, _ -> retryNow(task) }
+            .setNeutralButton(R.string.auto_retry_edit) { _, _ -> openEdit(task) }
+            .setNegativeButton(R.string.auto_retry_no, null)
+            .show()
+    }
+
+    /** Reschedules the task ~1 minute out and puts it back in Pending. */
+    private fun retryNow(task: AutoTask) {
+        task.status = AutoTaskStatus.PENDING
+        task.failureReason = null
+        task.scheduledAt = System.currentTimeMillis() + 60_000L
+        task.updatedAt = System.currentTimeMillis()
+        AutoTaskStore.upsert(this, task)
+        AutoTaskAlarmScheduler.schedule(this, task)
+        refresh()
+        Toast.makeText(this, R.string.auto_retry_scheduled, Toast.LENGTH_SHORT).show()
+    }
+
+    /** A pending task's own tap target: edit it, snooze it a bit, or leave it as-is. */
+    private fun promptPendingAction(task: AutoTask) {
+        val options = arrayOf(
+            getString(R.string.auto_pending_edit),
+            getString(R.string.auto_pending_snooze_15),
+            getString(R.string.auto_pending_snooze_60),
+        )
+        AlertDialog.Builder(this)
+            .setTitle(task.displayTitle())
+            .setItems(options) { _, index ->
+                when (index) {
+                    0 -> openEdit(task)
+                    1 -> snooze(task, 15)
+                    2 -> snooze(task, 60)
+                }
+            }
+            .show()
+    }
+
+    private fun snooze(task: AutoTask, minutes: Int) {
+        task.scheduledAt += minutes * 60_000L
+        task.updatedAt = System.currentTimeMillis()
+        AutoTaskStore.upsert(this, task)
+        AutoTaskAlarmScheduler.schedule(this, task)
+        refresh()
+        Toast.makeText(this, getString(R.string.auto_snoozed, minutes), Toast.LENGTH_SHORT).show()
+    }
+
     private fun refresh() {
         val status = statusForTab[tabs.selectedTabPosition]
         val tasks = AutoTaskStore.getAll(this)
@@ -117,7 +176,7 @@ class AutoSchedulerActivity : AppCompatActivity() {
             .show()
     }
 
-    /** TELEGRAM/EMAIL aren't wired up yet (see AutoTaskAlarmReceiver). */
+    /** EMAIL isn't wired up yet (see AutoTaskAlarmReceiver). */
     private fun showChannelPicker() {
         val channels = AutoTaskChannel.entries.toList()
         val labels = channels.map { channel ->
@@ -144,5 +203,5 @@ class AutoSchedulerActivity : AppCompatActivity() {
     private fun isSupported(channel: AutoTaskChannel): Boolean =
         channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.CALL ||
             channel == AutoTaskChannel.REMINDER || channel == AutoTaskChannel.WHATSAPP ||
-            channel == AutoTaskChannel.FAKE_CALL
+            channel == AutoTaskChannel.TELEGRAM || channel == AutoTaskChannel.FAKE_CALL
 }

@@ -273,4 +273,35 @@
     <string name="settings_sms_signature_enable">Add signature to SMS</string>
     <string name="settings_whatsapp_signature_enable">Add signature to WhatsApp messages</string>
     <string name="settings_signature_hint">Signature text</string>
+
+    <string name="auto_label_repeat">Repeat</string>
+    <string name="auto_recurrence_daily_at">Every day at %1$s</string>
+    <string name="auto_recurrence_weekdays_at">Weekdays at %1$s</string>
+    <string name="auto_task_last_fired">Last: %1$s (%2$s)</string>
+
+    <string name="auto_retry_title">This task failed</string>
+    <string name="auto_retry_yes">Retry</string>
+    <string name="auto_retry_no">No</string>
+    <string name="auto_retry_edit">Edit</string>
+    <string name="auto_retry_scheduled">Retrying in 1 minute</string>
+    <string-array name="auto_recurrence_options">
+        <item>Once</item>
+        <item>Every day</item>
+        <item>Weekdays (Mon–Fri)</item>
+    </string-array>
+
+    <string name="auto_retry_on_failure">Retry automatically if it fails</string>
+    <string name="auto_retry_on_failure_explainer">Retries every minute, up to 5 times, before giving up.</string>
+    <string name="auto_task_retry_suffix"> · attempt %1$d/%2$d</string>
+
+    <string name="auto_pick_contact">Pick from Contacts</string>
+    <string name="auto_label_recipient_telegram">Telegram username</string>
+    <string name="auto_send_now">Send now</string>
+    <string name="auto_send_now_toast">Sending now…</string>
+    <string name="settings_notify_on_failure">Notify me when a task fails</string>
+    <string name="auto_task_failed_title">%1$s failed</string>
+    <string name="auto_pending_edit">Edit</string>
+    <string name="auto_pending_snooze_15">Snooze 15 minutes</string>
+    <string name="auto_pending_snooze_60">Snooze 1 hour</string>
+    <string name="auto_snoozed">Snoozed %1$d minutes</string>
 </resources>

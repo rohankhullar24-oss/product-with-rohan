@@ -40,14 +40,26 @@ class AutoTaskAdapter(
         val context = holder.itemView.context
         holder.title.text = task.displayTitle()
 
-        val time = Instant.ofEpochMilli(task.scheduledAt).atZone(ZoneId.systemDefault())
-            .format(DateTimeFormatter.ofPattern("EEE d MMM, HH:mm"))
-        holder.subtitle.text = context.getString(R.string.auto_task_subtitle, channelLabel(task), time)
+        val whenText = when (task.recurrence) {
+            AutoRecurrence.ONE_TIME -> Instant.ofEpochMilli(task.scheduledAt).atZone(ZoneId.systemDefault())
+                .format(DateTimeFormatter.ofPattern("EEE d MMM, HH:mm"))
+            AutoRecurrence.DAILY -> context.getString(R.string.auto_recurrence_daily_at, task.timeOfDay)
+            AutoRecurrence.WEEKDAYS -> context.getString(R.string.auto_recurrence_weekdays_at, task.timeOfDay)
+        }
+        holder.subtitle.text = context.getString(R.string.auto_task_subtitle, channelLabel(task), whenText)
 
-        holder.status.text = when (task.status) {
-            AutoTaskStatus.PENDING -> context.getString(R.string.auto_task_status_pending)
-            AutoTaskStatus.DONE -> context.getString(R.string.auto_task_status_done)
-            AutoTaskStatus.FAILED -> task.failureReason ?: context.getString(R.string.auto_task_status_failed)
+        holder.status.text = when {
+            task.status == AutoTaskStatus.FAILED -> task.failureReason ?: context.getString(R.string.auto_task_status_failed)
+            task.status == AutoTaskStatus.DONE -> context.getString(R.string.auto_task_status_done)
+            task.lastFiredAt != null -> {
+                val lastTime = Instant.ofEpochMilli(task.lastFiredAt!!).atZone(ZoneId.systemDefault())
+                    .format(DateTimeFormatter.ofPattern("d MMM, HH:mm"))
+                val base = context.getString(R.string.auto_task_last_fired, task.lastResult, lastTime)
+                if (task.recurrence == AutoRecurrence.ONE_TIME && task.retryOnFailure && task.retryCount > 0) {
+                    base + context.getString(R.string.auto_task_retry_suffix, task.retryCount, AutoTaskFireRecorder.MAX_AUTO_RETRIES)
+                } else base
+            }
+            else -> context.getString(R.string.auto_task_status_pending)
         }
         holder.status.setTextColor(
             context.getColor(

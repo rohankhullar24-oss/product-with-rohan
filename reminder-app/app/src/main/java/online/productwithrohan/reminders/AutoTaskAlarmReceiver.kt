@@ -31,7 +31,7 @@ sealed class DispatchResult {
  * Fires once per [AutoTask] at its scheduled time and sends it — SMS and
  * CALL are quick platform calls, REMINDER hands off to the existing
  * reminder-alarm stack, FAKE_CALL shows a cosmetic incoming-call screen, and
- * WHATSAPP hands off to the accessibility service. TELEGRAM/EMAIL aren't
+ * WHATSAPP/TELEGRAM hand off to the accessibility service. EMAIL isn't
  * wired up yet (see AutoTask.kt).
  */
 class AutoTaskAlarmReceiver : BroadcastReceiver() {
@@ -48,17 +48,9 @@ class AutoTaskAlarmReceiver : BroadcastReceiver() {
 
                 when (val result = dispatch(context, task)) {
                     is DispatchResult.Async -> return@Thread
-                    is DispatchResult.Success -> {
-                        task.status = AutoTaskStatus.DONE
-                        task.failureReason = null
-                    }
-                    is DispatchResult.Failure -> {
-                        task.status = AutoTaskStatus.FAILED
-                        task.failureReason = result.reason
-                    }
+                    is DispatchResult.Success -> AutoTaskFireRecorder.recordFire(context, task, true, null)
+                    is DispatchResult.Failure -> AutoTaskFireRecorder.recordFire(context, task, false, result.reason)
                 }
-                task.updatedAt = System.currentTimeMillis()
-                AutoTaskStore.upsert(context, task)
             } finally {
                 pendingResult.finish()
             }
@@ -69,9 +61,9 @@ class AutoTaskAlarmReceiver : BroadcastReceiver() {
         AutoTaskChannel.SMS -> sendSms(context, task)
         AutoTaskChannel.CALL -> placeCall(context, task)
         AutoTaskChannel.REMINDER -> fireReminder(context, task)
-        AutoTaskChannel.WHATSAPP -> sendWhatsApp(context, task)
+        AutoTaskChannel.WHATSAPP -> sendViaChatApp(context, task, ChatApp.WHATSAPP)
+        AutoTaskChannel.TELEGRAM -> sendViaChatApp(context, task, ChatApp.TELEGRAM)
         AutoTaskChannel.FAKE_CALL -> showFakeCall(context, task)
-        AutoTaskChannel.TELEGRAM,
         AutoTaskChannel.EMAIL -> DispatchResult.Failure("${task.channel.name} isn't supported yet")
     }
 
@@ -151,15 +143,20 @@ class AutoTaskAlarmReceiver : BroadcastReceiver() {
         return DispatchResult.Success
     }
 
-    /** See [WhatsAppSender] — pre-fills via wa.me, [AutoTextAccessibilityService] taps Send. */
-    private fun sendWhatsApp(context: Context, task: AutoTask): DispatchResult {
-        val message = AutoSchedulerSettings.applyWhatsAppSignature(context, task.message)
-        return when (val result = WhatsAppSender.sendPrefilled(context, task.recipient, message, PendingActionKind.TASK, task.id)) {
-            WhatsAppSender.Result.Started -> DispatchResult.Async
-            WhatsAppSender.Result.AccessibilityNotEnabled -> DispatchResult.Failure("Auto Text accessibility permission not granted")
-            WhatsAppSender.Result.NotInstalled -> DispatchResult.Failure("WhatsApp isn't installed")
-            WhatsAppSender.Result.NoRecipient -> DispatchResult.Failure("No recipient number")
-            is WhatsAppSender.Result.Error -> DispatchResult.Failure(result.message)
+    /** See [ChatAppSender] — pre-fills via deep link, [AutoTextAccessibilityService] taps Send. */
+    private fun sendViaChatApp(context: Context, task: AutoTask, app: ChatApp): DispatchResult {
+        val message = if (app == ChatApp.WHATSAPP) AutoSchedulerSettings.applyWhatsAppSignature(context, task.message)
+        else task.message
+        return when (val result = ChatAppSender.sendPrefilled(context, app, task.recipient, message, PendingActionKind.TASK, task.id)) {
+            ChatAppSender.Result.Started -> DispatchResult.Async
+            ChatAppSender.Result.WaitingForUnlock -> {
+                AutoTaskLockRetryReceiver.scheduleRetry(context, task.id)
+                DispatchResult.Async
+            }
+            ChatAppSender.Result.AccessibilityNotEnabled -> DispatchResult.Failure("Auto Text accessibility permission not granted")
+            ChatAppSender.Result.NotInstalled -> DispatchResult.Failure("${app.name.lowercase().replaceFirstChar { it.uppercase() }} isn't installed")
+            ChatAppSender.Result.NoRecipient -> DispatchResult.Failure("No recipient")
+            is ChatAppSender.Result.Error -> DispatchResult.Failure(result.message)
         }
     }
 }

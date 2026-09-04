@@ -3,8 +3,10 @@ package online.productwithrohan.reminders
 import android.Manifest
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
@@ -41,6 +43,8 @@ class EditAutoTaskActivity : AppCompatActivity() {
     private lateinit var messageInput: TextInputEditText
     private lateinit var dateButton: Button
     private lateinit var timeButton: Button
+    private lateinit var pickRecipientListButton: Button
+    private lateinit var pickTemplateButton: Button
 
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -76,6 +80,8 @@ class EditAutoTaskActivity : AppCompatActivity() {
         messageInput = findViewById(R.id.input_message)
         dateButton = findViewById(R.id.button_date)
         timeButton = findViewById(R.id.button_time)
+        pickRecipientListButton = findViewById(R.id.button_pick_recipient_list)
+        pickTemplateButton = findViewById(R.id.button_pick_template)
 
         channelText.text = channelLabel(task.channel)
         labelInput.setText(task.label)
@@ -87,6 +93,8 @@ class EditAutoTaskActivity : AppCompatActivity() {
 
         dateButton.setOnClickListener { pickDate() }
         timeButton.setOnClickListener { pickTime() }
+        pickRecipientListButton.setOnClickListener { pickRecipientList() }
+        pickTemplateButton.setOnClickListener { pickTemplate() }
 
         findViewById<Button>(R.id.button_save).setOnClickListener { onSaveClicked() }
 
@@ -98,13 +106,50 @@ class EditAutoTaskActivity : AppCompatActivity() {
     }
 
     private fun applyChannelVisibility(channel: AutoTaskChannel) {
+        val hasRecipient = channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.CALL ||
+            channel == AutoTaskChannel.WHATSAPP
+        val hasMessage = channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.REMINDER ||
+            channel == AutoTaskChannel.WHATSAPP
         labelLayout.visibility = if (channel == AutoTaskChannel.REMINDER) View.VISIBLE else View.GONE
-        recipientLayout.visibility =
-            if (channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.CALL) View.VISIBLE else View.GONE
-        messageLayout.visibility =
-            if (channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.REMINDER) View.VISIBLE else View.GONE
+        recipientLayout.visibility = if (hasRecipient) View.VISIBLE else View.GONE
+        pickRecipientListButton.visibility = if (hasRecipient) View.VISIBLE else View.GONE
+        messageLayout.visibility = if (hasMessage) View.VISIBLE else View.GONE
+        pickTemplateButton.visibility = if (hasMessage) View.VISIBLE else View.GONE
         messageLayout.hint = if (channel == AutoTaskChannel.REMINDER)
             getString(R.string.auto_label_notes) else getString(R.string.auto_label_message)
+    }
+
+    /** For CALL, only the first member of a picked list is usable — a call has one recipient. */
+    private fun pickRecipientList() {
+        val lists = RecipientListStore.getAll(this)
+        if (lists.isEmpty()) {
+            Toast.makeText(this, R.string.recipient_list_none_yet, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val names = lists.map { it.name }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_pick_recipient_list)
+            .setItems(names) { _, index ->
+                val picked = lists[index]
+                recipientInput.setText(
+                    if (task.channel == AutoTaskChannel.CALL) picked.members.firstOrNull()?.phone.orEmpty()
+                    else picked.numbersJoined()
+                )
+            }
+            .show()
+    }
+
+    private fun pickTemplate() {
+        val templates = TemplateStore.getAll(this)
+        if (templates.isEmpty()) {
+            Toast.makeText(this, R.string.template_none_yet, Toast.LENGTH_SHORT).show()
+            return
+        }
+        val names = templates.map { it.name }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_pick_template)
+            .setItems(names) { _, index -> messageInput.setText(templates[index].message) }
+            .show()
     }
 
     private fun channelLabel(channel: AutoTaskChannel): String =
@@ -150,7 +195,17 @@ class EditAutoTaskActivity : AppCompatActivity() {
         task.scheduledAt = scheduled.toInstant().toEpochMilli()
 
         when (task.channel) {
-            AutoTaskChannel.SMS, AutoTaskChannel.CALL -> if (task.recipient.isBlank()) {
+            AutoTaskChannel.CALL -> {
+                if (task.recipient.isBlank()) {
+                    Toast.makeText(this, R.string.auto_error_recipient_required, Toast.LENGTH_SHORT).show()
+                    return
+                }
+                if (task.recipient.contains(",")) {
+                    Toast.makeText(this, R.string.auto_error_call_single_recipient, Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+            AutoTaskChannel.SMS, AutoTaskChannel.WHATSAPP -> if (task.recipient.isBlank()) {
                 Toast.makeText(this, R.string.auto_error_recipient_required, Toast.LENGTH_SHORT).show()
                 return
             }
@@ -160,7 +215,9 @@ class EditAutoTaskActivity : AppCompatActivity() {
             }
             else -> {}
         }
-        if (task.channel == AutoTaskChannel.SMS && task.message.isBlank()) {
+        if ((task.channel == AutoTaskChannel.SMS || task.channel == AutoTaskChannel.WHATSAPP) &&
+            task.message.isBlank()
+        ) {
             Toast.makeText(this, R.string.auto_error_message_required, Toast.LENGTH_SHORT).show()
             return
         }
@@ -176,7 +233,23 @@ class EditAutoTaskActivity : AppCompatActivity() {
             permissionLauncher.launch(permission)
             return
         }
+        if (task.channel == AutoTaskChannel.WHATSAPP && !AutoTextAccessibilityService.isEnabled(this)) {
+            promptEnableAccessibility()
+            return
+        }
         saveInternal()
+    }
+
+    /** Accessibility isn't a runtime permission — it's granted via its own Settings screen. */
+    private fun promptEnableAccessibility() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_accessibility_needed_title)
+            .setMessage(R.string.auto_accessibility_needed_message)
+            .setPositiveButton(R.string.auto_open_settings) { _, _ ->
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun saveInternal() {

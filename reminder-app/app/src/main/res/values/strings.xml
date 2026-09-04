@@ -198,4 +198,37 @@
     <string name="auto_permission_denied">Permission denied — can\'t schedule this task</string>
     <string name="auto_delete_title">Delete task?</string>
     <string name="auto_delete_message">This scheduled task will be cancelled and removed.</string>
+    <string name="auto_pick_recipient_list">Use recipient list</string>
+    <string name="auto_pick_template">Use template</string>
+    <string name="auto_error_call_single_recipient">A call can only have one recipient</string>
+    <string name="auto_accessibility_needed_title">Accessibility permission needed</string>
+    <string name="auto_accessibility_needed_message">Auto Scheduler needs Accessibility access to tap Send in WhatsApp on your behalf. Find \"Auto Scheduler\" (part of Reminders) in the next screen and turn it on.</string>
+    <string name="auto_open_settings">Open settings</string>
+    <string name="accessibility_service_description">Lets Auto Scheduler tap Send in WhatsApp after opening a pre-filled chat for a scheduled message. Only watches WhatsApp, and only while a scheduled WhatsApp task is pending.</string>
+
+    <!-- Recipient lists -->
+    <string name="title_recipient_lists">Recipients</string>
+    <string name="recipient_list_empty">No recipient lists yet.\nTap + to create a reusable group.</string>
+    <string name="recipient_list_member_count">%1$d member(s)</string>
+    <string name="recipient_list_title_new">New recipient list</string>
+    <string name="recipient_list_title_edit">Edit recipient list</string>
+    <string name="recipient_list_label_name">List name</string>
+    <string name="recipient_list_members">Members</string>
+    <string name="recipient_list_add_member">+ Add member</string>
+    <string name="recipient_entry_name">Name</string>
+    <string name="recipient_entry_phone">Phone number</string>
+    <string name="recipient_list_error_empty">Add at least one member with a phone number</string>
+    <string name="recipient_list_delete_title">Delete recipient list?</string>
+    <string name="recipient_list_delete_message">This recipient list will be removed.</string>
+    <string name="recipient_list_none_yet">No recipient lists yet — create one from the 3-dot menu</string>
+
+    <!-- Templates -->
+    <string name="title_templates">Templates</string>
+    <string name="template_empty_list">No templates yet.\nTap + to save a reusable message.</string>
+    <string name="template_title_new">New template</string>
+    <string name="template_title_edit">Edit template</string>
+    <string name="template_label_name">Template name</string>
+    <string name="template_delete_title">Delete template?</string>
+    <string name="template_delete_message">This template will be removed.</string>
+    <string name="template_none_yet">No templates yet — create one from the 3-dot menu</string>
 </resources>

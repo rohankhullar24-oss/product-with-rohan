@@ -5,6 +5,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.TextView
 import android.widget.Toast
@@ -66,6 +68,23 @@ class AutoSchedulerActivity : AppCompatActivity() {
                 View.VISIBLE else View.GONE
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.auto_scheduler_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.action_recipient_lists -> {
+            startActivity(Intent(this, RecipientListActivity::class.java))
+            true
+        }
+        R.id.action_templates -> {
+            startActivity(Intent(this, TemplateActivity::class.java))
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
+    }
+
     private fun refresh() {
         val status = statusForTab[tabs.selectedTabPosition]
         val tasks = AutoTaskStore.getAll(this)
@@ -100,5 +119,6 @@ class AutoSchedulerActivity : AppCompatActivity() {
     }
 
     private fun isSupported(channel: AutoTaskChannel): Boolean =
-        channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.CALL || channel == AutoTaskChannel.REMINDER
+        channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.CALL ||
+            channel == AutoTaskChannel.REMINDER || channel == AutoTaskChannel.WHATSAPP
 }

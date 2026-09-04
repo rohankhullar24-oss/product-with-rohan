@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_recipient_lists"
+        android:title="@string/title_recipient_lists" />
+    <item
+        android:id="@+id/action_templates"
+        android:title="@string/title_templates" />
+</menu>

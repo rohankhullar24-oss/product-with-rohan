@@ -67,6 +67,9 @@ class AutoSchedulerActivity : AppCompatActivity() {
         permissionBanner.visibility =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !AutoTaskAlarmScheduler.canScheduleExact(this))
                 View.VISIBLE else View.GONE
+        AutoSchedulerSyncManager.syncAsync(this) { changed ->
+            if (changed) runOnUiThread { refresh() }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

@@ -8,11 +8,14 @@ data class Template(
     val id: String = UUID.randomUUID().toString(),
     var name: String = "",
     var message: String = "",
+    /** Stamped by [TemplateStore.upsert]; drives cloud-sync conflict resolution. */
+    var updatedAt: Long = System.currentTimeMillis(),
 ) {
     fun toJson(): JSONObject = JSONObject().apply {
         put("id", id)
         put("name", name)
         put("message", message)
+        put("updatedAt", updatedAt)
     }
 
     companion object {
@@ -20,6 +23,7 @@ data class Template(
             id = o.getString("id"),
             name = o.optString("name"),
             message = o.optString("message"),
+            updatedAt = o.optLong("updatedAt", 0L),
         )
     }
 }

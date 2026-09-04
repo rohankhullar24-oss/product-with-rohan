@@ -128,6 +128,7 @@ class EditRecipientListActivity : AppCompatActivity() {
         list.name = name
         list.members = members.toMutableList()
         RecipientListStore.upsert(this, list)
+        AutoSchedulerSyncManager.syncAsync(this)
         finish()
     }
 
@@ -136,7 +137,9 @@ class EditRecipientListActivity : AppCompatActivity() {
             .setTitle(R.string.recipient_list_delete_title)
             .setMessage(R.string.recipient_list_delete_message)
             .setPositiveButton(R.string.delete_confirm) { _, _ ->
+                RowSyncEngine.recordDeletion(this, "recipient_list", list.id)
                 RecipientListStore.delete(this, list.id)
+                AutoSchedulerSyncManager.syncAsync(this)
                 finish()
             }
             .setNegativeButton(android.R.string.cancel, null)

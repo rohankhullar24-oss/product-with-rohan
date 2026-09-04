@@ -102,6 +102,7 @@ class CallReplySettingsActivity : AppCompatActivity() {
             endedSwitch.isChecked,
             notifySwitch.isChecked,
         )
+        AutoSchedulerSyncManager.syncAsync(this)
         finish()
     }
 }

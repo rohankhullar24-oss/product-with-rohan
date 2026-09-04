@@ -27,6 +27,7 @@ object AutoSchedulerSettings {
     fun notifyOnFailure(context: Context): Boolean = prefs(context).getBoolean(KEY_NOTIFY_ON_FAILURE, true)
     fun setNotifyOnFailure(context: Context, enabled: Boolean) {
         prefs(context).edit().putBoolean(KEY_NOTIFY_ON_FAILURE, enabled).apply()
+        SettingsSyncMeta.touch(context, PREFS)
     }
 
     /** Appends the relevant signature to [message] if one is configured and enabled. */
@@ -50,5 +51,6 @@ object AutoSchedulerSettings {
             .putString(KEY_WHATSAPP_SIGNATURE, whatsAppSignature)
             .putInt(KEY_SMS_DELAY_SECONDS, smsDelaySeconds.coerceIn(0, MAX_SMS_DELAY_SECONDS))
             .apply()
+        SettingsSyncMeta.touch(context, PREFS)
     }
 }

@@ -89,6 +89,7 @@ class ForwardCallSettingsActivity : AppCompatActivity() {
     private fun saveInternal() {
         val forwardTo = forwardToInput.text?.toString()?.trim().orEmpty()
         ForwardCallSettings.save(this, enabledSwitch.isChecked, forwardTo, notifySwitch.isChecked)
+        AutoSchedulerSyncManager.syncAsync(this)
         finish()
     }
 }

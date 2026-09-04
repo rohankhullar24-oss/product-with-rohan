@@ -193,6 +193,25 @@ common library:
     tap Backup first. `supabase_session` (the signed-in auth token) is
     deliberately excluded from both — it shouldn't silently restore onto
     a different device.
+  - A third layer, on top of both of those: **`AutoSchedulerSyncManager`**
+    mirrors `SyncManager`'s existing reminders-only cloud sync onto every
+    Auto Scheduler data set, so it survives an uninstall/reinstall the same
+    way reminders already do — tied to the signed-in account (email/OTP),
+    not to Google's device backup. Auto tasks, recipient lists, templates,
+    and auto-reply rules each sync as individual rows (last-write-wins by
+    `updatedAt`, tombstoned deletes) through one shared Supabase table,
+    `auto_scheduler_rows` (columns `user_id`/`kind`/`id`/`payload`/
+    `updated_at`/`deleted`, RLS-scoped to `auth.uid() = user_id`), via a
+    generic engine — `RowSyncEngine.sync()` — parameterized per store
+    instead of one bespoke table + sync function per data set (the same
+    "kind" discriminator also holds the five settings screens as whole-blob
+    rows, dumped/restored via the shared `PrefsJson` helper `BackupManager`
+    also uses, with change-tracking via `SettingsSyncMeta` since
+    SharedPreferences has no update timestamp of its own). Triggered from
+    `AutoSchedulerActivity.onResume()` (pull) and after every
+    save/delete across the Auto Scheduler screens (push) — see
+    `RowSyncEngine.recordDeletion` for the tombstone-before-delete calls
+    that make deletions propagate instead of resurrecting.
   - **`FakeCallActivity`**, **`ClaudeAlertsActivity`** — the Fake Call task
     type's ringing screen, and a small alerts/status surface.
 

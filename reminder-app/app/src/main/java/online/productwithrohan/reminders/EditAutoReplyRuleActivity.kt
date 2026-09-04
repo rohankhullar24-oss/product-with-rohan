@@ -57,6 +57,7 @@ class EditAutoReplyRuleActivity : AppCompatActivity() {
         rule.senderName = sender
         rule.message = message
         AutoReplyRuleStore.upsert(this, rule)
+        AutoSchedulerSyncManager.syncAsync(this)
         finish()
     }
 
@@ -65,7 +66,9 @@ class EditAutoReplyRuleActivity : AppCompatActivity() {
             .setTitle(R.string.auto_reply_rule_delete_title)
             .setMessage(R.string.auto_reply_rule_delete_message)
             .setPositiveButton(R.string.delete_confirm) { _, _ ->
+                RowSyncEngine.recordDeletion(this, "auto_reply_rule", rule.id)
                 AutoReplyRuleStore.delete(this, rule.id)
+                AutoSchedulerSyncManager.syncAsync(this)
                 finish()
             }
             .setNegativeButton(android.R.string.cancel, null)

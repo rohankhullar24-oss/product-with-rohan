@@ -34,12 +34,18 @@ object AutoReplyRuleStore {
     }
 
     fun upsert(context: Context, rule: AutoReplyRule) = synchronized(lock) {
+        rule.updatedAt = System.currentTimeMillis()
         val all = getAll(context).filter { it.id != rule.id } + rule
         save(context, all)
     }
 
     fun delete(context: Context, id: String) = synchronized(lock) {
         save(context, getAll(context).filter { it.id != id })
+    }
+
+    /** Replaces the whole store, e.g. with a merged list after a cloud sync. */
+    fun replaceAll(context: Context, list: List<AutoReplyRule>) = synchronized(lock) {
+        save(context, list)
     }
 
     private fun save(context: Context, list: List<AutoReplyRule>) {

@@ -48,6 +48,7 @@ class AutoSchedulerSettingsActivity : AppCompatActivity() {
             smsDelaySeconds = delaySeconds,
         )
         AutoSchedulerSettings.setNotifyOnFailure(this, notifyOnFailureSwitch.isChecked)
+        AutoSchedulerSyncManager.syncAsync(this)
         finish()
     }
 }

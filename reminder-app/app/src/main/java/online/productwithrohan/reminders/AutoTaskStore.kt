@@ -35,6 +35,11 @@ object AutoTaskStore {
         save(context, getAll(context).filter { it.id != id })
     }
 
+    /** Replaces the whole store, e.g. with a merged list after a cloud sync. */
+    fun replaceAll(context: Context, list: List<AutoTask>) = synchronized(lock) {
+        save(context, list)
+    }
+
     private fun save(context: Context, list: List<AutoTask>) {
         val arr = JSONArray()
         list.forEach { arr.put(it.toJson()) }

@@ -30,6 +30,8 @@ data class RecipientList(
     val id: String = UUID.randomUUID().toString(),
     var name: String = "",
     var members: MutableList<RecipientEntry> = mutableListOf(),
+    /** Stamped by [RecipientListStore.upsert]; drives cloud-sync conflict resolution. */
+    var updatedAt: Long = System.currentTimeMillis(),
 ) {
     /** Comma-separated numbers, ready to drop into an AutoTask's recipient field. */
     fun numbersJoined(): String = members.joinToString(", ") { it.phone }
@@ -38,6 +40,7 @@ data class RecipientList(
         put("id", id)
         put("name", name)
         put("members", JSONArray(members.map { it.toJson() }))
+        put("updatedAt", updatedAt)
     }
 
     companion object {
@@ -48,6 +51,7 @@ data class RecipientList(
                 id = o.getString("id"),
                 name = o.optString("name"),
                 members = members.toMutableList(),
+                updatedAt = o.optLong("updatedAt", 0L),
             )
         }
     }

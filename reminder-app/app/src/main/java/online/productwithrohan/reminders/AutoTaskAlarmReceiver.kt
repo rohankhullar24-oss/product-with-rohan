@@ -1,7 +1,6 @@
 package online.productwithrohan.reminders
 
 import android.Manifest
-import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -22,8 +21,8 @@ sealed class DispatchResult {
     /**
      * Handed off to something that finishes later (WhatsApp's accessibility
      * send). The task stays PENDING; [AutoTextAccessibilityService] marks it
-     * DONE when it taps Send, and [AutoTaskWatchdogReceiver] marks it FAILED
-     * if that never happens.
+     * DONE when it taps Send, and [PendingActionWatchdogReceiver] marks it
+     * FAILED if that never happens.
      */
     object Async : DispatchResult()
 }
@@ -128,30 +127,13 @@ class AutoTaskAlarmReceiver : BroadcastReceiver() {
         return DispatchResult.Success
     }
 
-    /**
-     * Opens WhatsApp straight to the chat with the message pre-filled, via
-     * WhatsApp's own wa.me deep link — no contact-search UI automation
-     * needed. [AutoTextAccessibilityService] only has to find and tap Send.
-     */
-    private fun sendWhatsApp(context: Context, task: AutoTask): DispatchResult {
-        if (!AutoTextAccessibilityService.isEnabled(context)) {
-            return DispatchResult.Failure("Auto Text accessibility permission not granted")
+    /** See [WhatsAppSender] — pre-fills via wa.me, [AutoTextAccessibilityService] taps Send. */
+    private fun sendWhatsApp(context: Context, task: AutoTask): DispatchResult =
+        when (val result = WhatsAppSender.sendPrefilled(context, task.recipient, task.message, PendingActionKind.TASK, task.id)) {
+            WhatsAppSender.Result.Started -> DispatchResult.Async
+            WhatsAppSender.Result.AccessibilityNotEnabled -> DispatchResult.Failure("Auto Text accessibility permission not granted")
+            WhatsAppSender.Result.NotInstalled -> DispatchResult.Failure("WhatsApp isn't installed")
+            WhatsAppSender.Result.NoRecipient -> DispatchResult.Failure("No recipient number")
+            is WhatsAppSender.Result.Error -> DispatchResult.Failure(result.message)
         }
-        val digits = task.recipient.filter { it.isDigit() || it == '+' }
-        if (digits.isBlank()) return DispatchResult.Failure("No recipient number")
-        return try {
-            val uri = Uri.parse("https://wa.me/$digits?text=${Uri.encode(task.message)}")
-            val whatsAppIntent = Intent(Intent.ACTION_VIEW, uri)
-                .setPackage("com.whatsapp")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(whatsAppIntent)
-            AutoTextAccessibilityService.startPending(context, task.id)
-            AutoTaskWatchdogReceiver.schedule(context, task.id)
-            DispatchResult.Async
-        } catch (e: ActivityNotFoundException) {
-            DispatchResult.Failure("WhatsApp isn't installed")
-        } catch (e: Exception) {
-            DispatchResult.Failure(e.message ?: "WhatsApp send failed")
-        }
-    }
 }

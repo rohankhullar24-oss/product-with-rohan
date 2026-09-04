@@ -57,7 +57,7 @@ class AutoSchedulerActivity : AppCompatActivity() {
             override fun onTabReselected(tab: TabLayout.Tab) {}
         })
 
-        findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { showChannelPicker() }
+        findViewById<FloatingActionButton>(R.id.fab).setOnClickListener { showTaskTypePicker() }
     }
 
     override fun onResume() {
@@ -94,7 +94,26 @@ class AutoSchedulerActivity : AppCompatActivity() {
         emptyView.visibility = if (tasks.isEmpty()) View.VISIBLE else View.GONE
     }
 
-    /** Only SMS/CALL/REMINDER are wired up so far (see AutoTaskAlarmReceiver). */
+    /** Matches the reference app's "Select a task" sheet: Schedule / Auto Reply / Auto Forward. */
+    private fun showTaskTypePicker() {
+        val options = arrayOf(
+            getString(R.string.auto_task_type_schedule),
+            getString(R.string.auto_task_type_reply),
+            getString(R.string.auto_task_type_forward),
+        )
+        AlertDialog.Builder(this)
+            .setTitle(R.string.auto_add_task)
+            .setItems(options) { _, index ->
+                when (index) {
+                    0 -> showChannelPicker()
+                    1 -> startActivity(Intent(this, AutoReplySettingsActivity::class.java))
+                    2 -> startActivity(Intent(this, AutoForwardSettingsActivity::class.java))
+                }
+            }
+            .show()
+    }
+
+    /** Only SMS/CALL/REMINDER/WHATSAPP are wired up so far (see AutoTaskAlarmReceiver). */
     private fun showChannelPicker() {
         val channels = AutoTaskChannel.entries.toList()
         val labels = channels.map { channel ->

@@ -231,4 +231,30 @@
     <string name="template_delete_title">Delete template?</string>
     <string name="template_delete_message">This template will be removed.</string>
     <string name="template_none_yet">No templates yet — create one from the 3-dot menu</string>
+
+    <string name="auto_task_type_schedule">Schedule</string>
+    <string name="auto_task_type_reply">Auto Reply</string>
+    <string name="auto_task_type_forward">Auto Forward</string>
+    <string name="auto_notify_on_send">Notify me when it\'s sent</string>
+    <string name="auto_notification_access_needed_message">Notification access is needed to see incoming WhatsApp messages. Tap to fix.</string>
+    <string name="auto_text_events_channel">Auto Scheduler events</string>
+
+    <!-- Auto Reply -->
+    <string name="auto_reply_title">WhatsApp Auto Reply</string>
+    <string name="auto_reply_enable">Auto-reply to WhatsApp messages</string>
+    <string name="auto_reply_explainer">While on, every incoming WhatsApp message gets this reply. It\'s a single reply for everyone, not per-contact.</string>
+    <string name="auto_reply_message_hint">Reply message</string>
+    <string name="auto_reply_message_required">Enter a reply message</string>
+    <string name="auto_reply_sent_title">Auto-reply sent</string>
+    <string name="auto_reply_sent_text">A WhatsApp auto-reply was sent</string>
+
+    <!-- Auto Forward -->
+    <string name="auto_forward_title">WhatsApp Auto Forward</string>
+    <string name="auto_forward_enable">Forward WhatsApp messages</string>
+    <string name="auto_forward_explainer">While on, every incoming WhatsApp message gets relayed to this number.</string>
+    <string name="auto_forward_to_hint">Forward to phone number</string>
+    <string name="auto_forward_to_required">Enter a phone number to forward to</string>
+    <string name="auto_forward_sent_title">Message forwarded</string>
+    <string name="auto_forward_sent_text">A WhatsApp message was auto-forwarded</string>
+    <string name="auto_forward_message_format">Fwd from %1$s: %2$s</string>
 </resources>

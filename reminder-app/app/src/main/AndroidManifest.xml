@@ -157,12 +157,31 @@
             android:exported="false"
             android:parentActivityName=".TemplateActivity" />
 
+        <activity
+            android:name=".AutoReplySettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <activity
+            android:name=".AutoForwardSettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <service
+            android:name=".AutoTextNotificationListenerService"
+            android:exported="true"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".AutoTaskAlarmReceiver"
             android:exported="false" />
 
         <receiver
-            android:name=".AutoTaskWatchdogReceiver"
+            android:name=".PendingActionWatchdogReceiver"
             android:exported="false" />
 
         <service

@@ -25,6 +25,9 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
 
+    <!-- Auto Reply's "only while Bluetooth is on" condition; isEnabled() needs this pre-31, is unrestricted after. -->
+    <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
+
     <application
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
@@ -161,6 +164,16 @@
             android:name=".AutoReplySettingsActivity"
             android:exported="false"
             android:parentActivityName=".AutoSchedulerActivity" />
+
+        <activity
+            android:name=".AutoReplyRuleListActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoReplySettingsActivity" />
+
+        <activity
+            android:name=".EditAutoReplyRuleActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoReplyRuleListActivity" />
 
         <activity
             android:name=".AutoForwardSettingsActivity"

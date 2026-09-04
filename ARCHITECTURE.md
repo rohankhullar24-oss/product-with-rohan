@@ -105,9 +105,56 @@ common library:
 
 - **`usage-core/`** — shared library both apps depend on: fetches/tracks
   Claude usage or session data used to compute the widgets' bars/timers.
-- **`reminder-app/`** — a general reminders app with alarm scheduling
-  (`AlarmScheduler`, `AlarmService`, `AlarmReceiver`, `NotificationHelper`),
-  local storage (`ReminderStore`), and Supabase sync (`SyncManager`).
+- **`reminder-app/`** — started as a general reminders app (alarm scheduling
+  via `AlarmScheduler`/`AlarmService`/`AlarmReceiver`/`NotificationHelper`,
+  local storage in `ReminderStore`, Supabase sync via `SyncManager`) and a
+  journal feature (`Journal*` — entries, media, calendar view, location,
+  Supabase sync). It has since grown an **Auto Scheduler**, a second
+  distinct feature area for scheduling one-off/recurring outbound actions:
+  - **`AutoTask`** (+ `AutoTaskStore`, `AutoTaskAdapter`, `AutoSchedulerActivity`,
+    `EditAutoTaskActivity`) — a task list (Pending/Done/Failed tabs) that can
+    schedule SMS, WhatsApp, Telegram, Email (modeled only), Reminder, Call, or
+    Fake Call, one-off or recurring (Daily/Weekdays). Firing goes through
+    `AutoTaskAlarmScheduler`/`AutoTaskAlarmReceiver`, with `AutoTaskFireRecorder`
+    handling recurrence/retry bookkeeping shared across all three completion
+    paths (sync dispatch, WhatsApp accessibility success, watchdog timeout).
+    A task can opt into automatic retry-on-failure (`retryOnFailure`, up to 5
+    attempts) or lock-screen retry (`AutoTaskLockRetryReceiver` polls every
+    60s until unlocked rather than failing just for being locked).
+  - **`ChatApp`/`ChatAppSender`** — generalized WhatsApp/Telegram sending via
+    deep link (`wa.me` / `tg://resolve`) + `AutoTextAccessibilityService`
+    driving the actual send, watched for completion by
+    `AutoTextNotificationListenerService`.
+  - **`RecipientList`/`RecipientListStore`/`RecipientListActivity`** and
+    **`Template`/`TemplateStore`/`TemplateActivity`** — reusable recipient
+    groups and message templates shared across scheduled tasks.
+  - **Auto Reply** (`AutoReplySettings`, `AutoReplySettingsActivity`) — replies
+    automatically to incoming WhatsApp messages picked up by
+    `AutoTextNotificationListenerService`. Beyond a single global on/off
+    message, it supports: a filter mode (Everyone vs. Specific people, via an
+    allowed-senders list) with a separate always-wins ignored-senders list;
+    per-sender custom reply rules (`AutoReplyRule`/`AutoReplyRuleStore`,
+    edited via `AutoReplyRuleListActivity`/`EditAutoReplyRuleActivity`); a
+    0–120s reply delay; a 1:1-vs-group toggle (off by default); device-state
+    gating (`AutoReplyConditions` — screen locked / charging / silent-DND /
+    Bluetooth on, each independent and AND'd); and optionally replying to
+    missed WhatsApp calls (detected heuristically from notification text).
+  - **Auto Forward** (`AutoForwardSettings`, `AutoForwardSettingsActivity`) —
+    relays incoming WhatsApp message text to a fixed number, also driven by
+    `AutoTextNotificationListenerService`.
+  - **`AccountActivity`** — signatures and SMS-delay settings shared across
+    the scheduler features.
+  - **`FakeCallActivity`**, **`ClaudeAlertsActivity`** — the Fake Call task
+    type's ringing screen, and a small alerts/status surface.
+
+  Two things worth knowing when touching this app: **versioning** —
+  `versionCode` derives from `GITHUB_RUN_NUMBER` (always increasing on every
+  CI build) rather than being hand-bumped, and `versionName` is bumped
+  manually per release batch. And **CI/release** — `reminder-app.yml`
+  builds a debug APK on every push/PR and publishes it to the
+  `reminder-app-latest` GitHub Release on pushes to `master`; there's no
+  in-app version display yet (nothing on-device shows which build is
+  installed).
 - **`claude-limits-app/`** — a home-screen widget showing Claude subscription
   usage limits (5-hour session window + weekly cap) that rings an alarm when a
   window resets. No API exists for this data; see `claude-limits-app/README.md`

@@ -6,4 +6,7 @@
     <item
         android:id="@+id/action_templates"
         android:title="@string/title_templates" />
+    <item
+        android:id="@+id/action_auto_scheduler_settings"
+        android:title="@string/title_auto_scheduler_settings" />
 </menu>

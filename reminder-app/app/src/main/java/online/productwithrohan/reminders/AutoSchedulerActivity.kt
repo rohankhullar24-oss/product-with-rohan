@@ -82,6 +82,10 @@ class AutoSchedulerActivity : AppCompatActivity() {
             startActivity(Intent(this, TemplateActivity::class.java))
             true
         }
+        R.id.action_auto_scheduler_settings -> {
+            startActivity(Intent(this, AutoSchedulerSettingsActivity::class.java))
+            true
+        }
         else -> super.onOptionsItemSelected(item)
     }
 
@@ -113,7 +117,7 @@ class AutoSchedulerActivity : AppCompatActivity() {
             .show()
     }
 
-    /** Only SMS/CALL/REMINDER/WHATSAPP are wired up so far (see AutoTaskAlarmReceiver). */
+    /** TELEGRAM/EMAIL aren't wired up yet (see AutoTaskAlarmReceiver). */
     private fun showChannelPicker() {
         val channels = AutoTaskChannel.entries.toList()
         val labels = channels.map { channel ->
@@ -139,5 +143,6 @@ class AutoSchedulerActivity : AppCompatActivity() {
 
     private fun isSupported(channel: AutoTaskChannel): Boolean =
         channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.CALL ||
-            channel == AutoTaskChannel.REMINDER || channel == AutoTaskChannel.WHATSAPP
+            channel == AutoTaskChannel.REMINDER || channel == AutoTaskChannel.WHATSAPP ||
+            channel == AutoTaskChannel.FAKE_CALL
 }

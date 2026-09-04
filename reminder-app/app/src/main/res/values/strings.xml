@@ -257,4 +257,20 @@
     <string name="auto_forward_sent_title">Message forwarded</string>
     <string name="auto_forward_sent_text">A WhatsApp message was auto-forwarded</string>
     <string name="auto_forward_message_format">Fwd from %1$s: %2$s</string>
+
+    <string name="auto_label_caller_name">Caller name to show</string>
+
+    <!-- Fake Call -->
+    <string name="fake_call_incoming">Incoming call…</string>
+    <string name="fake_call_accept">Accept</string>
+    <string name="fake_call_decline">Decline</string>
+    <string name="fake_call_unknown_caller">Unknown</string>
+
+    <!-- Auto Scheduler settings -->
+    <string name="title_auto_scheduler_settings">Auto Scheduler settings</string>
+    <string name="settings_sms_delay_hint">Bulk SMS: delay between messages (seconds)</string>
+    <string name="settings_sms_delay_explainer">Applied between recipients when one task has more than one SMS number. Capped at 5 seconds.</string>
+    <string name="settings_sms_signature_enable">Add signature to SMS</string>
+    <string name="settings_whatsapp_signature_enable">Add signature to WhatsApp messages</string>
+    <string name="settings_signature_hint">Signature text</string>
 </resources>

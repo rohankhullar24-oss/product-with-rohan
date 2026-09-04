@@ -167,6 +167,18 @@
             android:exported="false"
             android:parentActivityName=".AutoSchedulerActivity" />
 
+        <activity
+            android:name=".AutoSchedulerSettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <activity
+            android:name=".FakeCallActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:launchMode="singleTask"
+            android:taskAffinity=".FakeCall" />
+
         <service
             android:name=".AutoTextNotificationListenerService"
             android:exported="true"

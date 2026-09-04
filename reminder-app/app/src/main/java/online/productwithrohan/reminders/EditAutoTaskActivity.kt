@@ -110,7 +110,11 @@ class EditAutoTaskActivity : AppCompatActivity() {
             channel == AutoTaskChannel.WHATSAPP
         val hasMessage = channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.REMINDER ||
             channel == AutoTaskChannel.WHATSAPP
-        labelLayout.visibility = if (channel == AutoTaskChannel.REMINDER) View.VISIBLE else View.GONE
+        val hasLabel = channel == AutoTaskChannel.REMINDER || channel == AutoTaskChannel.FAKE_CALL
+        labelLayout.visibility = if (hasLabel) View.VISIBLE else View.GONE
+        labelLayout.hint = getString(
+            if (channel == AutoTaskChannel.FAKE_CALL) R.string.auto_label_caller_name else R.string.auto_label_title
+        )
         recipientLayout.visibility = if (hasRecipient) View.VISIBLE else View.GONE
         pickRecipientListButton.visibility = if (hasRecipient) View.VISIBLE else View.GONE
         messageLayout.visibility = if (hasMessage) View.VISIBLE else View.GONE
@@ -209,7 +213,7 @@ class EditAutoTaskActivity : AppCompatActivity() {
                 Toast.makeText(this, R.string.auto_error_recipient_required, Toast.LENGTH_SHORT).show()
                 return
             }
-            AutoTaskChannel.REMINDER -> if (task.label.isBlank()) {
+            AutoTaskChannel.REMINDER, AutoTaskChannel.FAKE_CALL -> if (task.label.isBlank()) {
                 Toast.makeText(this, R.string.error_title_required, Toast.LENGTH_SHORT).show()
                 return
             }

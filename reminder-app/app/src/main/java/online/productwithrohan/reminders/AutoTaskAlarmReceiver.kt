@@ -30,29 +30,39 @@ sealed class DispatchResult {
 /**
  * Fires once per [AutoTask] at its scheduled time and sends it — SMS and
  * CALL are quick platform calls, REMINDER hands off to the existing
- * reminder-alarm stack, and WHATSAPP hands off to the accessibility service.
- * TELEGRAM/EMAIL/FAKE_CALL aren't wired up yet (see AutoTask.kt).
+ * reminder-alarm stack, FAKE_CALL shows a cosmetic incoming-call screen, and
+ * WHATSAPP hands off to the accessibility service. TELEGRAM/EMAIL aren't
+ * wired up yet (see AutoTask.kt).
  */
 class AutoTaskAlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getStringExtra(AutoTaskAlarmScheduler.EXTRA_TASK_ID) ?: return
-        val task = AutoTaskStore.get(context, id) ?: return
-        if (task.status != AutoTaskStatus.PENDING) return
+        // Off the main thread so sendSms's delay-between-recipients can use
+        // Thread.sleep safely instead of risking an ANR.
+        val pendingResult = goAsync()
+        Thread {
+            try {
+                val task = AutoTaskStore.get(context, id) ?: return@Thread
+                if (task.status != AutoTaskStatus.PENDING) return@Thread
 
-        when (val result = dispatch(context, task)) {
-            is DispatchResult.Async -> return
-            is DispatchResult.Success -> {
-                task.status = AutoTaskStatus.DONE
-                task.failureReason = null
+                when (val result = dispatch(context, task)) {
+                    is DispatchResult.Async -> return@Thread
+                    is DispatchResult.Success -> {
+                        task.status = AutoTaskStatus.DONE
+                        task.failureReason = null
+                    }
+                    is DispatchResult.Failure -> {
+                        task.status = AutoTaskStatus.FAILED
+                        task.failureReason = result.reason
+                    }
+                }
+                task.updatedAt = System.currentTimeMillis()
+                AutoTaskStore.upsert(context, task)
+            } finally {
+                pendingResult.finish()
             }
-            is DispatchResult.Failure -> {
-                task.status = AutoTaskStatus.FAILED
-                task.failureReason = result.reason
-            }
-        }
-        task.updatedAt = System.currentTimeMillis()
-        AutoTaskStore.upsert(context, task)
+        }.start()
     }
 
     private fun dispatch(context: Context, task: AutoTask): DispatchResult = when (task.channel) {
@@ -60,9 +70,20 @@ class AutoTaskAlarmReceiver : BroadcastReceiver() {
         AutoTaskChannel.CALL -> placeCall(context, task)
         AutoTaskChannel.REMINDER -> fireReminder(context, task)
         AutoTaskChannel.WHATSAPP -> sendWhatsApp(context, task)
+        AutoTaskChannel.FAKE_CALL -> showFakeCall(context, task)
         AutoTaskChannel.TELEGRAM,
-        AutoTaskChannel.EMAIL,
-        AutoTaskChannel.FAKE_CALL -> DispatchResult.Failure("${task.channel.name} isn't supported yet")
+        AutoTaskChannel.EMAIL -> DispatchResult.Failure("${task.channel.name} isn't supported yet")
+    }
+
+    private fun showFakeCall(context: Context, task: AutoTask): DispatchResult = try {
+        context.startActivity(
+            Intent(context, FakeCallActivity::class.java)
+                .putExtra(FakeCallActivity.EXTRA_CALLER_NAME, task.label)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+        DispatchResult.Success
+    } catch (e: Exception) {
+        DispatchResult.Failure(e.message ?: "Couldn't start fake call")
     }
 
     private fun sendSms(context: Context, task: AutoTask): DispatchResult {
@@ -71,12 +92,15 @@ class AutoTaskAlarmReceiver : BroadcastReceiver() {
         ) return DispatchResult.Failure("SMS permission not granted")
         val numbers = task.recipient.split(",").map { it.trim() }.filter { it.isNotBlank() }
         if (numbers.isEmpty()) return DispatchResult.Failure("No recipient number")
+        val delayMs = AutoSchedulerSettings.smsDelaySeconds(context) * 1000L
+        val message = AutoSchedulerSettings.applySmsSignature(context, task.message)
         return try {
             // getSystemService(SmsManager::class.java) needs API 31+; minSdk here is 26.
             val smsManager = SmsManager.getDefault()
-            val parts = smsManager.divideMessage(task.message)
+            val parts = smsManager.divideMessage(message)
             var failures = 0
-            for (number in numbers) {
+            numbers.forEachIndexed { index, number ->
+                if (index > 0 && delayMs > 0) Thread.sleep(delayMs)
                 try {
                     smsManager.sendMultipartTextMessage(number, null, parts, null, null)
                 } catch (e: Exception) {
@@ -128,12 +152,14 @@ class AutoTaskAlarmReceiver : BroadcastReceiver() {
     }
 
     /** See [WhatsAppSender] — pre-fills via wa.me, [AutoTextAccessibilityService] taps Send. */
-    private fun sendWhatsApp(context: Context, task: AutoTask): DispatchResult =
-        when (val result = WhatsAppSender.sendPrefilled(context, task.recipient, task.message, PendingActionKind.TASK, task.id)) {
+    private fun sendWhatsApp(context: Context, task: AutoTask): DispatchResult {
+        val message = AutoSchedulerSettings.applyWhatsAppSignature(context, task.message)
+        return when (val result = WhatsAppSender.sendPrefilled(context, task.recipient, message, PendingActionKind.TASK, task.id)) {
             WhatsAppSender.Result.Started -> DispatchResult.Async
             WhatsAppSender.Result.AccessibilityNotEnabled -> DispatchResult.Failure("Auto Text accessibility permission not granted")
             WhatsAppSender.Result.NotInstalled -> DispatchResult.Failure("WhatsApp isn't installed")
             WhatsAppSender.Result.NoRecipient -> DispatchResult.Failure("No recipient number")
             is WhatsAppSender.Result.Error -> DispatchResult.Failure(result.message)
         }
+    }
 }

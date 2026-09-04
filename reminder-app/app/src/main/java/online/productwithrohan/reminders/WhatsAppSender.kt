@@ -1,5 +1,6 @@
 package online.productwithrohan.reminders
 
+import android.app.KeyguardManager
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -16,6 +17,8 @@ object WhatsAppSender {
 
     sealed class Result {
         object Started : Result()
+        /** Device is locked — WhatsApp can't be driven. Caller should retry once unlocked. */
+        object WaitingForUnlock : Result()
         object AccessibilityNotEnabled : Result()
         object NotInstalled : Result()
         object NoRecipient : Result()
@@ -29,6 +32,8 @@ object WhatsAppSender {
         if (!AutoTextAccessibilityService.isEnabled(context)) return Result.AccessibilityNotEnabled
         val digits = recipient.filter { it.isDigit() || it == '+' }
         if (digits.isBlank()) return Result.NoRecipient
+        val keyguard = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        if (keyguard.isKeyguardLocked) return Result.WaitingForUnlock
         return try {
             val uri = Uri.parse("https://wa.me/$digits?text=${Uri.encode(message)}")
             val intent = Intent(Intent.ACTION_VIEW, uri)

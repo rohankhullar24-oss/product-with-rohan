@@ -17,6 +17,9 @@ import java.time.ZonedDateTime
 object AutoTaskFireRecorder {
 
     fun recordFire(context: Context, task: AutoTask, success: Boolean, reason: String?) {
+        // The task resolved one way or another, so any lock-unlock retry chain for it is done.
+        AutoTaskLockRetryReceiver.cancel(context, task.id)
+
         val now = System.currentTimeMillis()
         task.lastFiredAt = now
         task.lastResult = if (success) "Sent" else (reason ?: "Failed")

@@ -148,6 +148,10 @@ class AutoTaskAlarmReceiver : BroadcastReceiver() {
         val message = AutoSchedulerSettings.applyWhatsAppSignature(context, task.message)
         return when (val result = WhatsAppSender.sendPrefilled(context, task.recipient, message, PendingActionKind.TASK, task.id)) {
             WhatsAppSender.Result.Started -> DispatchResult.Async
+            WhatsAppSender.Result.WaitingForUnlock -> {
+                AutoTaskLockRetryReceiver.scheduleRetry(context, task.id)
+                DispatchResult.Async
+            }
             WhatsAppSender.Result.AccessibilityNotEnabled -> DispatchResult.Failure("Auto Text accessibility permission not granted")
             WhatsAppSender.Result.NotInstalled -> DispatchResult.Failure("WhatsApp isn't installed")
             WhatsAppSender.Result.NoRecipient -> DispatchResult.Failure("No recipient number")

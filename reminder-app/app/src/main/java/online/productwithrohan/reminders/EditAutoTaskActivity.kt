@@ -315,6 +315,7 @@ class EditAutoTaskActivity : AppCompatActivity() {
             .setMessage(R.string.auto_delete_message)
             .setPositiveButton(R.string.delete_confirm) { _, _ ->
                 AutoTaskAlarmScheduler.cancel(this, task.id)
+                AutoTaskLockRetryReceiver.cancel(this, task.id)
                 AutoTaskStore.delete(this, task.id)
                 finish()
             }

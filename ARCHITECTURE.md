@@ -129,21 +129,37 @@ common library:
     **`Template`/`TemplateStore`/`TemplateActivity`** — reusable recipient
     groups and message templates shared across scheduled tasks.
   - **Auto Reply** (`AutoReplySettings`, `AutoReplySettingsActivity`) — replies
-    automatically to incoming WhatsApp messages picked up by
-    `AutoTextNotificationListenerService`. Beyond a single global on/off
-    message, it supports: a filter mode (Everyone vs. Specific people, via an
+    automatically to incoming WhatsApp/Telegram messages (picked up by
+    `AutoTextNotificationListenerService`) and SMS (`SmsAutoReplyReceiver`,
+    sent directly via `SmsManager` — no notification/accessibility dance
+    needed there). Gating is shared across all three transports via
+    `AutoReplyEngine`: a filter mode (Everyone vs. Specific people, via an
     allowed-senders list) with a separate always-wins ignored-senders list;
     per-sender custom reply rules (`AutoReplyRule`/`AutoReplyRuleStore`,
     edited via `AutoReplyRuleListActivity`/`EditAutoReplyRuleActivity`); a
-    0–120s reply delay; a 1:1-vs-group toggle (off by default); device-state
-    gating (`AutoReplyConditions` — screen locked / charging / silent-DND /
-    Bluetooth on, each independent and AND'd); and optionally replying to
-    missed WhatsApp calls (detected heuristically from notification text).
+    0–120s reply delay; a 1:1-vs-group toggle (off by default, WhatsApp/
+    Telegram only); device-state gating (`AutoReplyConditions` — screen
+    locked / charging / silent-DND / Bluetooth on, each independent and
+    AND'd); and optionally replying to missed WhatsApp calls (detected
+    heuristically from notification text). Telegram (`includeTelegram`) and
+    SMS (`replyToSms`) are each off by default, matching the original
+    WhatsApp-only behavior.
   - **Auto Forward** (`AutoForwardSettings`, `AutoForwardSettingsActivity`) —
-    relays incoming WhatsApp message text to a fixed number, also driven by
-    `AutoTextNotificationListenerService`.
+    relays incoming WhatsApp (and Telegram, when Auto Reply's "Also watch
+    Telegram" is on, since both features share the same listener) message
+    text to a fixed number, also driven by `AutoTextNotificationListenerService`.
+  - **Forward Call** (`ForwardCallSettings`, `ForwardCallSettingsActivity`,
+    `ForwardCallReceiver`) — forwards a missed call's number as an SMS to a
+    fixed number. Detection is heuristic (RINGING → IDLE without ever
+    reaching OFFHOOK, the same pattern call-screening apps use, since
+    Android has no distinct "missed call" broadcast of its own); the number
+    itself comes from a `CallLog` query rather than the state-changed
+    intent's own extra, which needs `READ_CALL_LOG` from Android 10 onward
+    anyway.
   - **`AccountActivity`** — signatures and SMS-delay settings shared across
-    the scheduler features.
+    the scheduler features, plus the installed app version (`versionName`/
+    `versionCode`) at the bottom — the only place the app currently shows
+    which build is installed.
   - **`FakeCallActivity`**, **`ClaudeAlertsActivity`** — the Fake Call task
     type's ringing screen, and a small alerts/status surface.
 
@@ -152,9 +168,7 @@ common library:
   CI build) rather than being hand-bumped, and `versionName` is bumped
   manually per release batch. And **CI/release** — `reminder-app.yml`
   builds a debug APK on every push/PR and publishes it to the
-  `reminder-app-latest` GitHub Release on pushes to `master`; there's no
-  in-app version display yet (nothing on-device shows which build is
-  installed).
+  `reminder-app-latest` GitHub Release on pushes to `master`.
 - **`claude-limits-app/`** — a home-screen widget showing Claude subscription
   usage limits (5-hour session window + weekly cap) that rings an alarm when a
   window resets. No API exists for this data; see `claude-limits-app/README.md`

@@ -16,18 +16,19 @@ import androidx.core.app.NotificationManagerCompat
  * notification's own tap intent) or an auto-forward (relays the text to a
  * fixed number via [ChatAppSender]).
  *
- * A reply only fires if the sender clears every gate: not on the ignored
- * list, allowed by the filter mode, from a 1:1 chat (unless group replies
- * are on), and every device-state condition in [AutoReplyConditions] holds.
- * The message sent is a per-sender override from [AutoReplyRuleStore] if one
- * exists, else the global message; it can be delayed a configurable number
- * of seconds first.
+ * A reply only fires if the sender clears every gate — see [AutoReplyEngine]
+ * for the shared allow/ignore/filter/condition checks every Auto Reply
+ * transport uses (this one, plus [SmsAutoReplyReceiver] for SMS). It can be
+ * delayed a configurable number of seconds first.
  *
- * Heuristic by nature — WhatsApp doesn't publish a message-notification
+ * Heuristic by nature — WhatsApp/Telegram don't publish a message-notification
  * contract, so this reads the same MessagingStyle/extras any notification
  * listener would, and skips group-summary notifications to avoid double
  * firing. Notification access is a special access, granted from Settings,
- * not a runtime permission — see [isEnabled].
+ * not a runtime permission — see [isEnabled]. Telegram is watched only when
+ * [AutoReplySettings.includeTelegram] is on (off by default, matching the
+ * original WhatsApp-only behavior) — that gates Auto Forward's Telegram
+ * messages too, since both features share this same listener.
  */
 class AutoTextNotificationListenerService : NotificationListenerService() {
 
@@ -35,7 +36,7 @@ class AutoTextNotificationListenerService : NotificationListenerService() {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
-        if (sbn.packageName != "com.whatsapp") return
+        if (!isWatchedPackage(sbn.packageName)) return
         if (sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0) return
 
         val postedWhen = sbn.notification.`when`
@@ -62,6 +63,12 @@ class AutoTextNotificationListenerService : NotificationListenerService() {
         lastSeenWhen.remove(sbn.key)
     }
 
+    private fun isWatchedPackage(packageName: String): Boolean = when (packageName) {
+        ChatApp.WHATSAPP.packageName -> true
+        ChatApp.TELEGRAM.packageName -> AutoReplySettings.includeTelegram(this)
+        else -> false
+    }
+
     private data class Extracted(val sender: String, val text: String, val isGroup: Boolean)
 
     /** (sender display name, latest message text, is-group-chat), preferring MessagingStyle over the flat extras. */
@@ -84,18 +91,7 @@ class AutoTextNotificationListenerService : NotificationListenerService() {
             text.contains("missed video call", ignoreCase = true)
 
     private fun maybeAutoReply(sbn: StatusBarNotification, sender: String, isGroup: Boolean) {
-        if (isGroup && !AutoReplySettings.includeGroups(this)) return
-        val normalizedSender = sender.trim().lowercase()
-        if (normalizedSender in AutoReplySettings.ignoredSenders(this)) return
-        if (AutoReplySettings.filterMode(this) == AutoReplyFilterMode.SPECIFIC &&
-            normalizedSender !in AutoReplySettings.allowedSenders(this)
-        ) return
-        if (!AutoReplyConditions.allSatisfied(this)) return
-
-        val message = AutoReplyRuleStore.findFor(this, sender)?.message?.takeIf { it.isNotBlank() }
-            ?: AutoReplySettings.message(this)
-        if (message.isBlank()) return
-
+        val message = AutoReplyEngine.resolveMessage(this, sender, isGroup) ?: return
         val delayMs = AutoReplySettings.delaySeconds(this) * 1000L
         if (delayMs <= 0) {
             sendReply(sbn, message)

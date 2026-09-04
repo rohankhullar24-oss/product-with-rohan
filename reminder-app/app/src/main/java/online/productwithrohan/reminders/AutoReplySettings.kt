@@ -27,6 +27,8 @@ object AutoReplySettings {
     private const val KEY_REQUIRE_SILENT_OR_DND = "require_silent_or_dnd"
     private const val KEY_REQUIRE_BLUETOOTH_ON = "require_bluetooth_on"
     private const val KEY_REPLY_TO_MISSED_CALL = "reply_to_missed_call"
+    private const val KEY_INCLUDE_TELEGRAM = "include_telegram"
+    private const val KEY_REPLY_TO_SMS = "reply_to_sms"
 
     /** Delay runs on an in-process Handler, so keep it short enough to survive the process staying alive. */
     const val MAX_DELAY_SECONDS = 120
@@ -57,6 +59,10 @@ object AutoReplySettings {
     fun requireSilentOrDnd(context: Context): Boolean = prefs(context).getBoolean(KEY_REQUIRE_SILENT_OR_DND, false)
     fun requireBluetoothOn(context: Context): Boolean = prefs(context).getBoolean(KEY_REQUIRE_BLUETOOTH_ON, false)
     fun replyToMissedCall(context: Context): Boolean = prefs(context).getBoolean(KEY_REPLY_TO_MISSED_CALL, false)
+    /** Off by default — matches the original WhatsApp-only behavior; also gates Auto Forward's Telegram messages. */
+    fun includeTelegram(context: Context): Boolean = prefs(context).getBoolean(KEY_INCLUDE_TELEGRAM, false)
+    /** Off by default — a separate toggle from the WhatsApp/Telegram one so turning one on doesn't silently enable the other. */
+    fun replyToSms(context: Context): Boolean = prefs(context).getBoolean(KEY_REPLY_TO_SMS, false)
 
     /** One name per line — matched case/whitespace-insensitively against the notification sender name. */
     private fun linesToSet(raw: String?): Set<String> =
@@ -78,6 +84,8 @@ object AutoReplySettings {
         requireSilentOrDnd: Boolean,
         requireBluetoothOn: Boolean,
         replyToMissedCall: Boolean,
+        includeTelegram: Boolean,
+        replyToSms: Boolean,
     ) {
         prefs(context).edit()
             .putBoolean(KEY_ENABLED, enabled)
@@ -93,6 +101,8 @@ object AutoReplySettings {
             .putBoolean(KEY_REQUIRE_SILENT_OR_DND, requireSilentOrDnd)
             .putBoolean(KEY_REQUIRE_BLUETOOTH_ON, requireBluetoothOn)
             .putBoolean(KEY_REPLY_TO_MISSED_CALL, replyToMissedCall)
+            .putBoolean(KEY_INCLUDE_TELEGRAM, includeTelegram)
+            .putBoolean(KEY_REPLY_TO_SMS, replyToSms)
             .apply()
     }
 }

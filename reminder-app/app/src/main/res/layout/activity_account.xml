@@ -107,5 +107,14 @@
                 android:textColor="?attr/colorError"
                 android:text="@string/account_sign_out" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/text_app_version"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:gravity="center"
+            android:textAppearance="?attr/textAppearanceBodySmall"
+            android:textColor="?android:attr/textColorSecondary" />
     </LinearLayout>
 </ScrollView>

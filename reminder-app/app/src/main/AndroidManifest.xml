@@ -16,6 +16,13 @@
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
 
+    <!-- Forward Call: detect + look up a missed call (ForwardCallReceiver), forward it by SMS. -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+
+    <!-- Auto Reply's "Also reply to SMS" (SmsAutoReplyReceiver). -->
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+
     <!-- Journal attachments: in-app audio recording, current-location tagging,
          and the recent-photos suggestions tray. Camera/gallery photo & video
          capture use the system apps' own pickers and need no permission here. -->
@@ -181,6 +188,11 @@
             android:parentActivityName=".AutoSchedulerActivity" />
 
         <activity
+            android:name=".ForwardCallSettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <activity
             android:name=".AutoSchedulerSettingsActivity"
             android:exported="false"
             android:parentActivityName=".AutoSchedulerActivity" />
@@ -212,6 +224,28 @@
         <receiver
             android:name=".AutoTaskLockRetryReceiver"
             android:exported="false" />
+
+        <!-- Missed-call detection for Forward Call — a protected system broadcast,
+             so exported="false" still reaches it (same as BootReceiver above). -->
+        <receiver
+            android:name=".ForwardCallReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.PHONE_STATE" />
+            </intent-filter>
+        </receiver>
+
+        <!-- SMS Auto Reply. android.provider.Telephony.SMS_RECEIVED requires
+             exported="true" + BROADCAST_SMS so the telephony process can deliver
+             it, even though this app isn't the default SMS app. -->
+        <receiver
+            android:name=".SmsAutoReplyReceiver"
+            android:exported="true"
+            android:permission="android.permission.BROADCAST_SMS">
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
 
         <service
             android:name=".AutoTextAccessibilityService"

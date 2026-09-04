@@ -44,7 +44,24 @@ class AccountActivity : AppCompatActivity() {
         findViewById<Button>(R.id.button_sync_now).setOnClickListener { syncNow() }
         findViewById<Button>(R.id.button_sign_out).setOnClickListener { signOut() }
 
+        showAppVersion()
         render()
+    }
+
+    /** Nothing else on-device shows which build is installed, so surface it here. */
+    private fun showAppVersion() {
+        val versionText = findViewById<TextView>(R.id.text_app_version)
+        try {
+            val info = packageManager.getPackageInfo(packageName, 0)
+            val versionCode = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                info.longVersionCode
+            } else {
+                @Suppress("DEPRECATION") info.versionCode.toLong()
+            }
+            versionText.text = getString(R.string.account_app_version, info.versionName, versionCode)
+        } catch (e: android.content.pm.PackageManager.NameNotFoundException) {
+            versionText.visibility = View.GONE
+        }
     }
 
     private fun render() {

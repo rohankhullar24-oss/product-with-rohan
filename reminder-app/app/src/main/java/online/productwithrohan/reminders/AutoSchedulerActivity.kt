@@ -41,7 +41,11 @@ class AutoSchedulerActivity : AppCompatActivity() {
         tabs = findViewById(R.id.tabs)
 
         adapter = AutoTaskAdapter(onClick = { task ->
-            if (task.status == AutoTaskStatus.FAILED) promptRetry(task) else openEdit(task)
+            when (task.status) {
+                AutoTaskStatus.FAILED -> promptRetry(task)
+                AutoTaskStatus.PENDING -> promptPendingAction(task)
+                AutoTaskStatus.DONE -> openEdit(task)
+            }
         })
 
         val recycler = findViewById<RecyclerView>(R.id.recycler)
@@ -116,6 +120,34 @@ class AutoSchedulerActivity : AppCompatActivity() {
         Toast.makeText(this, R.string.auto_retry_scheduled, Toast.LENGTH_SHORT).show()
     }
 
+    /** A pending task's own tap target: edit it, snooze it a bit, or leave it as-is. */
+    private fun promptPendingAction(task: AutoTask) {
+        val options = arrayOf(
+            getString(R.string.auto_pending_edit),
+            getString(R.string.auto_pending_snooze_15),
+            getString(R.string.auto_pending_snooze_60),
+        )
+        AlertDialog.Builder(this)
+            .setTitle(task.displayTitle())
+            .setItems(options) { _, index ->
+                when (index) {
+                    0 -> openEdit(task)
+                    1 -> snooze(task, 15)
+                    2 -> snooze(task, 60)
+                }
+            }
+            .show()
+    }
+
+    private fun snooze(task: AutoTask, minutes: Int) {
+        task.scheduledAt += minutes * 60_000L
+        task.updatedAt = System.currentTimeMillis()
+        AutoTaskStore.upsert(this, task)
+        AutoTaskAlarmScheduler.schedule(this, task)
+        refresh()
+        Toast.makeText(this, getString(R.string.auto_snoozed, minutes), Toast.LENGTH_SHORT).show()
+    }
+
     private fun refresh() {
         val status = statusForTab[tabs.selectedTabPosition]
         val tasks = AutoTaskStore.getAll(this)
@@ -144,7 +176,7 @@ class AutoSchedulerActivity : AppCompatActivity() {
             .show()
     }
 
-    /** TELEGRAM/EMAIL aren't wired up yet (see AutoTaskAlarmReceiver). */
+    /** EMAIL isn't wired up yet (see AutoTaskAlarmReceiver). */
     private fun showChannelPicker() {
         val channels = AutoTaskChannel.entries.toList()
         val labels = channels.map { channel ->
@@ -171,5 +203,5 @@ class AutoSchedulerActivity : AppCompatActivity() {
     private fun isSupported(channel: AutoTaskChannel): Boolean =
         channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.CALL ||
             channel == AutoTaskChannel.REMINDER || channel == AutoTaskChannel.WHATSAPP ||
-            channel == AutoTaskChannel.FAKE_CALL
+            channel == AutoTaskChannel.TELEGRAM || channel == AutoTaskChannel.FAKE_CALL
 }

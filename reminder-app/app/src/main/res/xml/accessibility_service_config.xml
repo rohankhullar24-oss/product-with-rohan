@@ -4,5 +4,5 @@
     android:accessibilityFlags="flagRetrieveInteractiveWindows"
     android:canRetrieveWindowContent="true"
     android:notificationTimeout="100"
-    android:packageNames="com.whatsapp"
+    android:packageNames="com.whatsapp,org.telegram.messenger"
     android:description="@string/accessibility_service_description" />

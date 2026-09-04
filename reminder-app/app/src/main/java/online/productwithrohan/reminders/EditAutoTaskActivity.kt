@@ -1,11 +1,13 @@
 package online.productwithrohan.reminders
 
 import android.Manifest
+import android.app.Activity
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.ContactsContract
 import android.provider.Settings
 import android.view.View
 import android.widget.Button
@@ -49,18 +51,35 @@ class EditAutoTaskActivity : AppCompatActivity() {
     private lateinit var timeButton: Button
     private lateinit var timeOnlyButton: Button
     private lateinit var pickRecipientListButton: Button
+    private lateinit var pickContactButton: Button
     private lateinit var pickTemplateButton: Button
     private lateinit var retryRow: View
     private lateinit var retryExplainer: View
     private lateinit var retrySwitch: MaterialSwitch
+    private lateinit var sendNowButton: Button
 
     private val recurrenceOrder = listOf(AutoRecurrence.ONE_TIME, AutoRecurrence.DAILY, AutoRecurrence.WEEKDAYS)
+
+    /** Set by whichever button (Save / Send Now) triggered validation, read back in saveInternal(). */
+    private var pendingSendNow = false
 
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
             if (granted) saveInternal() else Toast.makeText(
                 this, R.string.auto_permission_denied, Toast.LENGTH_SHORT
             ).show()
+        }
+
+    private val contactPickerLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+            val uri = result.data?.data ?: return@registerForActivityResult
+            contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val numberIndex = cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER)
+                    if (numberIndex >= 0) recipientInput.setText(cursor.getString(numberIndex))
+                }
+            }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,10 +117,12 @@ class EditAutoTaskActivity : AppCompatActivity() {
         timeButton = findViewById(R.id.button_time)
         timeOnlyButton = findViewById(R.id.button_time_only)
         pickRecipientListButton = findViewById(R.id.button_pick_recipient_list)
+        pickContactButton = findViewById(R.id.button_pick_contact)
         pickTemplateButton = findViewById(R.id.button_pick_template)
         retryRow = findViewById(R.id.row_retry)
         retryExplainer = findViewById(R.id.text_retry_explainer)
         retrySwitch = findViewById(R.id.switch_retry_on_failure)
+        sendNowButton = findViewById(R.id.button_send_now)
 
         channelText.text = channelLabel(task.channel)
         labelInput.setText(task.label)
@@ -125,29 +146,48 @@ class EditAutoTaskActivity : AppCompatActivity() {
         timeButton.setOnClickListener { pickTime() }
         timeOnlyButton.setOnClickListener { pickTime() }
         pickRecipientListButton.setOnClickListener { pickRecipientList() }
+        pickContactButton.setOnClickListener {
+            contactPickerLauncher.launch(Intent(Intent.ACTION_PICK, ContactsContract.CommonDataKinds.Phone.CONTENT_URI))
+        }
         pickTemplateButton.setOnClickListener { pickTemplate() }
 
-        findViewById<Button>(R.id.button_save).setOnClickListener { onSaveClicked() }
+        findViewById<Button>(R.id.button_save).setOnClickListener {
+            pendingSendNow = false
+            onSaveClicked()
+        }
 
         val deleteButton = findViewById<Button>(R.id.button_delete)
         if (!isNew) {
             deleteButton.visibility = View.VISIBLE
             deleteButton.setOnClickListener { confirmDelete() }
+            sendNowButton.visibility = View.VISIBLE
+            sendNowButton.setOnClickListener {
+                pendingSendNow = true
+                onSaveClicked()
+            }
         }
     }
 
     private fun applyChannelVisibility(channel: AutoTaskChannel) {
         val hasRecipient = channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.CALL ||
-            channel == AutoTaskChannel.WHATSAPP
+            channel == AutoTaskChannel.WHATSAPP || channel == AutoTaskChannel.TELEGRAM
         val hasMessage = channel == AutoTaskChannel.SMS || channel == AutoTaskChannel.REMINDER ||
-            channel == AutoTaskChannel.WHATSAPP
+            channel == AutoTaskChannel.WHATSAPP || channel == AutoTaskChannel.TELEGRAM
         val hasLabel = channel == AutoTaskChannel.REMINDER || channel == AutoTaskChannel.FAKE_CALL
+        // Telegram is keyed by username, not a phone number, so the phone-based pickers don't apply.
+        val hasPhoneRecipient = hasRecipient && channel != AutoTaskChannel.TELEGRAM
         labelLayout.visibility = if (hasLabel) View.VISIBLE else View.GONE
         labelLayout.hint = getString(
             if (channel == AutoTaskChannel.FAKE_CALL) R.string.auto_label_caller_name else R.string.auto_label_title
         )
         recipientLayout.visibility = if (hasRecipient) View.VISIBLE else View.GONE
-        pickRecipientListButton.visibility = if (hasRecipient) View.VISIBLE else View.GONE
+        recipientLayout.hint = getString(
+            if (channel == AutoTaskChannel.TELEGRAM) R.string.auto_label_recipient_telegram else R.string.auto_label_recipient
+        )
+        recipientInput.inputType = if (channel == AutoTaskChannel.TELEGRAM)
+            android.text.InputType.TYPE_CLASS_TEXT else android.text.InputType.TYPE_CLASS_PHONE
+        pickRecipientListButton.visibility = if (hasPhoneRecipient) View.VISIBLE else View.GONE
+        pickContactButton.visibility = if (hasPhoneRecipient) View.VISIBLE else View.GONE
         messageLayout.visibility = if (hasMessage) View.VISIBLE else View.GONE
         pickTemplateButton.visibility = if (hasMessage) View.VISIBLE else View.GONE
         messageLayout.hint = if (channel == AutoTaskChannel.REMINDER)
@@ -265,7 +305,7 @@ class EditAutoTaskActivity : AppCompatActivity() {
                     return
                 }
             }
-            AutoTaskChannel.SMS, AutoTaskChannel.WHATSAPP -> if (task.recipient.isBlank()) {
+            AutoTaskChannel.SMS, AutoTaskChannel.WHATSAPP, AutoTaskChannel.TELEGRAM -> if (task.recipient.isBlank()) {
                 Toast.makeText(this, R.string.auto_error_recipient_required, Toast.LENGTH_SHORT).show()
                 return
             }
@@ -275,8 +315,8 @@ class EditAutoTaskActivity : AppCompatActivity() {
             }
             else -> {}
         }
-        if ((task.channel == AutoTaskChannel.SMS || task.channel == AutoTaskChannel.WHATSAPP) &&
-            task.message.isBlank()
+        if ((task.channel == AutoTaskChannel.SMS || task.channel == AutoTaskChannel.WHATSAPP ||
+                task.channel == AutoTaskChannel.TELEGRAM) && task.message.isBlank()
         ) {
             Toast.makeText(this, R.string.auto_error_message_required, Toast.LENGTH_SHORT).show()
             return
@@ -293,7 +333,8 @@ class EditAutoTaskActivity : AppCompatActivity() {
             permissionLauncher.launch(permission)
             return
         }
-        if (task.channel == AutoTaskChannel.WHATSAPP && !AutoTextAccessibilityService.isEnabled(this)) {
+        val needsAccessibility = task.channel == AutoTaskChannel.WHATSAPP || task.channel == AutoTaskChannel.TELEGRAM
+        if (needsAccessibility && !AutoTextAccessibilityService.isEnabled(this)) {
             promptEnableAccessibility()
             return
         }
@@ -320,6 +361,14 @@ class EditAutoTaskActivity : AppCompatActivity() {
         task.updatedAt = System.currentTimeMillis()
         AutoTaskStore.upsert(this, task)
         AutoTaskAlarmScheduler.schedule(this, task)
+        if (pendingSendNow) {
+            // Same broadcast the real alarm fires — goes through the exact same dispatch path.
+            sendBroadcast(
+                Intent(this, AutoTaskAlarmReceiver::class.java)
+                    .putExtra(AutoTaskAlarmScheduler.EXTRA_TASK_ID, task.id)
+            )
+            Toast.makeText(this, R.string.auto_send_now_toast, Toast.LENGTH_SHORT).show()
+        }
         finish()
     }
 

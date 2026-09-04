@@ -10,6 +10,7 @@ object AutoSchedulerSettings {
     private const val KEY_WHATSAPP_SIGNATURE_ENABLED = "whatsapp_signature_enabled"
     private const val KEY_WHATSAPP_SIGNATURE = "whatsapp_signature"
     private const val KEY_SMS_DELAY_SECONDS = "sms_delay_seconds"
+    private const val KEY_NOTIFY_ON_FAILURE = "notify_on_failure"
 
     /** Bulk SMS sends run on goAsync(), so bound this to keep well under the ~10s receiver limit. */
     const val MAX_SMS_DELAY_SECONDS = 5
@@ -22,6 +23,11 @@ object AutoSchedulerSettings {
         prefs(context).getBoolean(KEY_WHATSAPP_SIGNATURE_ENABLED, false)
     fun whatsAppSignature(context: Context): String = prefs(context).getString(KEY_WHATSAPP_SIGNATURE, "") ?: ""
     fun smsDelaySeconds(context: Context): Int = prefs(context).getInt(KEY_SMS_DELAY_SECONDS, 0)
+    /** Defaults on — a failed task is easy to miss otherwise since it just sits in the Failed tab. */
+    fun notifyOnFailure(context: Context): Boolean = prefs(context).getBoolean(KEY_NOTIFY_ON_FAILURE, true)
+    fun setNotifyOnFailure(context: Context, enabled: Boolean) {
+        prefs(context).edit().putBoolean(KEY_NOTIFY_ON_FAILURE, enabled).apply()
+    }
 
     /** Appends the relevant signature to [message] if one is configured and enabled. */
     fun applySmsSignature(context: Context, message: String): String =

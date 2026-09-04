@@ -13,6 +13,7 @@ class AutoSchedulerSettingsActivity : AppCompatActivity() {
     private lateinit var smsSignatureInput: TextInputEditText
     private lateinit var whatsAppSignatureSwitch: MaterialSwitch
     private lateinit var whatsAppSignatureInput: TextInputEditText
+    private lateinit var notifyOnFailureSwitch: MaterialSwitch
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,12 +25,14 @@ class AutoSchedulerSettingsActivity : AppCompatActivity() {
         smsSignatureInput = findViewById(R.id.input_sms_signature)
         whatsAppSignatureSwitch = findViewById(R.id.switch_whatsapp_signature)
         whatsAppSignatureInput = findViewById(R.id.input_whatsapp_signature)
+        notifyOnFailureSwitch = findViewById(R.id.switch_notify_on_failure)
 
         smsDelayInput.setText(AutoSchedulerSettings.smsDelaySeconds(this).toString())
         smsSignatureSwitch.isChecked = AutoSchedulerSettings.smsSignatureEnabled(this)
         smsSignatureInput.setText(AutoSchedulerSettings.smsSignature(this))
         whatsAppSignatureSwitch.isChecked = AutoSchedulerSettings.whatsAppSignatureEnabled(this)
         whatsAppSignatureInput.setText(AutoSchedulerSettings.whatsAppSignature(this))
+        notifyOnFailureSwitch.isChecked = AutoSchedulerSettings.notifyOnFailure(this)
 
         findViewById<Button>(R.id.button_save).setOnClickListener { onSaveClicked() }
     }
@@ -44,6 +47,7 @@ class AutoSchedulerSettingsActivity : AppCompatActivity() {
             whatsAppSignature = whatsAppSignatureInput.text?.toString()?.trim().orEmpty(),
             smsDelaySeconds = delaySeconds,
         )
+        AutoSchedulerSettings.setNotifyOnFailure(this, notifyOnFailureSwitch.isChecked)
         finish()
     }
 }

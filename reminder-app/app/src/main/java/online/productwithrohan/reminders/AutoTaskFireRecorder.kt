@@ -57,6 +57,13 @@ object AutoTaskFireRecorder {
             else -> {
                 task.status = AutoTaskStatus.FAILED
                 task.failureReason = reason
+                if (AutoSchedulerSettings.notifyOnFailure(context)) {
+                    AutoTextNotify.show(
+                        context,
+                        context.getString(R.string.auto_task_failed_title, task.displayTitle()),
+                        reason ?: context.getString(R.string.auto_task_status_failed),
+                    )
+                }
             }
         }
         task.updatedAt = now

@@ -8,12 +8,12 @@ import android.content.Context
 import android.content.Intent
 
 /**
- * A scheduled WhatsApp task can't be sent while the device is locked —
- * WhatsApp's UI isn't drivable — so instead of failing, [WhatsAppSender]
- * reports [WhatsAppSender.Result.WaitingForUnlock] and this receiver polls
- * every [RETRY_INTERVAL_MS] until the keyguard is unlocked, then retries the
- * send. Only stops retrying once the task actually sends (or hits a real
- * failure unrelated to being locked, e.g. WhatsApp not installed).
+ * A scheduled WhatsApp/Telegram task can't be sent while the device is
+ * locked — the app's UI isn't drivable — so instead of failing,
+ * [ChatAppSender] reports [ChatAppSender.Result.WaitingForUnlock] and this
+ * receiver polls every [RETRY_INTERVAL_MS] until the keyguard is unlocked,
+ * then retries the send. Only stops retrying once the task actually sends
+ * (or hits a real failure unrelated to being locked, e.g. app not installed).
  */
 class AutoTaskLockRetryReceiver : BroadcastReceiver() {
 
@@ -21,6 +21,7 @@ class AutoTaskLockRetryReceiver : BroadcastReceiver() {
         val taskId = intent.getStringExtra(EXTRA_TASK_ID) ?: return
         val task = AutoTaskStore.get(context, taskId) ?: return
         if (task.status != AutoTaskStatus.PENDING) return
+        val app = ChatApp.forChannel(task.channel) ?: return
 
         val keyguard = context.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         if (keyguard.isKeyguardLocked) {
@@ -28,17 +29,18 @@ class AutoTaskLockRetryReceiver : BroadcastReceiver() {
             return
         }
 
-        val message = AutoSchedulerSettings.applyWhatsAppSignature(context, task.message)
-        when (val result = WhatsAppSender.sendPrefilled(context, task.recipient, message, PendingActionKind.TASK, task.id)) {
-            WhatsAppSender.Result.Started -> {}
-            WhatsAppSender.Result.WaitingForUnlock -> scheduleRetry(context, taskId)
-            WhatsAppSender.Result.AccessibilityNotEnabled ->
+        val message = if (app == ChatApp.WHATSAPP) AutoSchedulerSettings.applyWhatsAppSignature(context, task.message)
+        else task.message
+        when (val result = ChatAppSender.sendPrefilled(context, app, task.recipient, message, PendingActionKind.TASK, task.id)) {
+            ChatAppSender.Result.Started -> {}
+            ChatAppSender.Result.WaitingForUnlock -> scheduleRetry(context, taskId)
+            ChatAppSender.Result.AccessibilityNotEnabled ->
                 AutoTaskFireRecorder.recordFire(context, task, false, "Auto Text accessibility permission not granted")
-            WhatsAppSender.Result.NotInstalled ->
-                AutoTaskFireRecorder.recordFire(context, task, false, "WhatsApp isn't installed")
-            WhatsAppSender.Result.NoRecipient ->
-                AutoTaskFireRecorder.recordFire(context, task, false, "No recipient number")
-            is WhatsAppSender.Result.Error -> AutoTaskFireRecorder.recordFire(context, task, false, result.message)
+            ChatAppSender.Result.NotInstalled ->
+                AutoTaskFireRecorder.recordFire(context, task, false, "${app.name.lowercase().replaceFirstChar { it.uppercase() }} isn't installed")
+            ChatAppSender.Result.NoRecipient ->
+                AutoTaskFireRecorder.recordFire(context, task, false, "No recipient")
+            is ChatAppSender.Result.Error -> AutoTaskFireRecorder.recordFire(context, task, false, result.message)
         }
     }
 

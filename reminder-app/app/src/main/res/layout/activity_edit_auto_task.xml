@@ -42,12 +42,25 @@
                 android:inputType="phone" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <Button
-            android:id="@+id/button_pick_recipient_list"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/row_recipient_pickers"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:text="@string/auto_pick_recipient_list" />
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <Button
+                android:id="@+id/button_pick_contact"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/auto_pick_contact" />
+
+            <Button
+                android:id="@+id/button_pick_recipient_list"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/auto_pick_recipient_list" />
+        </LinearLayout>
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/layout_message"
@@ -161,6 +174,15 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
             android:text="@string/save" />
+
+        <Button
+            android:id="@+id/button_send_now"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/auto_send_now"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/button_delete"

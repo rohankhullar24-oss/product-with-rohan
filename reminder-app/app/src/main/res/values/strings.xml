@@ -293,4 +293,15 @@
     <string name="auto_retry_on_failure">Retry automatically if it fails</string>
     <string name="auto_retry_on_failure_explainer">Retries every minute, up to 5 times, before giving up.</string>
     <string name="auto_task_retry_suffix"> · attempt %1$d/%2$d</string>
+
+    <string name="auto_pick_contact">Pick from Contacts</string>
+    <string name="auto_label_recipient_telegram">Telegram username</string>
+    <string name="auto_send_now">Send now</string>
+    <string name="auto_send_now_toast">Sending now…</string>
+    <string name="settings_notify_on_failure">Notify me when a task fails</string>
+    <string name="auto_task_failed_title">%1$s failed</string>
+    <string name="auto_pending_edit">Edit</string>
+    <string name="auto_pending_snooze_15">Snooze 15 minutes</string>
+    <string name="auto_pending_snooze_60">Snooze 1 hour</string>
+    <string name="auto_snoozed">Snoozed %1$d minutes</string>
 </resources>

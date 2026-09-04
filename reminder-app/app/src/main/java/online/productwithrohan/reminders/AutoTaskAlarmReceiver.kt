@@ -143,10 +143,20 @@ class AutoTaskAlarmReceiver : BroadcastReceiver() {
         return DispatchResult.Success
     }
 
-    /** See [ChatAppSender] — pre-fills via deep link, [AutoTextAccessibilityService] taps Send. */
+    /**
+     * See [ChatAppSender] — pre-fills via deep link, [AutoTextAccessibilityService] taps
+     * Send. A task with an attachment can't go through that deep-link + typed-send flow
+     * (there's no attachment param on a wa.me/tg://resolve link), so it's handed off
+     * instead to the system share sheet, scoped to [app]'s package — the recipient isn't
+     * pre-filled there, so the user picks the chat and taps send themselves.
+     */
     private fun sendViaChatApp(context: Context, task: AutoTask, app: ChatApp): DispatchResult {
         val message = if (app == ChatApp.WHATSAPP) AutoSchedulerSettings.applyWhatsAppSignature(context, task.message)
         else task.message
+        val attachment = task.attachmentUri
+        if (!attachment.isNullOrBlank()) {
+            return sendAttachmentViaShareSheet(context, app, Uri.parse(attachment), message)
+        }
         return when (val result = ChatAppSender.sendPrefilled(context, app, task.recipient, message, PendingActionKind.TASK, task.id)) {
             ChatAppSender.Result.Started -> DispatchResult.Async
             ChatAppSender.Result.WaitingForUnlock -> {
@@ -157,6 +167,27 @@ class AutoTaskAlarmReceiver : BroadcastReceiver() {
             ChatAppSender.Result.NotInstalled -> DispatchResult.Failure("${app.name.lowercase().replaceFirstChar { it.uppercase() }} isn't installed")
             ChatAppSender.Result.NoRecipient -> DispatchResult.Failure("No recipient")
             is ChatAppSender.Result.Error -> DispatchResult.Failure(result.message)
+        }
+    }
+
+    private fun sendAttachmentViaShareSheet(context: Context, app: ChatApp, uri: Uri, message: String): DispatchResult {
+        val type = context.contentResolver.getType(uri) ?: "*/*"
+        return try {
+            val intent = Intent(Intent.ACTION_SEND)
+                .setPackage(app.packageName)
+                .setType(type)
+                .putExtra(Intent.EXTRA_STREAM, uri)
+                .putExtra(Intent.EXTRA_TEXT, message)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            context.startActivity(intent)
+            DispatchResult.Success
+        } catch (e: android.content.ActivityNotFoundException) {
+            DispatchResult.Failure("${app.name.lowercase().replaceFirstChar { it.uppercase() }} isn't installed")
+        } catch (e: SecurityException) {
+            DispatchResult.Failure("Couldn't read the attachment — pick it again in the task")
+        } catch (e: Exception) {
+            DispatchResult.Failure(e.message ?: "Couldn't share the attachment")
         }
     }
 }

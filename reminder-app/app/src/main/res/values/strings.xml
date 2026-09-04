@@ -356,6 +356,8 @@
 
     <string name="auto_label_custom_days">Repeat on</string>
     <string name="auto_error_custom_days_required">Pick at least one day</string>
+    <string name="auto_attach_file">Attach file</string>
+    <string name="auto_remove_attachment">Remove attachment</string>
     <string name="auto_day_mon">Mon</string>
     <string name="auto_day_tue">Tue</string>
     <string name="auto_day_wed">Wed</string>

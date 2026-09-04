@@ -37,6 +37,12 @@ data class AutoTask(
     var recipient: String = "",
     /** SMS/WhatsApp body or reminder notes, depending on channel. */
     var message: String = "",
+    /**
+     * A persisted-permission content:// URI to attach, WHATSAPP/TELEGRAM
+     * only (see [AutoTaskAlarmReceiver.sendViaChatApp]) — null for no
+     * attachment.
+     */
+    var attachmentUri: String? = null,
     /** Reminder title / fake-caller name; also shown as the task's label. */
     var label: String = "",
     /** Epoch millis this task is next due to fire. */
@@ -90,6 +96,7 @@ data class AutoTask(
         put("channel", channel.name)
         put("recipient", recipient)
         put("message", message)
+        put("attachmentUri", attachmentUri ?: JSONObject.NULL)
         put("label", label)
         put("scheduledAt", scheduledAt)
         put("recurrence", recurrence.name)
@@ -110,6 +117,7 @@ data class AutoTask(
             channel = AutoTaskChannel.valueOf(o.optString("channel", AutoTaskChannel.SMS.name)),
             recipient = o.optString("recipient"),
             message = o.optString("message"),
+            attachmentUri = if (o.isNull("attachmentUri") || !o.has("attachmentUri")) null else o.optString("attachmentUri"),
             label = o.optString("label"),
             scheduledAt = o.optLong("scheduledAt", 0L),
             recurrence = runCatching { AutoRecurrence.valueOf(o.optString("recurrence", AutoRecurrence.ONE_TIME.name)) }

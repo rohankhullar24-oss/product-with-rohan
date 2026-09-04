@@ -156,10 +156,36 @@ common library:
     itself comes from a `CallLog` query rather than the state-changed
     intent's own extra, which needs `READ_CALL_LOG` from Android 10 onward
     anyway.
+  - **Call Auto Reply** (`CallReplySettings`, `CallReplySettingsActivity`,
+    `CallReplyReceiver`) — texts the *caller* back once their call ends,
+    instead of forwarding the number elsewhere. Reuses Forward Call's
+    RINGING/OFFHOOK → IDLE heuristic; missed calls (never answered) and
+    ended calls (answered then hung up) are each independently toggleable.
+  - Recipient lists can also **import from a CSV or vCard file**
+    (`RecipientImportParser`), not just one contact at a time via the
+    system contact picker.
+  - Custom repeat: `AutoTask.recurrence` has a `CUSTOM_DAYS` option on top
+    of ONE_TIME/DAILY/WEEKDAYS, firing only on the days set in
+    `AutoTask.customDays` (a day-of-week bitmask) — any subset of the week,
+    not just Mon–Fri.
+  - WHATSAPP/TELEGRAM tasks can carry a file **attachment**
+    (`AutoTask.attachmentUri`, a persisted-permission `content://` URI).
+    Since neither app's deep link supports pre-attaching media, an
+    attached task skips the deep-link + accessibility-typed-send flow and
+    hands off to the system share sheet instead, scoped to that app's
+    package (`AutoTaskAlarmReceiver.sendAttachmentViaShareSheet`) — the
+    recipient isn't pre-filled there, so the user picks the chat and taps
+    send. SMS has no equivalent (no MMS API here), so it's WhatsApp/
+    Telegram only.
   - **`AccountActivity`** — signatures and SMS-delay settings shared across
-    the scheduler features, plus the installed app version (`versionName`/
-    `versionCode`) at the bottom — the only place the app currently shows
-    which build is installed.
+    the scheduler features, a full local backup/restore covering every
+    Auto Scheduler data set (`BackupManager` — auto tasks, recipient
+    lists, templates, auto-reply rules, and every settings screen, dumped
+    generically via `SharedPreferences.getAll` so it doesn't need updating
+    per new setting) on top of `MainActivity`'s existing reminders-only
+    export, plus the installed app version (`versionName`/`versionCode`)
+    at the bottom — the only place the app currently shows which build is
+    installed.
   - **`FakeCallActivity`**, **`ClaudeAlertsActivity`** — the Fake Call task
     type's ringing screen, and a small alerts/status surface.
 

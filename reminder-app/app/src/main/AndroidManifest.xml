@@ -12,6 +12,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
+    <!-- Auto Scheduler: SMS/CALL channels only so far (see AutoTaskAlarmReceiver). -->
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+
     <!-- Journal attachments: in-app audio recording, current-location tagging,
          and the recent-photos suggestions tray. Camera/gallery photo & video
          capture use the system apps' own pickers and need no permission here. -->
@@ -121,6 +125,21 @@
             android:name=".ClaudeAlertsActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
+
+        <!-- Auto Scheduler: schedules a one-off SMS/call/reminder for a future time. -->
+        <activity
+            android:name=".AutoSchedulerActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".EditAutoTaskActivity"
+            android:exported="false"
+            android:parentActivityName=".AutoSchedulerActivity" />
+
+        <receiver
+            android:name=".AutoTaskAlarmReceiver"
+            android:exported="false" />
 
         <activity
             android:name="online.productwithrohan.usagecore.LoginActivity"

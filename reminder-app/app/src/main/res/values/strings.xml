@@ -168,4 +168,34 @@
     <string name="alerts_ring_explainer">Rings like an alarm the moment a window rolls over. Off by default: if you also have the Claude Limits app installed, it already rings, and leaving both on means two alarms.</string>
     <string name="alerts_disclaimer">Reads the same usage data as the Claude website. Anthropic publishes no API for subscription limits, so this can break without notice.</string>
     <string name="alerts_disconnect">Disconnect Claude</string>
+
+    <!-- Auto Scheduler -->
+    <string name="title_auto_scheduler">Auto Scheduler</string>
+    <string name="auto_tab_pending">Pending</string>
+    <string name="auto_tab_done">Done</string>
+    <string name="auto_tab_failed">Failed</string>
+    <string name="auto_empty_list">No tasks.\nTap + to schedule an SMS, call or reminder.</string>
+    <string name="auto_add_task">Add task</string>
+    <string name="auto_pick_channel">Schedule</string>
+    <string name="auto_channel_coming_soon">%1$s (coming soon)</string>
+    <string name="auto_channel_coming_soon_toast">This channel isn\'t wired up yet</string>
+    <string name="auto_channel_label">Schedule %1$s</string>
+    <string name="auto_task_subtitle">%1$s · %2$s</string>
+    <string name="auto_task_status_pending">Pending</string>
+    <string name="auto_task_status_done">Sent</string>
+    <string name="auto_task_status_failed">Failed</string>
+    <string name="auto_title_new">New scheduled task</string>
+    <string name="auto_title_edit">Edit scheduled task</string>
+    <string name="auto_label_title">Title</string>
+    <string name="auto_label_recipient">Recipient phone number</string>
+    <string name="auto_label_message">Message</string>
+    <string name="auto_label_notes">Notes (optional)</string>
+    <string name="auto_label_when">When</string>
+    <string name="auto_pick_date">Pick date</string>
+    <string name="auto_pick_time">Pick time</string>
+    <string name="auto_error_recipient_required">Please enter a recipient number</string>
+    <string name="auto_error_message_required">Please enter a message</string>
+    <string name="auto_permission_denied">Permission denied — can\'t schedule this task</string>
+    <string name="auto_delete_title">Delete task?</string>
+    <string name="auto_delete_message">This scheduled task will be cancelled and removed.</string>
 </resources>

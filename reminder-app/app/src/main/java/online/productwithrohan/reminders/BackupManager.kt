@@ -31,6 +31,7 @@ object BackupManager {
         "auto_reply_settings",
         "auto_forward_settings",
         "forward_call_settings",
+        "call_reply_settings",
         "auto_scheduler_settings",
     )
 

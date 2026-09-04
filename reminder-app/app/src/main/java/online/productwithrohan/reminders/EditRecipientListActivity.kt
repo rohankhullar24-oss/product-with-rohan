@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
@@ -24,6 +25,28 @@ class EditRecipientListActivity : AppCompatActivity() {
 
     /** Row EditText refs, parallel to [list].members, so edits survive a re-render. */
     private val rowInputs = mutableListOf<Pair<TextInputEditText, TextInputEditText>>()
+
+    private val importFileLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri == null) return@registerForActivityResult
+            try {
+                val text = contentResolver.openInputStream(uri)?.use { input ->
+                    input.readBytes().decodeToString()
+                } ?: throw IllegalStateException("empty file")
+                val imported = RecipientImportParser.parse(text)
+                if (imported.isEmpty()) {
+                    Toast.makeText(this, R.string.recipient_list_import_failed, Toast.LENGTH_SHORT).show()
+                    return@registerForActivityResult
+                }
+                syncFromViews()
+                list.members.removeAll { it.phone.isBlank() && it.name.isBlank() }
+                list.members.addAll(imported)
+                renderMembers()
+                Toast.makeText(this, getString(R.string.recipient_list_import_done, imported.size), Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(this, R.string.recipient_list_import_failed, Toast.LENGTH_SHORT).show()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +69,10 @@ class EditRecipientListActivity : AppCompatActivity() {
             syncFromViews()
             list.members.add(RecipientEntry())
             renderMembers()
+        }
+
+        findViewById<Button>(R.id.button_import_file).setOnClickListener {
+            importFileLauncher.launch(arrayOf("*/*"))
         }
 
         findViewById<Button>(R.id.button_save).setOnClickListener { onSaveClicked() }

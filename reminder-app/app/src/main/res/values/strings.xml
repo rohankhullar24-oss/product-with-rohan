@@ -227,6 +227,9 @@
     <string name="recipient_entry_name">Name</string>
     <string name="recipient_entry_phone">Phone number</string>
     <string name="recipient_list_error_empty">Add at least one member with a phone number</string>
+    <string name="recipient_list_import_file">Import from file (CSV/vCard)</string>
+    <string name="recipient_list_import_done">Imported %1$d contacts</string>
+    <string name="recipient_list_import_failed">Couldn\'t read any contacts from that file</string>
     <string name="recipient_list_delete_title">Delete recipient list?</string>
     <string name="recipient_list_delete_message">This recipient list will be removed.</string>
     <string name="recipient_list_none_yet">No recipient lists yet — create one from the 3-dot menu</string>
@@ -245,6 +248,7 @@
     <string name="auto_task_type_reply">Auto Reply</string>
     <string name="auto_task_type_forward">Auto Forward</string>
     <string name="auto_task_type_forward_call">Forward Call</string>
+    <string name="auto_task_type_call_reply">Call Auto Reply</string>
     <string name="auto_notify_on_send">Notify me when it\'s sent</string>
     <string name="auto_notification_access_needed_message">Notification access is needed to see incoming WhatsApp messages. Tap to fix.</string>
     <string name="auto_text_events_channel">Auto Scheduler events</string>
@@ -305,6 +309,16 @@
     <string name="forward_call_message_format">Missed call from %1$s</string>
     <string name="forward_call_sent_title">Missed call forwarded</string>
     <string name="forward_call_sent_text">A missed call was forwarded by SMS</string>
+
+    <string name="call_reply_title">Call Auto Reply</string>
+    <string name="call_reply_enable">Auto-reply to calls</string>
+    <string name="call_reply_explainer">Texts the caller back automatically once their call ends, instead of forwarding it elsewhere.</string>
+    <string name="call_reply_message_hint">Reply message</string>
+    <string name="call_reply_message_required">Enter a reply message</string>
+    <string name="call_reply_missed">Reply to missed calls</string>
+    <string name="call_reply_ended">Reply to ended (answered) calls</string>
+    <string name="call_reply_sent_title">Call reply sent</string>
+    <string name="call_reply_sent_text">An auto-reply SMS was sent to the caller</string>
 
     <string name="auto_label_caller_name">Caller name to show</string>
 

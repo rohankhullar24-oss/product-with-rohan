@@ -43,6 +43,14 @@
             android:text="@string/recipient_list_add_member" />
 
         <Button
+            android:id="@+id/button_import_file"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/recipient_list_import_file" />
+
+        <Button
             android:id="@+id/button_save"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

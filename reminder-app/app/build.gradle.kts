@@ -16,7 +16,7 @@ android {
         // bumps, and no more every build silently sharing the same version.
         // Local (non-CI) builds fall back to a fixed baseline above the last manual value.
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 13
-        versionName = "3.10"
+        versionName = "3.11"
     }
 
     buildTypes {

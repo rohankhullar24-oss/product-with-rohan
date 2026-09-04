@@ -1,4 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Legacy full-backup format, used on API less than 31 (data_extraction_rules.xml
+  covers 31+). Keep the two files' domain/path entries in sync: this is the
+  pre-Android-12 mirror of that file, not an alternative to it.
+
+  Covers every locally-stored Auto Scheduler data set (see ARCHITECTURE.md and
+  BackupManager.kt for the same list), so Android's own backup/restore-on-reinstall
+  round-trips it without the user needing BackupManager's manual export first.
+  supabase_session is deliberately excluded: an auth token shouldn't silently
+  restore onto a different device.
+-->
 <full-backup-content>
     <include domain="file" path="reminders.json" />
+    <include domain="file" path="auto_tasks.json" />
+    <include domain="file" path="recipient_lists.json" />
+    <include domain="file" path="templates.json" />
+    <include domain="file" path="auto_reply_rules.json" />
+
+    <include domain="sharedpref" path="auto_reply_settings.xml" />
+    <include domain="sharedpref" path="auto_forward_settings.xml" />
+    <include domain="sharedpref" path="forward_call_settings.xml" />
+    <include domain="sharedpref" path="call_reply_settings.xml" />
+    <include domain="sharedpref" path="auto_scheduler_settings.xml" />
+
+    <exclude domain="sharedpref" path="supabase_session.xml" />
 </full-backup-content>

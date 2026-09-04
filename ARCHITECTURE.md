@@ -185,7 +185,14 @@ common library:
     per new setting) on top of `MainActivity`'s existing reminders-only
     export, plus the installed app version (`versionName`/`versionCode`)
     at the bottom — the only place the app currently shows which build is
-    installed.
+    installed. On top of that manual export, `backup_rules.xml` (API < 31)
+    and `data_extraction_rules.xml` (API 31+) list the same files so
+    Android's own auto-backup (Google account cloud backup, and
+    device-to-device transfer) round-trips everything automatically on
+    reinstall/new-device setup, without the user needing to remember to
+    tap Backup first. `supabase_session` (the signed-in auth token) is
+    deliberately excluded from both — it shouldn't silently restore onto
+    a different device.
   - **`FakeCallActivity`**, **`ClaudeAlertsActivity`** — the Fake Call task
     type's ringing screen, and a small alerts/status surface.
 

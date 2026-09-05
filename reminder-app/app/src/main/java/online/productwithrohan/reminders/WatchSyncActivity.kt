@@ -50,6 +50,17 @@ class WatchSyncActivity : AppCompatActivity() {
         private val CTS_CHAR_UUID = UUID.fromString("00002a2b-0000-1000-8000-00805f9b34fb")
         private val BATTERY_SERVICE_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
         private val BATTERY_CHAR_UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
+
+        // "zhbraceletsdk" vendor protocol (com.zjw.zhbraceletsdk / com.zhapp.ble in the NoiseFit
+        // app, decompiled from the real app APK): a protobuf-based command channel used by
+        // watches whose firmware doesn't implement the standard Current Time Service. Commands
+        // are SEWear{id, <payload>} protobuf messages, prefixed with a 2-byte little-endian
+        // packet-index header, written to CHAR_02. Cmd id 48 = SEWear{ systemTime: SESystemTime{
+        // timeSet: SETimeSet{ timestamp, offset } } }.
+        private val ZH_PROTOBUF_SERVICE_UUID = UUID.fromString("16186f00-0000-1000-8000-00807f9b34fb")
+        private val ZH_PROTOBUF_CHAR_02_UUID = UUID.fromString("16186f02-0000-1000-8000-00807f9b34fb")
+        private const val ZH_CMD_SET_TIME = 48
+
         private const val SCAN_TIMEOUT_MS = 12_000L
         private val MAC_ADDRESS_REGEX = Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
     }
@@ -313,10 +324,14 @@ class WatchSyncActivity : AppCompatActivity() {
             runOnUiThread { logServices(g.services) }
 
             val ctsChar = g.getService(CTS_SERVICE_UUID)?.getCharacteristic(CTS_CHAR_UUID)
-            if (ctsChar == null) {
-                runOnUiThread { appendLog(getString(R.string.watch_sync_log_no_cts)) }
-            } else {
+            val zhTimeChar = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
+            if (ctsChar != null) {
                 writeCurrentTime(g, ctsChar)
+            } else if (zhTimeChar != null) {
+                runOnUiThread { appendLog(getString(R.string.watch_sync_log_vendor_protocol)) }
+                writeVendorTimeSync(g, zhTimeChar)
+            } else {
+                runOnUiThread { appendLog(getString(R.string.watch_sync_log_no_cts)) }
             }
 
             val batteryChar = g.getService(BATTERY_SERVICE_UUID)?.getCharacteristic(BATTERY_CHAR_UUID)
@@ -403,6 +418,57 @@ class WatchSyncActivity : AppCompatActivity() {
             appendLog(getString(R.string.watch_sync_log_permission_error))
         }
     }
+
+    /**
+     * Builds and writes the vendor "zhbraceletsdk" time-sync command (cmd id 48): a
+     * SEWear{ id: 48, systemTime: SESystemTime{ timeSet: SETimeSet{ timestamp, offset } } }
+     * protobuf message, hand-encoded to the exact wire format the decompiled NoiseFit app
+     * produces (field numbers/types confirmed from its generated *Protos.java sources),
+     * prefixed with the SDK's 2-byte little-endian single-packet header.
+     */
+    private fun writeVendorTimeSync(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+        val timestampSeconds = System.currentTimeMillis() / 1000
+        val offsetQuarterHours = (java.util.TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60000) / 15
+
+        val timeSet = mutableListOf<Byte>()
+        appendProtoTag(timeSet, 1, 0); appendVarint(timeSet, timestampSeconds) // timestamp (uint32)
+        appendProtoTag(timeSet, 2, 0); appendVarint(timeSet, zigzagEncode32(offsetQuarterHours).toLong()) // offset (sint32)
+
+        val systemTime = mutableListOf<Byte>()
+        appendProtoTag(systemTime, 1, 2); appendVarint(systemTime, timeSet.size.toLong()); systemTime.addAll(timeSet)
+
+        val wear = mutableListOf<Byte>()
+        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SET_TIME.toLong()) // id
+        appendProtoTag(wear, 5, 2); appendVarint(wear, systemTime.size.toLong()); wear.addAll(systemTime) // systemTime
+
+        // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
+        val payload = byteArrayOf(1, 0) + wear.toByteArray()
+        try {
+            @Suppress("DEPRECATION")
+            characteristic.value = payload
+            @Suppress("DEPRECATION")
+            g.writeCharacteristic(characteristic)
+        } catch (e: SecurityException) {
+            appendLog(getString(R.string.watch_sync_log_permission_error))
+        }
+    }
+
+    private fun appendProtoTag(out: MutableList<Byte>, fieldNumber: Int, wireType: Int) =
+        appendVarint(out, ((fieldNumber shl 3) or wireType).toLong())
+
+    private fun appendVarint(out: MutableList<Byte>, valueIn: Long) {
+        var value = valueIn
+        while (true) {
+            if (value and 0x7FL.inv() == 0L) {
+                out.add(value.toByte())
+                return
+            }
+            out.add(((value and 0x7F) or 0x80).toByte())
+            value = value ushr 7
+        }
+    }
+
+    private fun zigzagEncode32(n: Int): Int = (n shl 1) xor (n shr 31)
 
     private fun appendLog(line: String) {
         if (Looper.myLooper() != Looper.getMainLooper()) {

@@ -188,6 +188,7 @@
     <string name="watch_sync_log_intro">Tap Scan, then pick your watch from the list once it shows up.</string>
     <string name="watch_sync_log_scanning">Scanning…</string>
     <string name="watch_sync_log_location_off">Your phone\'s Location is turned OFF — on Android, BLE scans silently find 0 devices while Location is off, even with Bluetooth permission granted. Turn Location on in Settings, then scan again.</string>
+    <string name="watch_sync_log_vendor_protocol">No standard Current Time Service — trying this watch\'s vendor time-sync protocol instead…</string>
     <string name="watch_sync_log_found">Found: %1$s (%2$s)</string>
     <string name="watch_sync_log_scan_failed">Scan failed (error %1$d).</string>
     <string name="watch_sync_log_scan_done">Scan stopped. %1$d device(s) found.</string>

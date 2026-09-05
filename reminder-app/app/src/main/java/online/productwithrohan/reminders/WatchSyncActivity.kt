@@ -64,6 +64,14 @@ class WatchSyncActivity : AppCompatActivity() {
         private const val ZH_CMD_SET_TIME = 48
         private const val ZH_CMD_SEND_APP_NOTIFICATION = 179
         private const val ZH_CMD_GET_BATTERY = 33
+        // App-level "device binding" handshake — separate from BLE's own pairing/bonding, and
+        // likely what makes the watch actually show itself as paired to this phone (rather than
+        // just accepting GATT connections from anyone). Not confirmed against the app's own
+        // consumer code (couldn't find it in the decompiled tree), only against the protobuf
+        // wire format itself: request cmd 16 returns a SEBindCheck carrying a watch-generated
+        // bindRandomKey; cmd 17 is presumed to complete the handshake by echoing that key back.
+        private const val ZH_CMD_REQUEST_BIND_STATE = 16
+        private const val ZH_CMD_BIND_DEVICE = 17
 
         // Fixed 6-byte ACKs the SDK writes back on CHAR_01 while receiving a multi-packet reply
         // (decompiled from com.zhapp.ble.a: a.d() / outer a()) — [0,0,1,X,0,0] where X=1 means
@@ -389,6 +397,12 @@ class WatchSyncActivity : AppCompatActivity() {
 
             val ctsChar = g.getService(CTS_SERVICE_UUID)?.getCharacteristic(CTS_CHAR_UUID)
             val zhTimeChar = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
+
+            if (zhTimeChar != null) {
+                enableVendorResponseNotifications(g)
+                requestDeviceBindState(g, zhTimeChar)
+            }
+
             if (ctsChar != null) {
                 writeCurrentTime(g, ctsChar)
             } else if (zhTimeChar != null) {
@@ -399,10 +413,6 @@ class WatchSyncActivity : AppCompatActivity() {
                     appendLog(getString(R.string.watch_sync_log_no_cts))
                     timeResult.setText(R.string.watch_sync_card_time_no_standard_service)
                 }
-            }
-
-            if (zhTimeChar != null) {
-                enableVendorResponseNotifications(g)
             }
 
             val batteryChar = g.getService(BATTERY_SERVICE_UUID)?.getCharacteristic(BATTERY_CHAR_UUID)
@@ -570,6 +580,56 @@ class WatchSyncActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * SEWear{ id: 16 } — bare request. Presumed reply: SEWear{ bindAccount: SEBindAccount{
+     * bindCheck: SEBindCheck{ bindRandomKey, bindCheckResult, ... } } } — see handleBindStateResponse.
+     */
+    private fun requestDeviceBindState(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+        val wear = mutableListOf<Byte>()
+        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_REQUEST_BIND_STATE.toLong())
+        pendingResponseCmdId = ZH_CMD_REQUEST_BIND_STATE
+        lastVendorWriteCmdId = ZH_CMD_REQUEST_BIND_STATE
+        writeVendorPacket(g, characteristic, wear.toByteArray())
+        appendLog(getString(R.string.watch_sync_log_bind_request_sent))
+    }
+
+    private fun handleBindStateResponse(wearBytes: ByteArray) {
+        val bindAccountBytes = parseProtoFields(wearBytes)[3]?.firstOrNull()?.bytes
+        val bindCheckBytes = bindAccountBytes?.let { parseProtoFields(it)[2]?.firstOrNull()?.bytes }
+        val randomKey = bindCheckBytes?.let { parseProtoFields(it)[2]?.firstOrNull()?.bytes }?.toString(Charsets.UTF_8)
+        runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_state_received, randomKey ?: "?")) }
+        val g = gatt
+        val char02 = g?.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
+        if (g == null || char02 == null || randomKey == null) {
+            runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_no_key)) }
+            return
+        }
+        sendBindDevice(g, char02, randomKey)
+    }
+
+    /**
+     * SEWear{ id: 17, bindAccount: SEBindAccount{ bindCheck: SEBindCheck{ deviceVerify: false,
+     * bindRandomKey: <echoed from the cmd-16 response> } } } — echoing the watch's own
+     * challenge key back is the best-effort read of this handshake; unconfirmed against real
+     * consumer code, so treat the result as a hypothesis until the watch's own UI confirms it.
+     */
+    private fun sendBindDevice(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, randomKey: String) {
+        val bindCheck = mutableListOf<Byte>()
+        appendProtoTag(bindCheck, 1, 0); appendVarint(bindCheck, 0) // deviceVerify = false
+        appendProtoString(bindCheck, 2, randomKey) // bindRandomKey (echoed)
+
+        val bindAccount = mutableListOf<Byte>()
+        appendProtoTag(bindAccount, 2, 2); appendVarint(bindAccount, bindCheck.size.toLong()); bindAccount.addAll(bindCheck)
+
+        val wear = mutableListOf<Byte>()
+        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_BIND_DEVICE.toLong())
+        appendProtoTag(wear, 3, 2); appendVarint(wear, bindAccount.size.toLong()); wear.addAll(bindAccount)
+
+        lastVendorWriteCmdId = ZH_CMD_BIND_DEVICE
+        writeVendorPacket(g, characteristic, wear.toByteArray())
+        appendLog(getString(R.string.watch_sync_log_bind_device_sent))
+    }
+
     private fun sendTestNotification() {
         val g = gatt
         if (g == null) {
@@ -663,6 +723,8 @@ class WatchSyncActivity : AppCompatActivity() {
         pendingResponseCmdId = null
         if (cmdId == ZH_CMD_GET_BATTERY) {
             handleBatteryResponse(merged)
+        } else if (cmdId == ZH_CMD_REQUEST_BIND_STATE) {
+            handleBindStateResponse(merged)
         }
     }
 

@@ -197,6 +197,7 @@
     <string name="watch_sync_log_battery_request_sent">Battery request sent, waiting for response…</string>
     <string name="watch_sync_log_vendor_battery">Battery (vendor protocol): %1$d%%</string>
     <string name="watch_sync_log_vendor_response_unparseable">Got a watch response but couldn\'t find the expected field in it.</string>
+    <string name="watch_sync_log_vendor_write_sent">Sent to watch (write-without-response — check the watch itself to confirm it took effect).</string>
     <string name="watch_sync_log_found">Found: %1$s (%2$s)</string>
     <string name="watch_sync_log_scan_failed">Scan failed (error %1$d).</string>
     <string name="watch_sync_log_scan_done">Scan stopped. %1$d device(s) found.</string>

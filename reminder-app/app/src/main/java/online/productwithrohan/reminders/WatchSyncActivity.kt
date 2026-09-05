@@ -370,10 +370,15 @@ class WatchSyncActivity : AppCompatActivity() {
 
         override fun onCharacteristicWrite(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
             runOnUiThread {
-                if (status == BluetoothGatt.GATT_SUCCESS) {
-                    appendLog(getString(R.string.watch_sync_log_time_synced))
-                } else {
+                if (status != BluetoothGatt.GATT_SUCCESS) {
                     appendLog(getString(R.string.watch_sync_log_write_failed, status))
+                } else if (characteristic.uuid == CTS_CHAR_UUID) {
+                    appendLog(getString(R.string.watch_sync_log_time_synced))
+                } else if (characteristic.uuid == ZH_PROTOBUF_CHAR_02_UUID) {
+                    // This characteristic only supports write-without-response, so GATT_SUCCESS
+                    // here only means the phone's Bluetooth stack sent the packet — the watch
+                    // gives no acknowledgment either way. Check the watch's own display to confirm.
+                    appendLog(getString(R.string.watch_sync_log_vendor_write_sent))
                 }
             }
         }
@@ -470,15 +475,7 @@ class WatchSyncActivity : AppCompatActivity() {
         appendProtoTag(wear, 5, 2); appendVarint(wear, systemTime.size.toLong()); wear.addAll(systemTime) // systemTime
 
         // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
-        val payload = byteArrayOf(1, 0) + wear.toByteArray()
-        try {
-            @Suppress("DEPRECATION")
-            characteristic.value = payload
-            @Suppress("DEPRECATION")
-            g.writeCharacteristic(characteristic)
-        } catch (e: SecurityException) {
-            appendLog(getString(R.string.watch_sync_log_permission_error))
-        }
+        writeVendorRaw(g, characteristic, byteArrayOf(1, 0) + wear.toByteArray())
     }
 
     private fun appendProtoTag(out: MutableList<Byte>, fieldNumber: Int, wireType: Int) =
@@ -565,15 +562,7 @@ class WatchSyncActivity : AppCompatActivity() {
 
     private fun writeVendorPacket(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, wearBytes: ByteArray) {
         // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
-        val payload = byteArrayOf(1, 0) + wearBytes
-        try {
-            @Suppress("DEPRECATION")
-            characteristic.value = payload
-            @Suppress("DEPRECATION")
-            g.writeCharacteristic(characteristic)
-        } catch (e: SecurityException) {
-            appendLog(getString(R.string.watch_sync_log_permission_error))
-        }
+        writeVendorRaw(g, characteristic, byteArrayOf(1, 0) + wearBytes)
     }
 
     /**
@@ -614,9 +603,22 @@ class WatchSyncActivity : AppCompatActivity() {
     }
 
     private fun writeAckFrame(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, ack: ByteArray) {
+        writeVendorRaw(g, characteristic, ack)
+    }
+
+    /**
+     * Confirmed on real hardware: all five vendor characteristics (16186f01-05) only declare
+     * the write-no-response property, not write-with-response — set the write type explicitly
+     * rather than relying on Android's undocumented fallback behavior. Note this means a
+     * successful GATT_SUCCESS callback only confirms the phone's local stack sent the packet,
+     * NOT that the watch received or processed it (write-without-response gets no peripheral ack).
+     */
+    private fun writeVendorRaw(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, bytes: ByteArray) {
         try {
             @Suppress("DEPRECATION")
-            characteristic.value = ack
+            characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+            @Suppress("DEPRECATION")
+            characteristic.value = bytes
             @Suppress("DEPRECATION")
             g.writeCharacteristic(characteristic)
         } catch (e: SecurityException) {

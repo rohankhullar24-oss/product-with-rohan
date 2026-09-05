@@ -79,6 +79,14 @@ class WatchSyncActivity : AppCompatActivity() {
     private lateinit var scanButton: Button
     private lateinit var logView: TextView
     private lateinit var logScroll: ScrollView
+    private lateinit var logToggle: TextView
+    private lateinit var statusHeadline: TextView
+    private lateinit var statusSubtitle: TextView
+    private lateinit var cardDevices: View
+    private lateinit var sectionControls: View
+    private lateinit var timeResult: TextView
+    private lateinit var notificationResult: TextView
+    private lateinit var batteryResult: TextView
 
     private val handler = Handler(Looper.getMainLooper())
     private val foundDevices = LinkedHashMap<String, BluetoothDevice>()
@@ -90,6 +98,7 @@ class WatchSyncActivity : AppCompatActivity() {
     private var receivedPackets: Array<ByteArray?>? = null
     private var receivedPacketNum = 0
     private var pendingResponseCmdId: Int? = null
+    private var lastVendorWriteCmdId: Int? = null
 
     private val bluetoothManager by lazy { getSystemService(BluetoothManager::class.java) }
     private val bleScanner by lazy { bluetoothManager?.adapter?.bluetoothLeScanner }
@@ -122,6 +131,7 @@ class WatchSyncActivity : AppCompatActivity() {
             if (foundDevices.put(device.address, device) == null) {
                 appendLog(getString(R.string.watch_sync_log_found, name ?: getString(R.string.watch_sync_unknown_device), device.address))
                 refreshDeviceList()
+                cardDevices.visibility = View.VISIBLE
             }
         }
 
@@ -140,9 +150,23 @@ class WatchSyncActivity : AppCompatActivity() {
         scanButton = findViewById(R.id.button_scan)
         logView = findViewById(R.id.log_view)
         logScroll = findViewById(R.id.log_scroll)
+        logToggle = findViewById(R.id.log_toggle)
+        statusHeadline = findViewById(R.id.status_headline)
+        statusSubtitle = findViewById(R.id.status_subtitle)
+        cardDevices = findViewById(R.id.card_devices)
+        sectionControls = findViewById(R.id.section_controls)
+        timeResult = findViewById(R.id.time_result)
+        notificationResult = findViewById(R.id.notification_result)
+        batteryResult = findViewById(R.id.battery_result)
+
         findViewById<Button>(R.id.button_scan_qr).setOnClickListener { scanQrCode() }
         findViewById<Button>(R.id.button_send_notification).setOnClickListener { sendTestNotification() }
         findViewById<Button>(R.id.button_read_battery).setOnClickListener { requestVendorBattery() }
+        logToggle.setOnClickListener {
+            val show = logScroll.visibility != View.VISIBLE
+            logScroll.visibility = if (show) View.VISIBLE else View.GONE
+            logToggle.setText(if (show) R.string.watch_sync_hide_log else R.string.watch_sync_show_log)
+        }
 
         adapter = SimpleListAdapter(
             title = { deviceName(it) ?: getString(R.string.watch_sync_unknown_device) },
@@ -200,12 +224,15 @@ class WatchSyncActivity : AppCompatActivity() {
         if (!hasPermissions() || scanning) return
         foundDevices.clear()
         refreshDeviceList()
+        cardDevices.visibility = View.GONE
         if (!isLocationEnabled()) {
             appendLog(getString(R.string.watch_sync_log_location_off))
         }
         appendLog(getString(R.string.watch_sync_log_scanning))
         scanning = true
         updateScanButton()
+        statusHeadline.setText(R.string.watch_sync_status_not_connected)
+        statusSubtitle.setText(R.string.watch_sync_status_scanning)
         try {
             bleScanner?.startScan(scanCallback)
         } catch (e: SecurityException) {
@@ -314,7 +341,10 @@ class WatchSyncActivity : AppCompatActivity() {
 
     private fun onDeviceSelected(device: BluetoothDevice) {
         stopScan()
-        appendLog(getString(R.string.watch_sync_log_connecting, deviceName(device) ?: device.address))
+        val name = deviceName(device) ?: device.address
+        appendLog(getString(R.string.watch_sync_log_connecting, name))
+        statusSubtitle.text = getString(R.string.watch_sync_status_connecting, name)
+        sectionControls.visibility = View.GONE
         gatt?.close()
         gatt = try {
             device.connectGatt(this, false, gattCallback)
@@ -327,19 +357,35 @@ class WatchSyncActivity : AppCompatActivity() {
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
-                runOnUiThread { appendLog(getString(R.string.watch_sync_log_connected)) }
+                runOnUiThread {
+                    appendLog(getString(R.string.watch_sync_log_connected))
+                    val name = deviceName(g.device) ?: g.device.address
+                    statusHeadline.text = getString(R.string.watch_sync_status_connected_headline, name)
+                    statusSubtitle.setText(R.string.watch_sync_status_connected_subtitle)
+                }
                 try {
                     g.discoverServices()
                 } catch (e: SecurityException) {
                     runOnUiThread { appendLog(getString(R.string.watch_sync_log_permission_error)) }
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-                runOnUiThread { appendLog(getString(R.string.watch_sync_log_disconnected)) }
+                runOnUiThread {
+                    appendLog(getString(R.string.watch_sync_log_disconnected))
+                    statusHeadline.setText(R.string.watch_sync_status_not_connected)
+                    statusSubtitle.setText(R.string.watch_sync_status_disconnected_subtitle)
+                    sectionControls.visibility = View.GONE
+                }
             }
         }
 
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
-            runOnUiThread { logServices(g.services) }
+            runOnUiThread {
+                logServices(g.services)
+                sectionControls.visibility = View.VISIBLE
+                timeResult.setText(R.string.watch_sync_card_time_pending)
+                notificationResult.setText(R.string.watch_sync_card_notification_subtitle)
+                batteryResult.setText(R.string.watch_sync_card_battery_subtitle)
+            }
 
             val ctsChar = g.getService(CTS_SERVICE_UUID)?.getCharacteristic(CTS_CHAR_UUID)
             val zhTimeChar = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
@@ -349,7 +395,10 @@ class WatchSyncActivity : AppCompatActivity() {
                 runOnUiThread { appendLog(getString(R.string.watch_sync_log_vendor_protocol)) }
                 writeVendorTimeSync(g, zhTimeChar)
             } else {
-                runOnUiThread { appendLog(getString(R.string.watch_sync_log_no_cts)) }
+                runOnUiThread {
+                    appendLog(getString(R.string.watch_sync_log_no_cts))
+                    timeResult.setText(R.string.watch_sync_card_time_no_standard_service)
+                }
             }
 
             if (zhTimeChar != null) {
@@ -372,13 +421,22 @@ class WatchSyncActivity : AppCompatActivity() {
             runOnUiThread {
                 if (status != BluetoothGatt.GATT_SUCCESS) {
                     appendLog(getString(R.string.watch_sync_log_write_failed, status))
+                    if (characteristic.uuid == CTS_CHAR_UUID ||
+                        (characteristic.uuid == ZH_PROTOBUF_CHAR_02_UUID && lastVendorWriteCmdId == ZH_CMD_SET_TIME)
+                    ) {
+                        timeResult.setText(R.string.watch_sync_card_time_failed)
+                    }
                 } else if (characteristic.uuid == CTS_CHAR_UUID) {
                     appendLog(getString(R.string.watch_sync_log_time_synced))
+                    timeResult.setText(R.string.watch_sync_card_time_synced)
                 } else if (characteristic.uuid == ZH_PROTOBUF_CHAR_02_UUID) {
                     // This characteristic only supports write-without-response, so GATT_SUCCESS
                     // here only means the phone's Bluetooth stack sent the packet — the watch
                     // gives no acknowledgment either way. Check the watch's own display to confirm.
                     appendLog(getString(R.string.watch_sync_log_vendor_write_sent))
+                    if (lastVendorWriteCmdId == ZH_CMD_SET_TIME) {
+                        timeResult.setText(R.string.watch_sync_card_time_sent_unconfirmed)
+                    }
                 }
             }
         }
@@ -390,6 +448,7 @@ class WatchSyncActivity : AppCompatActivity() {
                 val percent = characteristic.value?.firstOrNull()?.toInt()?.and(0xFF)
                 if (status == BluetoothGatt.GATT_SUCCESS && percent != null) {
                     appendLog(getString(R.string.watch_sync_log_battery, percent))
+                    batteryResult.text = getString(R.string.watch_sync_log_vendor_battery, percent)
                 } else {
                     appendLog(getString(R.string.watch_sync_log_battery_failed, status))
                 }
@@ -475,6 +534,7 @@ class WatchSyncActivity : AppCompatActivity() {
         appendProtoTag(wear, 5, 2); appendVarint(wear, systemTime.size.toLong()); wear.addAll(systemTime) // systemTime
 
         // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
+        lastVendorWriteCmdId = ZH_CMD_SET_TIME
         writeVendorRaw(g, characteristic, byteArrayOf(1, 0) + wear.toByteArray())
     }
 
@@ -536,8 +596,10 @@ class WatchSyncActivity : AppCompatActivity() {
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SEND_APP_NOTIFICATION.toLong())
         appendProtoTag(wear, 13, 2); appendVarint(wear, notification.size.toLong()); wear.addAll(notification)
 
+        lastVendorWriteCmdId = ZH_CMD_SEND_APP_NOTIFICATION
         writeVendorPacket(g, char02, wear.toByteArray())
         appendLog(getString(R.string.watch_sync_log_notification_sent))
+        notificationResult.setText(R.string.watch_sync_card_notification_result)
     }
 
     private fun requestVendorBattery() {
@@ -556,8 +618,10 @@ class WatchSyncActivity : AppCompatActivity() {
         val wear = mutableListOf<Byte>()
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_GET_BATTERY.toLong())
         pendingResponseCmdId = ZH_CMD_GET_BATTERY
+        lastVendorWriteCmdId = ZH_CMD_GET_BATTERY
         writeVendorPacket(g, char02, wear.toByteArray())
         appendLog(getString(R.string.watch_sync_log_battery_request_sent))
+        batteryResult.setText(R.string.watch_sync_card_battery_checking)
     }
 
     private fun writeVendorPacket(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, wearBytes: ByteArray) {
@@ -634,8 +698,10 @@ class WatchSyncActivity : AppCompatActivity() {
         runOnUiThread {
             if (capacity != null) {
                 appendLog(getString(R.string.watch_sync_log_vendor_battery, capacity.toInt()))
+                batteryResult.text = getString(R.string.watch_sync_log_vendor_battery, capacity.toInt())
             } else {
                 appendLog(getString(R.string.watch_sync_log_vendor_response_unparseable))
+                batteryResult.setText(R.string.watch_sync_log_vendor_response_unparseable)
             }
         }
     }

@@ -50,6 +50,27 @@ class WatchSyncActivity : AppCompatActivity() {
         private val CTS_CHAR_UUID = UUID.fromString("00002a2b-0000-1000-8000-00805f9b34fb")
         private val BATTERY_SERVICE_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
         private val BATTERY_CHAR_UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
+
+        // "zhbraceletsdk" vendor protocol (com.zjw.zhbraceletsdk / com.zhapp.ble in the NoiseFit
+        // app, decompiled from the real app APK): a protobuf-based command channel used by
+        // watches whose firmware doesn't implement the standard Current Time Service. Commands
+        // are SEWear{id, <payload>} protobuf messages, prefixed with a 2-byte little-endian
+        // packet-index header, written to CHAR_02. Cmd id 48 = SEWear{ systemTime: SESystemTime{
+        // timeSet: SETimeSet{ timestamp, offset } } }.
+        private val ZH_PROTOBUF_SERVICE_UUID = UUID.fromString("16186f00-0000-1000-8000-00807f9b34fb")
+        private val ZH_PROTOBUF_CHAR_01_UUID = UUID.fromString("16186f01-0000-1000-8000-00807f9b34fb")
+        private val ZH_PROTOBUF_CHAR_02_UUID = UUID.fromString("16186f02-0000-1000-8000-00807f9b34fb")
+        private val CCCD_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
+        private const val ZH_CMD_SET_TIME = 48
+        private const val ZH_CMD_SEND_APP_NOTIFICATION = 179
+        private const val ZH_CMD_GET_BATTERY = 33
+
+        // Fixed 6-byte ACKs the SDK writes back on CHAR_01 while receiving a multi-packet reply
+        // (decompiled from com.zhapp.ble.a: a.d() / outer a()) — [0,0,1,X,0,0] where X=1 means
+        // "header received, send data" and X=0 means "all packets received".
+        private val ZH_ACK_READY_FOR_DATA = byteArrayOf(0, 0, 1, 1, 0, 0)
+        private val ZH_ACK_ALL_RECEIVED = byteArrayOf(0, 0, 1, 0, 0, 0)
+
         private const val SCAN_TIMEOUT_MS = 12_000L
         private val MAC_ADDRESS_REGEX = Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
     }
@@ -63,6 +84,12 @@ class WatchSyncActivity : AppCompatActivity() {
     private val foundDevices = LinkedHashMap<String, BluetoothDevice>()
     private var gatt: BluetoothGatt? = null
     private var scanning = false
+
+    // CHAR_01 multi-packet response reassembly state (mirrors the decompiled SDK's fields).
+    private var expectedPacketCount = 0
+    private var receivedPackets: Array<ByteArray?>? = null
+    private var receivedPacketNum = 0
+    private var pendingResponseCmdId: Int? = null
 
     private val bluetoothManager by lazy { getSystemService(BluetoothManager::class.java) }
     private val bleScanner by lazy { bluetoothManager?.adapter?.bluetoothLeScanner }
@@ -114,6 +141,8 @@ class WatchSyncActivity : AppCompatActivity() {
         logView = findViewById(R.id.log_view)
         logScroll = findViewById(R.id.log_scroll)
         findViewById<Button>(R.id.button_scan_qr).setOnClickListener { scanQrCode() }
+        findViewById<Button>(R.id.button_send_notification).setOnClickListener { sendTestNotification() }
+        findViewById<Button>(R.id.button_read_battery).setOnClickListener { requestVendorBattery() }
 
         adapter = SimpleListAdapter(
             title = { deviceName(it) ?: getString(R.string.watch_sync_unknown_device) },
@@ -313,10 +342,18 @@ class WatchSyncActivity : AppCompatActivity() {
             runOnUiThread { logServices(g.services) }
 
             val ctsChar = g.getService(CTS_SERVICE_UUID)?.getCharacteristic(CTS_CHAR_UUID)
-            if (ctsChar == null) {
-                runOnUiThread { appendLog(getString(R.string.watch_sync_log_no_cts)) }
-            } else {
+            val zhTimeChar = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
+            if (ctsChar != null) {
                 writeCurrentTime(g, ctsChar)
+            } else if (zhTimeChar != null) {
+                runOnUiThread { appendLog(getString(R.string.watch_sync_log_vendor_protocol)) }
+                writeVendorTimeSync(g, zhTimeChar)
+            } else {
+                runOnUiThread { appendLog(getString(R.string.watch_sync_log_no_cts)) }
+            }
+
+            if (zhTimeChar != null) {
+                enableVendorResponseNotifications(g)
             }
 
             val batteryChar = g.getService(BATTERY_SERVICE_UUID)?.getCharacteristic(BATTERY_CHAR_UUID)
@@ -352,6 +389,12 @@ class WatchSyncActivity : AppCompatActivity() {
                     appendLog(getString(R.string.watch_sync_log_battery_failed, status))
                 }
             }
+        }
+
+        @Suppress("DEPRECATION")
+        override fun onCharacteristicChanged(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+            if (characteristic.uuid != ZH_PROTOBUF_CHAR_01_UUID) return
+            handleVendorResponsePacket(g, characteristic.value ?: return)
         }
     }
 
@@ -402,6 +445,251 @@ class WatchSyncActivity : AppCompatActivity() {
         } catch (e: SecurityException) {
             appendLog(getString(R.string.watch_sync_log_permission_error))
         }
+    }
+
+    /**
+     * Builds and writes the vendor "zhbraceletsdk" time-sync command (cmd id 48): a
+     * SEWear{ id: 48, systemTime: SESystemTime{ timeSet: SETimeSet{ timestamp, offset } } }
+     * protobuf message, hand-encoded to the exact wire format the decompiled NoiseFit app
+     * produces (field numbers/types confirmed from its generated *Protos.java sources),
+     * prefixed with the SDK's 2-byte little-endian single-packet header.
+     */
+    private fun writeVendorTimeSync(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+        val timestampSeconds = System.currentTimeMillis() / 1000
+        val offsetQuarterHours = (java.util.TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60000) / 15
+
+        val timeSet = mutableListOf<Byte>()
+        appendProtoTag(timeSet, 1, 0); appendVarint(timeSet, timestampSeconds) // timestamp (uint32)
+        appendProtoTag(timeSet, 2, 0); appendVarint(timeSet, zigzagEncode32(offsetQuarterHours).toLong()) // offset (sint32)
+
+        val systemTime = mutableListOf<Byte>()
+        appendProtoTag(systemTime, 1, 2); appendVarint(systemTime, timeSet.size.toLong()); systemTime.addAll(timeSet)
+
+        val wear = mutableListOf<Byte>()
+        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SET_TIME.toLong()) // id
+        appendProtoTag(wear, 5, 2); appendVarint(wear, systemTime.size.toLong()); wear.addAll(systemTime) // systemTime
+
+        // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
+        val payload = byteArrayOf(1, 0) + wear.toByteArray()
+        try {
+            @Suppress("DEPRECATION")
+            characteristic.value = payload
+            @Suppress("DEPRECATION")
+            g.writeCharacteristic(characteristic)
+        } catch (e: SecurityException) {
+            appendLog(getString(R.string.watch_sync_log_permission_error))
+        }
+    }
+
+    private fun appendProtoTag(out: MutableList<Byte>, fieldNumber: Int, wireType: Int) =
+        appendVarint(out, ((fieldNumber shl 3) or wireType).toLong())
+
+    private fun appendVarint(out: MutableList<Byte>, valueIn: Long) {
+        var value = valueIn
+        while (true) {
+            if (value and 0x7FL.inv() == 0L) {
+                out.add(value.toByte())
+                return
+            }
+            out.add(((value and 0x7F) or 0x80).toByte())
+            value = value ushr 7
+        }
+    }
+
+    private fun zigzagEncode32(n: Int): Int = (n shl 1) xor (n shr 31)
+
+    // --- vendor protocol: notifications + battery read -----------------------------------
+
+    @Suppress("DEPRECATION")
+    private fun enableVendorResponseNotifications(g: BluetoothGatt) {
+        val char01 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_01_UUID) ?: return
+        try {
+            g.setCharacteristicNotification(char01, true)
+            val cccd = char01.getDescriptor(CCCD_UUID) ?: return
+            cccd.value = android.bluetooth.BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+            g.writeDescriptor(cccd)
+        } catch (e: SecurityException) {
+            appendLog(getString(R.string.watch_sync_log_permission_error))
+        }
+    }
+
+    private fun sendTestNotification() {
+        val g = gatt
+        if (g == null) {
+            appendLog(getString(R.string.watch_sync_log_not_connected))
+            return
+        }
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
+        if (char02 == null) {
+            appendLog(getString(R.string.watch_sync_log_no_vendor_service))
+            return
+        }
+        // SEWear{ id: 179, notification: SENotification{ appNotification: SEAppNotification{
+        //   appName=1, pageName=2, title=3, text=4, tickerText=5 } } } — field numbers confirmed
+        // from the decompiled NoiseFit app's NotificationProtos.java.
+        val appNotification = mutableListOf<Byte>()
+        appendProtoString(appNotification, 1, "Reminders")
+        appendProtoString(appNotification, 3, "Test notification")
+        appendProtoString(appNotification, 4, "Sent from Watch Sync")
+
+        val notification = mutableListOf<Byte>()
+        appendProtoTag(notification, 2, 2); appendVarint(notification, appNotification.size.toLong()); notification.addAll(appNotification)
+
+        val wear = mutableListOf<Byte>()
+        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SEND_APP_NOTIFICATION.toLong())
+        appendProtoTag(wear, 13, 2); appendVarint(wear, notification.size.toLong()); wear.addAll(notification)
+
+        writeVendorPacket(g, char02, wear.toByteArray())
+        appendLog(getString(R.string.watch_sync_log_notification_sent))
+    }
+
+    private fun requestVendorBattery() {
+        val g = gatt
+        if (g == null) {
+            appendLog(getString(R.string.watch_sync_log_not_connected))
+            return
+        }
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
+        if (char02 == null) {
+            appendLog(getString(R.string.watch_sync_log_no_vendor_service))
+            return
+        }
+        // SEWear{ id: 33 } — a bare request with no payload; the watch replies asynchronously
+        // over CHAR_01 with a SEWear{ device: SEDevice{ deviceBatteryStatus: { capacity } } }.
+        val wear = mutableListOf<Byte>()
+        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_GET_BATTERY.toLong())
+        pendingResponseCmdId = ZH_CMD_GET_BATTERY
+        writeVendorPacket(g, char02, wear.toByteArray())
+        appendLog(getString(R.string.watch_sync_log_battery_request_sent))
+    }
+
+    private fun writeVendorPacket(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, wearBytes: ByteArray) {
+        // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
+        val payload = byteArrayOf(1, 0) + wearBytes
+        try {
+            @Suppress("DEPRECATION")
+            characteristic.value = payload
+            @Suppress("DEPRECATION")
+            g.writeCharacteristic(characteristic)
+        } catch (e: SecurityException) {
+            appendLog(getString(R.string.watch_sync_log_permission_error))
+        }
+    }
+
+    /**
+     * Reassembles a multi-packet CHAR_01 reply (decompiled from BluetoothService.i(byte[])):
+     * a header packet (4 zero bytes + 2-byte LE packet count) triggers a "ready" ACK, then each
+     * data packet (2-byte LE index + payload) is stored; once all arrive, a "done" ACK is sent
+     * and the merged bytes are parsed as a SEWear message.
+     */
+    private fun handleVendorResponsePacket(g: BluetoothGatt, data: ByteArray) {
+        val char01 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_01_UUID) ?: return
+        if (data.size >= 6 && data[0] == 0.toByte() && data[1] == 0.toByte() && data[2] == 0.toByte() && data[3] == 0.toByte()) {
+            val count = ((data[4].toInt() and 0xFF)) or ((data[5].toInt() and 0xFF) shl 8)
+            expectedPacketCount = count
+            receivedPackets = arrayOfNulls(count)
+            receivedPacketNum = 0
+            writeAckFrame(g, char01, ZH_ACK_READY_FOR_DATA)
+            return
+        }
+        val packets = receivedPackets ?: return
+        if (data.size < 2) return
+        val index = ((data[0].toInt() and 0xFF)) or ((data[1].toInt() and 0xFF) shl 8)
+        if (index <= 0 || index > packets.size) return
+        packets[index - 1] = data.copyOfRange(2, data.size)
+        receivedPacketNum++
+        if (receivedPacketNum < expectedPacketCount) return
+
+        writeAckFrame(g, char01, ZH_ACK_ALL_RECEIVED)
+        val merged = packets.fold(ByteArray(0)) { acc, chunk -> acc + (chunk ?: ByteArray(0)) }
+        receivedPackets = null
+        expectedPacketCount = 0
+        receivedPacketNum = 0
+
+        val cmdId = pendingResponseCmdId
+        pendingResponseCmdId = null
+        if (cmdId == ZH_CMD_GET_BATTERY) {
+            handleBatteryResponse(merged)
+        }
+    }
+
+    private fun writeAckFrame(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, ack: ByteArray) {
+        try {
+            @Suppress("DEPRECATION")
+            characteristic.value = ack
+            @Suppress("DEPRECATION")
+            g.writeCharacteristic(characteristic)
+        } catch (e: SecurityException) {
+            appendLog(getString(R.string.watch_sync_log_permission_error))
+        }
+    }
+
+    private fun handleBatteryResponse(wearBytes: ByteArray) {
+        val wearFields = parseProtoFields(wearBytes)
+        val deviceBytes = wearFields[4]?.firstOrNull()?.bytes
+        val batteryStatusBytes = deviceBytes?.let { parseProtoFields(it)[2]?.firstOrNull()?.bytes }
+        val capacity = batteryStatusBytes?.let { parseProtoFields(it)[1]?.firstOrNull()?.varintValue }
+        runOnUiThread {
+            if (capacity != null) {
+                appendLog(getString(R.string.watch_sync_log_vendor_battery, capacity.toInt()))
+            } else {
+                appendLog(getString(R.string.watch_sync_log_vendor_response_unparseable))
+            }
+        }
+    }
+
+    // --- minimal protobuf wire-format helpers (encode + decode, no runtime dependency) ------
+
+    private class ProtoField(val varintValue: Long?, val bytes: ByteArray?)
+
+    private fun parseProtoFields(data: ByteArray): Map<Int, MutableList<ProtoField>> {
+        val result = mutableMapOf<Int, MutableList<ProtoField>>()
+        var pos = 0
+        while (pos < data.size) {
+            val (tag, tagLen) = readVarintAt(data, pos)
+            pos += tagLen
+            val fieldNumber = (tag shr 3).toInt()
+            when ((tag and 0x7).toInt()) {
+                0 -> {
+                    val (v, l) = readVarintAt(data, pos)
+                    pos += l
+                    result.getOrPut(fieldNumber) { mutableListOf() }.add(ProtoField(v, null))
+                }
+                2 -> {
+                    val (len, l) = readVarintAt(data, pos)
+                    pos += l
+                    val end = pos + len.toInt()
+                    if (end > data.size) return result
+                    result.getOrPut(fieldNumber) { mutableListOf() }.add(ProtoField(null, data.copyOfRange(pos, end)))
+                    pos = end
+                }
+                1 -> pos += 8
+                5 -> pos += 4
+                else -> return result
+            }
+        }
+        return result
+    }
+
+    private fun readVarintAt(data: ByteArray, start: Int): Pair<Long, Int> {
+        var result = 0L
+        var shift = 0
+        var pos = start
+        while (pos < data.size) {
+            val b = data[pos].toInt() and 0xFF
+            result = result or ((b.toLong() and 0x7F) shl shift)
+            pos++
+            if (b and 0x80 == 0) break
+            shift += 7
+        }
+        return Pair(result, pos - start)
+    }
+
+    private fun appendProtoString(out: MutableList<Byte>, fieldNumber: Int, value: String) {
+        val bytes = value.toByteArray(Charsets.UTF_8)
+        appendProtoTag(out, fieldNumber, 2)
+        appendVarint(out, bytes.size.toLong())
+        out.addAll(bytes.toList())
     }
 
     private fun appendLog(line: String) {

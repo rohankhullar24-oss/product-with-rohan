@@ -198,6 +198,10 @@
     <string name="watch_sync_log_no_cts">This watch does not expose the standard Current Time Service — it needs vendor-specific syncing, not supported yet. See the service list above.</string>
     <string name="watch_sync_log_time_synced">Time synced to the watch ✓</string>
     <string name="watch_sync_log_write_failed">Time write failed (status %1$d).</string>
+    <string name="watch_sync_log_no_battery">No standard Battery Service either — battery %% is vendor-specific too.</string>
+    <string name="watch_sync_log_battery">Battery: %1$d%%</string>
+    <string name="watch_sync_log_battery_failed">Battery read failed (status %1$d).</string>
+    <string name="watch_sync_steps_note">Steps, distance and calories aren\'t part of any standard Bluetooth service — no watch exposes those generically. Getting them here needs this watch\'s private protocol, which the service dump above is the first step toward figuring out.</string>
 
     <!-- Auto Scheduler -->
     <string name="title_auto_scheduler">Auto Scheduler</string>

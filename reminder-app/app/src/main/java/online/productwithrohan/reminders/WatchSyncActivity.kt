@@ -45,6 +45,8 @@ class WatchSyncActivity : AppCompatActivity() {
     companion object {
         private val CTS_SERVICE_UUID = UUID.fromString("00001805-0000-1000-8000-00805f9b34fb")
         private val CTS_CHAR_UUID = UUID.fromString("00002a2b-0000-1000-8000-00805f9b34fb")
+        private val BATTERY_SERVICE_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
+        private val BATTERY_CHAR_UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
         private const val SCAN_TIMEOUT_MS = 12_000L
     }
 
@@ -228,9 +230,20 @@ class WatchSyncActivity : AppCompatActivity() {
             val ctsChar = g.getService(CTS_SERVICE_UUID)?.getCharacteristic(CTS_CHAR_UUID)
             if (ctsChar == null) {
                 runOnUiThread { appendLog(getString(R.string.watch_sync_log_no_cts)) }
-                return
+            } else {
+                writeCurrentTime(g, ctsChar)
             }
-            writeCurrentTime(g, ctsChar)
+
+            val batteryChar = g.getService(BATTERY_SERVICE_UUID)?.getCharacteristic(BATTERY_CHAR_UUID)
+            if (batteryChar == null) {
+                runOnUiThread { appendLog(getString(R.string.watch_sync_log_no_battery)) }
+            } else {
+                try {
+                    g.readCharacteristic(batteryChar)
+                } catch (e: SecurityException) {
+                    runOnUiThread { appendLog(getString(R.string.watch_sync_log_permission_error)) }
+                }
+            }
         }
 
         override fun onCharacteristicWrite(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
@@ -239,6 +252,19 @@ class WatchSyncActivity : AppCompatActivity() {
                     appendLog(getString(R.string.watch_sync_log_time_synced))
                 } else {
                     appendLog(getString(R.string.watch_sync_log_write_failed, status))
+                }
+            }
+        }
+
+        @Suppress("DEPRECATION")
+        override fun onCharacteristicRead(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+            if (characteristic.uuid != BATTERY_CHAR_UUID) return
+            runOnUiThread {
+                val percent = characteristic.value?.firstOrNull()?.toInt()?.and(0xFF)
+                if (status == BluetoothGatt.GATT_SUCCESS && percent != null) {
+                    appendLog(getString(R.string.watch_sync_log_battery, percent))
+                } else {
+                    appendLog(getString(R.string.watch_sync_log_battery_failed, status))
                 }
             }
         }
@@ -252,6 +278,7 @@ class WatchSyncActivity : AppCompatActivity() {
                 appendLog("    char ${c.uuid}")
             }
         }
+        appendLog(getString(R.string.watch_sync_steps_note))
     }
 
     /** Bluetooth SIG "Current Time Service" exact_time_256 payload (10 bytes). */

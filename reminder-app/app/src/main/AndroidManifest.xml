@@ -36,9 +36,14 @@
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
 
     <!-- Watch Sync: BLE scan/connect to nearby watches (Noise ColorFit etc.) to push time.
-         BLUETOOTH_SCAN/CONNECT are no-ops pre-31, where plain BLUETOOTH(_ADMIN) above covers it. -->
+         BLUETOOTH_SCAN/CONNECT are no-ops pre-31, where plain BLUETOOTH(_ADMIN) above covers it.
+         neverForLocation: we only read the device name/MAC/GATT services, never derive
+         location from scan results — without this flag, Android 12+ silently returns
+         zero scan results whenever the phone's system Location toggle is off, even
+         though the BLUETOOTH_SCAN runtime permission is granted. -->
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
-    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
+        android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
 

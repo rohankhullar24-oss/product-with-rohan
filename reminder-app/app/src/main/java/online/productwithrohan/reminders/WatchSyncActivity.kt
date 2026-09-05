@@ -14,6 +14,7 @@ import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -22,6 +23,7 @@ import java.util.Calendar
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.view.View
@@ -169,6 +171,9 @@ class WatchSyncActivity : AppCompatActivity() {
         if (!hasPermissions() || scanning) return
         foundDevices.clear()
         refreshDeviceList()
+        if (!isLocationEnabled()) {
+            appendLog(getString(R.string.watch_sync_log_location_off))
+        }
         appendLog(getString(R.string.watch_sync_log_scanning))
         scanning = true
         updateScanButton()
@@ -192,6 +197,20 @@ class WatchSyncActivity : AppCompatActivity() {
             // permission was revoked mid-scan; nothing more to clean up
         }
         appendLog(getString(R.string.watch_sync_log_scan_done, foundDevices.size))
+    }
+
+    /**
+     * Android's BLE scan silently returns zero results while system Location is
+     * off (this used to be unconditional; SCAN_MODE + neverForLocation lifts it on
+     * S+, but pre-S devices are still gated on this regardless of permissions).
+     */
+    private fun isLocationEnabled(): Boolean {
+        val lm = getSystemService(LocationManager::class.java) ?: return true
+        return try {
+            LocationManagerCompat.isLocationEnabled(lm)
+        } catch (e: Exception) {
+            true
+        }
     }
 
     private fun updateScanButton() {

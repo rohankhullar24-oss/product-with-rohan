@@ -29,6 +29,7 @@ import android.widget.Button
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import java.util.UUID
 
 /**
@@ -45,7 +46,10 @@ class WatchSyncActivity : AppCompatActivity() {
     companion object {
         private val CTS_SERVICE_UUID = UUID.fromString("00001805-0000-1000-8000-00805f9b34fb")
         private val CTS_CHAR_UUID = UUID.fromString("00002a2b-0000-1000-8000-00805f9b34fb")
+        private val BATTERY_SERVICE_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
+        private val BATTERY_CHAR_UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
         private const val SCAN_TIMEOUT_MS = 12_000L
+        private val MAC_ADDRESS_REGEX = Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
     }
 
     private lateinit var adapter: SimpleListAdapter<BluetoothDevice>
@@ -66,11 +70,17 @@ class WatchSyncActivity : AppCompatActivity() {
             if (result.resultCode == Activity.RESULT_OK) startScan()
         }
 
+    private var pendingMacFromQr: String? = null
+
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
-            if (granted.values.all { it }) ensureBluetoothOnThenScan() else {
+            if (!granted.values.all { it }) {
                 Toast.makeText(this, R.string.watch_sync_permission_denied, Toast.LENGTH_LONG).show()
+                return@registerForActivityResult
             }
+            val mac = pendingMacFromQr
+            pendingMacFromQr = null
+            if (mac != null) connectByMac(mac) else ensureBluetoothOnThenScan()
         }
 
     private val scanCallback = object : ScanCallback() {
@@ -98,6 +108,7 @@ class WatchSyncActivity : AppCompatActivity() {
         scanButton = findViewById(R.id.button_scan)
         logView = findViewById(R.id.log_view)
         logScroll = findViewById(R.id.log_scroll)
+        findViewById<Button>(R.id.button_scan_qr).setOnClickListener { scanQrCode() }
 
         adapter = SimpleListAdapter(
             title = { deviceName(it) ?: getString(R.string.watch_sync_unknown_device) },
@@ -194,6 +205,60 @@ class WatchSyncActivity : AppCompatActivity() {
         null
     }
 
+    // --- QR pairing -----------------------------------------------------
+
+    /**
+     * Most watches' "Download App & Pair" QR is just a dynamically-generated
+     * app-download link (why it looks different every scan), not a pairing
+     * secret — real BLE pairing still happens by device discovery. This is
+     * here as a fallback for watches that DO embed their MAC in the code, and
+     * as a diagnostic: the raw payload gets logged either way so we can see
+     * which case we're in.
+     */
+    private fun scanQrCode() {
+        GmsBarcodeScanning.getClient(this).startScan()
+            .addOnSuccessListener { barcode ->
+                val raw = barcode.rawValue
+                if (raw.isNullOrBlank()) {
+                    appendLog(getString(R.string.watch_sync_log_qr_empty))
+                } else {
+                    handleQrResult(raw)
+                }
+            }
+            .addOnFailureListener { e ->
+                appendLog(getString(R.string.watch_sync_log_qr_failed, e.message ?: e.toString()))
+            }
+    }
+
+    private fun handleQrResult(raw: String) {
+        appendLog(getString(R.string.watch_sync_log_qr_result, raw))
+        val mac = MAC_ADDRESS_REGEX.find(raw)?.value
+        if (mac == null) {
+            appendLog(getString(R.string.watch_sync_log_qr_no_mac))
+            return
+        }
+        appendLog(getString(R.string.watch_sync_log_qr_mac_found, mac))
+        if (hasPermissions()) {
+            connectByMac(mac)
+        } else {
+            pendingMacFromQr = mac
+            permissionLauncher.launch(requiredPermissions())
+        }
+    }
+
+    private fun connectByMac(mac: String) {
+        val device = try {
+            bluetoothManager?.adapter?.getRemoteDevice(mac)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+        if (device == null) {
+            appendLog(getString(R.string.watch_sync_log_qr_no_mac))
+            return
+        }
+        onDeviceSelected(device)
+    }
+
     // --- connect & sync -----------------------------------------------------
 
     private fun onDeviceSelected(device: BluetoothDevice) {
@@ -228,9 +293,20 @@ class WatchSyncActivity : AppCompatActivity() {
             val ctsChar = g.getService(CTS_SERVICE_UUID)?.getCharacteristic(CTS_CHAR_UUID)
             if (ctsChar == null) {
                 runOnUiThread { appendLog(getString(R.string.watch_sync_log_no_cts)) }
-                return
+            } else {
+                writeCurrentTime(g, ctsChar)
             }
-            writeCurrentTime(g, ctsChar)
+
+            val batteryChar = g.getService(BATTERY_SERVICE_UUID)?.getCharacteristic(BATTERY_CHAR_UUID)
+            if (batteryChar == null) {
+                runOnUiThread { appendLog(getString(R.string.watch_sync_log_no_battery)) }
+            } else {
+                try {
+                    g.readCharacteristic(batteryChar)
+                } catch (e: SecurityException) {
+                    runOnUiThread { appendLog(getString(R.string.watch_sync_log_permission_error)) }
+                }
+            }
         }
 
         override fun onCharacteristicWrite(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
@@ -239,6 +315,19 @@ class WatchSyncActivity : AppCompatActivity() {
                     appendLog(getString(R.string.watch_sync_log_time_synced))
                 } else {
                     appendLog(getString(R.string.watch_sync_log_write_failed, status))
+                }
+            }
+        }
+
+        @Suppress("DEPRECATION")
+        override fun onCharacteristicRead(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+            if (characteristic.uuid != BATTERY_CHAR_UUID) return
+            runOnUiThread {
+                val percent = characteristic.value?.firstOrNull()?.toInt()?.and(0xFF)
+                if (status == BluetoothGatt.GATT_SUCCESS && percent != null) {
+                    appendLog(getString(R.string.watch_sync_log_battery, percent))
+                } else {
+                    appendLog(getString(R.string.watch_sync_log_battery_failed, status))
                 }
             }
         }
@@ -252,6 +341,7 @@ class WatchSyncActivity : AppCompatActivity() {
                 appendLog("    char ${c.uuid}")
             }
         }
+        appendLog(getString(R.string.watch_sync_steps_note))
     }
 
     /** Bluetooth SIG "Current Time Service" exact_time_256 payload (10 bytes). */

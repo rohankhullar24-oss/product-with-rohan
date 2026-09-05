@@ -86,9 +86,12 @@ class WatchSyncActivity : AppCompatActivity() {
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val device = result.device
-            val name = deviceName(device) ?: return
+            // device.name relies on the OS's cached device info and is often null for a
+            // device that's never been paired, even though it IS broadcasting a name —
+            // the raw advertisement/scan-record name is the reliable source during a scan.
+            val name = result.scanRecord?.deviceName ?: deviceName(device)
             if (foundDevices.put(device.address, device) == null) {
-                appendLog(getString(R.string.watch_sync_log_found, name, device.address))
+                appendLog(getString(R.string.watch_sync_log_found, name ?: getString(R.string.watch_sync_unknown_device), device.address))
                 refreshDeviceList()
             }
         }

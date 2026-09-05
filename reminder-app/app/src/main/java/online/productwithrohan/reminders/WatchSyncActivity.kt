@@ -360,10 +360,21 @@ class WatchSyncActivity : AppCompatActivity() {
         for (service in services) {
             appendLog("  service ${service.uuid}")
             for (c in service.characteristics) {
-                appendLog("    char ${c.uuid}")
+                appendLog("    char ${c.uuid} [${characteristicPropsLabel(c)}]")
             }
         }
         appendLog(getString(R.string.watch_sync_steps_note))
+    }
+
+    /** Which operations a characteristic supports — narrows down which ones a vendor protocol likely uses for commands vs. responses. */
+    private fun characteristicPropsLabel(c: BluetoothGattCharacteristic): String {
+        val props = mutableListOf<String>()
+        if (c.properties and BluetoothGattCharacteristic.PROPERTY_READ != 0) props += "read"
+        if (c.properties and BluetoothGattCharacteristic.PROPERTY_WRITE != 0) props += "write"
+        if (c.properties and BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE != 0) props += "write-no-response"
+        if (c.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0) props += "notify"
+        if (c.properties and BluetoothGattCharacteristic.PROPERTY_INDICATE != 0) props += "indicate"
+        return if (props.isEmpty()) "none" else props.joinToString(",")
     }
 
     /** Bluetooth SIG "Current Time Service" exact_time_256 payload (10 bytes). */

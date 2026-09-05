@@ -29,6 +29,7 @@ import android.widget.Button
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
 import java.util.UUID
 
 /**
@@ -48,6 +49,7 @@ class WatchSyncActivity : AppCompatActivity() {
         private val BATTERY_SERVICE_UUID = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb")
         private val BATTERY_CHAR_UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb")
         private const val SCAN_TIMEOUT_MS = 12_000L
+        private val MAC_ADDRESS_REGEX = Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
     }
 
     private lateinit var adapter: SimpleListAdapter<BluetoothDevice>
@@ -68,11 +70,17 @@ class WatchSyncActivity : AppCompatActivity() {
             if (result.resultCode == Activity.RESULT_OK) startScan()
         }
 
+    private var pendingMacFromQr: String? = null
+
     private val permissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { granted ->
-            if (granted.values.all { it }) ensureBluetoothOnThenScan() else {
+            if (!granted.values.all { it }) {
                 Toast.makeText(this, R.string.watch_sync_permission_denied, Toast.LENGTH_LONG).show()
+                return@registerForActivityResult
             }
+            val mac = pendingMacFromQr
+            pendingMacFromQr = null
+            if (mac != null) connectByMac(mac) else ensureBluetoothOnThenScan()
         }
 
     private val scanCallback = object : ScanCallback() {
@@ -100,6 +108,7 @@ class WatchSyncActivity : AppCompatActivity() {
         scanButton = findViewById(R.id.button_scan)
         logView = findViewById(R.id.log_view)
         logScroll = findViewById(R.id.log_scroll)
+        findViewById<Button>(R.id.button_scan_qr).setOnClickListener { scanQrCode() }
 
         adapter = SimpleListAdapter(
             title = { deviceName(it) ?: getString(R.string.watch_sync_unknown_device) },
@@ -194,6 +203,60 @@ class WatchSyncActivity : AppCompatActivity() {
         device.name
     } catch (e: SecurityException) {
         null
+    }
+
+    // --- QR pairing -----------------------------------------------------
+
+    /**
+     * Most watches' "Download App & Pair" QR is just a dynamically-generated
+     * app-download link (why it looks different every scan), not a pairing
+     * secret — real BLE pairing still happens by device discovery. This is
+     * here as a fallback for watches that DO embed their MAC in the code, and
+     * as a diagnostic: the raw payload gets logged either way so we can see
+     * which case we're in.
+     */
+    private fun scanQrCode() {
+        GmsBarcodeScanning.getClient(this).startScan()
+            .addOnSuccessListener { barcode ->
+                val raw = barcode.rawValue
+                if (raw.isNullOrBlank()) {
+                    appendLog(getString(R.string.watch_sync_log_qr_empty))
+                } else {
+                    handleQrResult(raw)
+                }
+            }
+            .addOnFailureListener { e ->
+                appendLog(getString(R.string.watch_sync_log_qr_failed, e.message ?: e.toString()))
+            }
+    }
+
+    private fun handleQrResult(raw: String) {
+        appendLog(getString(R.string.watch_sync_log_qr_result, raw))
+        val mac = MAC_ADDRESS_REGEX.find(raw)?.value
+        if (mac == null) {
+            appendLog(getString(R.string.watch_sync_log_qr_no_mac))
+            return
+        }
+        appendLog(getString(R.string.watch_sync_log_qr_mac_found, mac))
+        if (hasPermissions()) {
+            connectByMac(mac)
+        } else {
+            pendingMacFromQr = mac
+            permissionLauncher.launch(requiredPermissions())
+        }
+    }
+
+    private fun connectByMac(mac: String) {
+        val device = try {
+            bluetoothManager?.adapter?.getRemoteDevice(mac)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
+        if (device == null) {
+            appendLog(getString(R.string.watch_sync_log_qr_no_mac))
+            return
+        }
+        onDeviceSelected(device)
     }
 
     // --- connect & sync -----------------------------------------------------

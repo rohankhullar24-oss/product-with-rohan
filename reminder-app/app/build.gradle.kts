@@ -41,6 +41,10 @@ dependencies {
     // Device biometric/lock-screen gate for the Journal section.
     implementation("androidx.biometric:biometric:1.1.0")
 
+    // Watch Sync: on-device QR scanner (Google Play services system UI —
+    // no camera permission or custom camera code needed in this app).
+    implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
+
     // The Claude usage layer, plus the AndroidX/Material dependencies it
     // exposes as api() — core-ktx, appcompat, material, work, security-crypto.
     implementation(project(":usage-core"))

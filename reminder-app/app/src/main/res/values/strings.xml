@@ -202,6 +202,12 @@
     <string name="watch_sync_log_battery">Battery: %1$d%%</string>
     <string name="watch_sync_log_battery_failed">Battery read failed (status %1$d).</string>
     <string name="watch_sync_steps_note">Steps, distance and calories aren\'t part of any standard Bluetooth service — no watch exposes those generically. Getting them here needs this watch\'s private protocol, which the service dump above is the first step toward figuring out.</string>
+    <string name="watch_sync_scan_qr">Scan watch\'s QR code instead</string>
+    <string name="watch_sync_log_qr_empty">QR scan returned no data.</string>
+    <string name="watch_sync_log_qr_failed">QR scan failed: %1$s</string>
+    <string name="watch_sync_log_qr_result">QR contents: %1$s</string>
+    <string name="watch_sync_log_qr_no_mac">No Bluetooth MAC address found in that QR — it\'s likely just an app-download link, not a pairing code.</string>
+    <string name="watch_sync_log_qr_mac_found">Found MAC address in QR: %1$s — connecting directly.</string>
 
     <!-- Auto Scheduler -->
     <string name="title_auto_scheduler">Auto Scheduler</string>

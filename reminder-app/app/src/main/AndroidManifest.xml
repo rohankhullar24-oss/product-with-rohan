@@ -35,6 +35,13 @@
     <!-- Auto Reply's "only while Bluetooth is on" condition; isEnabled() needs this pre-31, is unrestricted after. -->
     <uses-permission android:name="android.permission.BLUETOOTH" android:maxSdkVersion="30" />
 
+    <!-- Watch Sync: BLE scan/connect to nearby watches (Noise ColorFit etc.) to push time.
+         BLUETOOTH_SCAN/CONNECT are no-ops pre-31, where plain BLUETOOTH(_ADMIN) above covers it. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-feature android:name="android.hardware.bluetooth_le" android:required="false" />
+
     <application
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
@@ -131,6 +138,11 @@
           into the ones it uses. The reset alarm classes are separate from this
           app's own reminder alarm stack, so the two never collide.
         -->
+        <activity
+            android:name=".WatchSyncActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
         <activity
             android:name=".ClaudeAlertsActivity"
             android:exported="false"

@@ -178,6 +178,27 @@
     <string name="alerts_disclaimer">Reads the same usage data as the Claude website. Anthropic publishes no API for subscription limits, so this can break without notice.</string>
     <string name="alerts_disconnect">Disconnect Claude</string>
 
+    <!-- Watch Sync -->
+    <string name="title_watch_sync">Watch Sync</string>
+    <string name="watch_sync_start_scan">Scan for watches</string>
+    <string name="watch_sync_stop_scan">Stop scan</string>
+    <string name="watch_sync_unknown_device">Unnamed device</string>
+    <string name="watch_sync_permission_denied">Bluetooth permission is needed to scan for your watch.</string>
+    <string name="watch_sync_no_bluetooth">This device has no Bluetooth adapter.</string>
+    <string name="watch_sync_log_intro">Tap Scan, then pick your watch from the list once it shows up.</string>
+    <string name="watch_sync_log_scanning">Scanning…</string>
+    <string name="watch_sync_log_found">Found: %1$s (%2$s)</string>
+    <string name="watch_sync_log_scan_failed">Scan failed (error %1$d).</string>
+    <string name="watch_sync_log_scan_done">Scan stopped. %1$d device(s) found.</string>
+    <string name="watch_sync_log_connecting">Connecting to %1$s…</string>
+    <string name="watch_sync_log_connected">Connected. Discovering services…</string>
+    <string name="watch_sync_log_disconnected">Disconnected.</string>
+    <string name="watch_sync_log_permission_error">Missing Bluetooth permission for this action.</string>
+    <string name="watch_sync_log_services_header">Found %1$d service(s):</string>
+    <string name="watch_sync_log_no_cts">This watch does not expose the standard Current Time Service — it needs vendor-specific syncing, not supported yet. See the service list above.</string>
+    <string name="watch_sync_log_time_synced">Time synced to the watch ✓</string>
+    <string name="watch_sync_log_write_failed">Time write failed (status %1$d).</string>
+
     <!-- Auto Scheduler -->
     <string name="title_auto_scheduler">Auto Scheduler</string>
     <string name="auto_tab_pending">Pending</string>

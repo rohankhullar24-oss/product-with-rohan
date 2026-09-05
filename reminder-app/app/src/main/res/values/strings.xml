@@ -189,6 +189,14 @@
     <string name="watch_sync_log_scanning">Scanning…</string>
     <string name="watch_sync_log_location_off">Your phone\'s Location is turned OFF — on Android, BLE scans silently find 0 devices while Location is off, even with Bluetooth permission granted. Turn Location on in Settings, then scan again.</string>
     <string name="watch_sync_log_vendor_protocol">No standard Current Time Service — trying this watch\'s vendor time-sync protocol instead…</string>
+    <string name="watch_sync_send_test_notification">Send test notification</string>
+    <string name="watch_sync_read_battery">Read battery (vendor protocol)</string>
+    <string name="watch_sync_log_not_connected">Not connected to a watch.</string>
+    <string name="watch_sync_log_no_vendor_service">This watch doesn\'t expose the vendor protocol service.</string>
+    <string name="watch_sync_log_notification_sent">Test notification sent.</string>
+    <string name="watch_sync_log_battery_request_sent">Battery request sent, waiting for response…</string>
+    <string name="watch_sync_log_vendor_battery">Battery (vendor protocol): %1$d%%</string>
+    <string name="watch_sync_log_vendor_response_unparseable">Got a watch response but couldn\'t find the expected field in it.</string>
     <string name="watch_sync_log_found">Found: %1$s (%2$s)</string>
     <string name="watch_sync_log_scan_failed">Scan failed (error %1$d).</string>
     <string name="watch_sync_log_scan_done">Scan stopped. %1$d device(s) found.</string>

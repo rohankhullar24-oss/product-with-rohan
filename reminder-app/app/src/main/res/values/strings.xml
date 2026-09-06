@@ -227,6 +227,11 @@
     <string name="watch_sync_log_vendor_response_unparseable">Got a watch response but couldn\'t find the expected field in it.</string>
     <string name="watch_sync_log_vendor_write_sent">Sent to watch (write-without-response — check the watch itself to confirm it took effect).</string>
     <string name="watch_sync_log_bind_request_sent">Requesting device-binding state…</string>
+    <string name="watch_sync_log_no_notify_char">Vendor notify characteristic not found — no responses (bind state, battery, heart rate) can ever be received on this connection.</string>
+    <string name="watch_sync_log_notify_registered">Local notification registration for the watch\'s reply channel: %1$s</string>
+    <string name="watch_sync_log_no_cccd">This watch\'s reply channel has no standard notification-config descriptor — relying on local registration alone to receive responses (bind state, battery, heart rate). If none ever arrive, this watch needs a different way to enable notifications.</string>
+    <string name="watch_sync_log_no_bind_response">No response to the device-binding request after %1$d seconds — the watch will likely stay on its \"Download App &amp; Pair\" screen until this is fixed.</string>
+    <string name="watch_sync_log_cccd_write_result">Notification-config descriptor write status: %1$d (0 = success)</string>
     <string name="watch_sync_log_bind_state_received">Bind check result: %1$s (0 = success)</string>
     <string name="watch_sync_log_bind_no_key">Bind check did not succeed — app-level bind confirmation not attempted.</string>
     <string name="watch_sync_log_bind_device_sent">App-level bind confirmation sent (cmd 18, with a fresh app-generated token).</string>

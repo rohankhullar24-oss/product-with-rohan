@@ -96,6 +96,7 @@ class WatchSyncActivity : AppCompatActivity() {
         private val ZH_ACK_ALL_RECEIVED = byteArrayOf(0, 0, 1, 0, 0, 0)
 
         private const val SCAN_TIMEOUT_MS = 12_000L
+        private const val BIND_RESPONSE_TIMEOUT_MS = 8_000L
         private val MAC_ADDRESS_REGEX = Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
     }
 
@@ -623,6 +624,9 @@ class WatchSyncActivity : AppCompatActivity() {
 
         override fun onDescriptorWrite(g: BluetoothGatt, descriptor: android.bluetooth.BluetoothGattDescriptor, status: Int) {
             if (g !== gatt) return
+            if (descriptor.uuid == CCCD_UUID) {
+                runOnUiThread { appendLog(getString(R.string.watch_sync_log_cccd_write_result, status)) }
+            }
             runNextGattOp()
         }
 
@@ -731,15 +735,36 @@ class WatchSyncActivity : AppCompatActivity() {
 
     // --- vendor protocol: notifications + battery read -----------------------------------
 
+    /**
+     * Every request/response exchange (bind-state, battery, real-time HR) depends entirely on
+     * this succeeding — if the watch never actually notifies, every write still reports success
+     * (write-without-response gives no peripheral ack either way) while every response silently
+     * never arrives, which is indistinguishable from "the watch ignored us" without the logging
+     * added here. Previously this bailed out with NO log line at all if the characteristic had no
+     * standard 0x2902 CCCD descriptor — plausible on a cheap BLE SoC that streams notifications
+     * once the phone's local stack has registered for them via setCharacteristicNotification(),
+     * without requiring (or even exposing) the over-the-air descriptor write. That local
+     * registration is now unconditional; the CCCD write only happens if the descriptor exists.
+     */
     @Suppress("DEPRECATION")
     private fun enableVendorResponseNotifications(g: BluetoothGatt) {
-        val char01 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_01_UUID) ?: return
-        val cccd = char01.getDescriptor(CCCD_UUID) ?: return
+        val char01 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_01_UUID)
+        if (char01 == null) {
+            appendLog(getString(R.string.watch_sync_log_no_notify_char))
+            return
+        }
+        val cccd = char01.getDescriptor(CCCD_UUID)
         enqueueGattOp {
             try {
-                g.setCharacteristicNotification(char01, true)
-                cccd.value = android.bluetooth.BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                g.writeDescriptor(cccd)
+                val registered = g.setCharacteristicNotification(char01, true)
+                appendLog(getString(R.string.watch_sync_log_notify_registered, registered))
+                if (cccd != null) {
+                    cccd.value = android.bluetooth.BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                    g.writeDescriptor(cccd)
+                } else {
+                    appendLog(getString(R.string.watch_sync_log_no_cccd))
+                    runNextGattOp()
+                }
             } catch (e: SecurityException) {
                 appendLog(getString(R.string.watch_sync_log_permission_error))
                 runNextGattOp()
@@ -757,6 +782,16 @@ class WatchSyncActivity : AppCompatActivity() {
         pushPendingResponse(ZH_CMD_REQUEST_BIND_STATE)
         writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_REQUEST_BIND_STATE)
         appendLog(getString(R.string.watch_sync_log_bind_request_sent))
+        // This is the request whose response gates the watch's own "Download App & Pair" screen
+        // (its reply is what triggers the cmd-18 confirmation that actually completes binding) —
+        // if it never gets a reply, the watch never leaves that screen. Surface that explicitly
+        // instead of leaving it indistinguishable from "still waiting".
+        val bindGatt = g
+        handler.postDelayed({
+            if (bindGatt === gatt && pendingResponseCmdIds.contains(ZH_CMD_REQUEST_BIND_STATE)) {
+                appendLog(getString(R.string.watch_sync_log_no_bind_response, BIND_RESPONSE_TIMEOUT_MS / 1000))
+            }
+        }, BIND_RESPONSE_TIMEOUT_MS)
     }
 
     /**

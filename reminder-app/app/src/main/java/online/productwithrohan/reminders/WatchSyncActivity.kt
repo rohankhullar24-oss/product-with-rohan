@@ -108,6 +108,41 @@ class WatchSyncActivity : AppCompatActivity() {
     private var pendingResponseCmdId: Int? = null
     private var lastVendorWriteCmdId: Int? = null
 
+    // Android's BluetoothGatt allows only ONE outstanding write/read/descriptor-write at a
+    // time — issuing a second before the first's callback fires silently drops it (this is
+    // exactly what was happening: enabling notifications, the bind request, and time sync were
+    // all fired back-to-back in onServicesDiscovered, so most of them never actually went out).
+    // Every raw GATT operation must go through this queue instead of calling the API directly.
+    private val gattOpQueue = ArrayDeque<() -> Unit>()
+    private var gattOpInFlight = false
+
+    // GATT callbacks land on their own dispatch thread, not the main thread these functions are
+    // otherwise called from (button clicks) — synchronize queue mutation against that race.
+    @Synchronized
+    private fun enqueueGattOp(op: () -> Unit) {
+        gattOpQueue.addLast(op)
+        if (!gattOpInFlight) runNextGattOpLocked()
+    }
+
+    @Synchronized
+    private fun runNextGattOp() = runNextGattOpLocked()
+
+    private fun runNextGattOpLocked() {
+        val op = gattOpQueue.removeFirstOrNull()
+        if (op == null) {
+            gattOpInFlight = false
+            return
+        }
+        gattOpInFlight = true
+        op()
+    }
+
+    @Synchronized
+    private fun resetGattOpQueue() {
+        gattOpQueue.clear()
+        gattOpInFlight = false
+    }
+
     private val bluetoothManager by lazy { getSystemService(BluetoothManager::class.java) }
     private val bleScanner by lazy { bluetoothManager?.adapter?.bluetoothLeScanner }
 
@@ -353,6 +388,7 @@ class WatchSyncActivity : AppCompatActivity() {
         appendLog(getString(R.string.watch_sync_log_connecting, name))
         statusSubtitle.text = getString(R.string.watch_sync_status_connecting, name)
         sectionControls.visibility = View.GONE
+        resetGattOpQueue()
         gatt?.close()
         gatt = try {
             device.connectGatt(this, false, gattCallback)
@@ -377,6 +413,7 @@ class WatchSyncActivity : AppCompatActivity() {
                     runOnUiThread { appendLog(getString(R.string.watch_sync_log_permission_error)) }
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                resetGattOpQueue()
                 runOnUiThread {
                     appendLog(getString(R.string.watch_sync_log_disconnected))
                     statusHeadline.setText(R.string.watch_sync_status_not_connected)
@@ -419,10 +456,13 @@ class WatchSyncActivity : AppCompatActivity() {
             if (batteryChar == null) {
                 runOnUiThread { appendLog(getString(R.string.watch_sync_log_no_battery)) }
             } else {
-                try {
-                    g.readCharacteristic(batteryChar)
-                } catch (e: SecurityException) {
-                    runOnUiThread { appendLog(getString(R.string.watch_sync_log_permission_error)) }
+                enqueueGattOp {
+                    try {
+                        g.readCharacteristic(batteryChar)
+                    } catch (e: SecurityException) {
+                        runOnUiThread { appendLog(getString(R.string.watch_sync_log_permission_error)) }
+                        runNextGattOp()
+                    }
                 }
             }
         }
@@ -449,20 +489,27 @@ class WatchSyncActivity : AppCompatActivity() {
                     }
                 }
             }
+            runNextGattOp()
         }
 
         @Suppress("DEPRECATION")
         override fun onCharacteristicRead(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
-            if (characteristic.uuid != BATTERY_CHAR_UUID) return
-            runOnUiThread {
-                val percent = characteristic.value?.firstOrNull()?.toInt()?.and(0xFF)
-                if (status == BluetoothGatt.GATT_SUCCESS && percent != null) {
-                    appendLog(getString(R.string.watch_sync_log_battery, percent))
-                    batteryResult.text = getString(R.string.watch_sync_log_vendor_battery, percent)
-                } else {
-                    appendLog(getString(R.string.watch_sync_log_battery_failed, status))
+            if (characteristic.uuid == BATTERY_CHAR_UUID) {
+                runOnUiThread {
+                    val percent = characteristic.value?.firstOrNull()?.toInt()?.and(0xFF)
+                    if (status == BluetoothGatt.GATT_SUCCESS && percent != null) {
+                        appendLog(getString(R.string.watch_sync_log_battery, percent))
+                        batteryResult.text = getString(R.string.watch_sync_log_vendor_battery, percent)
+                    } else {
+                        appendLog(getString(R.string.watch_sync_log_battery_failed, status))
+                    }
                 }
             }
+            runNextGattOp()
+        }
+
+        override fun onDescriptorWrite(g: BluetoothGatt, descriptor: android.bluetooth.BluetoothGattDescriptor, status: Int) {
+            runNextGattOp()
         }
 
         @Suppress("DEPRECATION")
@@ -511,13 +558,16 @@ class WatchSyncActivity : AppCompatActivity() {
             0, // fractions256
             0, // adjust reason: manual time update
         )
-        try {
-            @Suppress("DEPRECATION")
-            characteristic.value = payload
-            @Suppress("DEPRECATION")
-            g.writeCharacteristic(characteristic)
-        } catch (e: SecurityException) {
-            appendLog(getString(R.string.watch_sync_log_permission_error))
+        enqueueGattOp {
+            try {
+                @Suppress("DEPRECATION")
+                characteristic.value = payload
+                @Suppress("DEPRECATION")
+                g.writeCharacteristic(characteristic)
+            } catch (e: SecurityException) {
+                appendLog(getString(R.string.watch_sync_log_permission_error))
+                runNextGattOp()
+            }
         }
     }
 
@@ -570,13 +620,16 @@ class WatchSyncActivity : AppCompatActivity() {
     @Suppress("DEPRECATION")
     private fun enableVendorResponseNotifications(g: BluetoothGatt) {
         val char01 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_01_UUID) ?: return
-        try {
-            g.setCharacteristicNotification(char01, true)
-            val cccd = char01.getDescriptor(CCCD_UUID) ?: return
-            cccd.value = android.bluetooth.BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-            g.writeDescriptor(cccd)
-        } catch (e: SecurityException) {
-            appendLog(getString(R.string.watch_sync_log_permission_error))
+        val cccd = char01.getDescriptor(CCCD_UUID) ?: return
+        enqueueGattOp {
+            try {
+                g.setCharacteristicNotification(char01, true)
+                cccd.value = android.bluetooth.BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                g.writeDescriptor(cccd)
+            } catch (e: SecurityException) {
+                appendLog(getString(R.string.watch_sync_log_permission_error))
+                runNextGattOp()
+            }
         }
     }
 
@@ -740,15 +793,18 @@ class WatchSyncActivity : AppCompatActivity() {
      * NOT that the watch received or processed it (write-without-response gets no peripheral ack).
      */
     private fun writeVendorRaw(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, bytes: ByteArray) {
-        try {
-            @Suppress("DEPRECATION")
-            characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
-            @Suppress("DEPRECATION")
-            characteristic.value = bytes
-            @Suppress("DEPRECATION")
-            g.writeCharacteristic(characteristic)
-        } catch (e: SecurityException) {
-            appendLog(getString(R.string.watch_sync_log_permission_error))
+        enqueueGattOp {
+            try {
+                @Suppress("DEPRECATION")
+                characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                @Suppress("DEPRECATION")
+                characteristic.value = bytes
+                @Suppress("DEPRECATION")
+                g.writeCharacteristic(characteristic)
+            } catch (e: SecurityException) {
+                appendLog(getString(R.string.watch_sync_log_permission_error))
+                runNextGattOp()
+            }
         }
     }
 

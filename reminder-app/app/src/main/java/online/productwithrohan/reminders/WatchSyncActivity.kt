@@ -89,11 +89,26 @@ class WatchSyncActivity : AppCompatActivity() {
         private const val ZH_REALTIME_HR_SETTINGS_FIELD = 38
         private const val ZH_REALTIME_HR_DATA_FIELD = 39
 
-        // Fixed 6-byte ACKs the SDK writes back on CHAR_01 while receiving a multi-packet reply
-        // (decompiled from com.zhapp.ble.a: a.d() / outer a()) — [0,0,1,X,0,0] where X=1 means
+        // Fixed 6-byte ACKs the phone writes back on CHAR_01 while RECEIVING a multi-packet reply
+        // (decompiled from com.zhapp.ble.a: a.d() / zero-arg a()) — [0,0,1,X,0,0] where X=1 means
         // "header received, send data" and X=0 means "all packets received".
         private val ZH_ACK_READY_FOR_DATA = byteArrayOf(0, 0, 1, 1, 0, 0)
         private val ZH_ACK_ALL_RECEIVED = byteArrayOf(0, 0, 1, 0, 0, 0)
+
+        // Flow-control frames the WATCH sends back on CHAR_02 while receiving a command from us
+        // (decompiled from BluetoothService.j(byte[]), the CHAR_02 notification handler). These
+        // are the other half of the write protocol: a command is not "sent" by writing its bytes,
+        // it's a handshake — see sendVendorCommand() below.
+        private const val ZH_FLOW_READY_FOR_DATA = 1 // watch: "header accepted, send the packets"
+        private const val ZH_FLOW_DEVICE_BUSY = 2
+        private const val ZH_FLOW_ALL_RECEIVED = 3 // watch: "command fully received"
+        private const val ZH_FLOW_PACKET_LOST = 5 // watch: "resend packet N" (N in bytes 4-5)
+
+        // The SDK assumes a 244-byte usable ATT payload (com.zhapp.ble.BluetoothService.k = 244)
+        // and splits commands into (payload - 2)-byte chunks, the 2 bytes being the packet index
+        // prefix. Android defaults to a 23-byte MTU (20 usable) unless we ask for more.
+        private const val ZH_DEFAULT_PAYLOAD_SIZE = 244
+        private const val ZH_DESIRED_MTU = ZH_DEFAULT_PAYLOAD_SIZE + 3
 
         private const val SCAN_TIMEOUT_MS = 12_000L
         private const val BIND_RESPONSE_TIMEOUT_MS = 8_000L
@@ -125,6 +140,21 @@ class WatchSyncActivity : AppCompatActivity() {
     private var receivedPackets: Array<ByteArray?>? = null
     private var receivedPacketNum = 0
     private var heartRateStreaming = false
+
+    // Outgoing vendor commands. A command is NOT delivered by writing its bytes to CHAR_02 —
+    // that's what every earlier version of this screen did, and it's why nothing the app sent
+    // ever took effect. The real protocol (decompiled from BluetoothService's CMD thread +
+    // sendBleData2() + the CHAR_02 notification handler) is a handshake:
+    //   1. phone → CHAR_02: header [0,0,0,0,packetCount_lo,packetCount_hi]
+    //   2. watch → CHAR_02: [0,0,1,1,0,0]  "ready, send the packets"
+    //   3. phone → CHAR_02: [index_lo,index_hi] + chunk, for index 1..packetCount
+    //   4. watch → CHAR_02: [0,0,1,3,0,0]  "command fully received"  (or [0,0,1,5,N,0] resend N)
+    // Only one command can be in flight at a time, so the rest queue up behind it.
+    private val outgoingCommands = ArrayDeque<Pair<Int?, ByteArray>>()
+    private var currentOutgoing: ByteArray? = null
+    private var currentOutgoingCmdId: Int? = null
+    private var currentOutgoingPacketCount = 0
+    private var vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
 
     // Requests that expect an async reply over CHAR_01 (bind-state check, battery) are matched
     // to their response FIFO, in send order — a single shared field here would let a manual
@@ -188,6 +218,11 @@ class WatchSyncActivity : AppCompatActivity() {
         gattOpInFlight = false
         currentGattOpCmdId = null
         pendingResponseCmdIds.clear()
+        outgoingCommands.clear()
+        currentOutgoing = null
+        currentOutgoingCmdId = null
+        currentOutgoingPacketCount = 0
+        vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
     }
 
     private val bluetoothManager by lazy { getSystemService(BluetoothManager::class.java) }
@@ -546,6 +581,10 @@ class WatchSyncActivity : AppCompatActivity() {
             val zhTimeChar = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
 
             if (zhTimeChar != null) {
+                // Order matters: negotiate the MTU the SDK's chunking assumes, subscribe to both
+                // vendor channels, and only then send anything — a command written before the
+                // CHAR_02 subscription exists can never complete its handshake.
+                requestVendorMtu(g)
                 enableVendorResponseNotifications(g)
                 requestDeviceBindState(g, zhTimeChar)
             }
@@ -633,8 +672,20 @@ class WatchSyncActivity : AppCompatActivity() {
         @Suppress("DEPRECATION")
         override fun onCharacteristicChanged(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
             if (g !== gatt) return
-            if (characteristic.uuid != ZH_PROTOBUF_CHAR_01_UUID) return
-            handleVendorResponsePacket(g, characteristic.value ?: return)
+            val value = characteristic.value ?: return
+            when (characteristic.uuid) {
+                // CHAR_01 carries response data; CHAR_02 carries flow control for what we send.
+                ZH_PROTOBUF_CHAR_01_UUID -> handleVendorResponsePacket(g, value)
+                ZH_PROTOBUF_CHAR_02_UUID -> handleVendorFlowControl(value)
+            }
+        }
+
+        override fun onMtuChanged(g: BluetoothGatt, mtu: Int, status: Int) {
+            if (g !== gatt) return
+            // The usable ATT payload is MTU - 3; the SDK's own chunking assumes 244 of those.
+            vendorPayloadSize = (mtu - 3).coerceIn(18, ZH_DEFAULT_PAYLOAD_SIZE)
+            runOnUiThread { appendLog(getString(R.string.watch_sync_log_mtu, mtu, vendorPayloadSize)) }
+            runNextGattOp()
         }
     }
 
@@ -712,8 +763,7 @@ class WatchSyncActivity : AppCompatActivity() {
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SET_TIME.toLong()) // id
         appendProtoTag(wear, 5, 2); appendVarint(wear, systemTime.size.toLong()); wear.addAll(systemTime) // systemTime
 
-        // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
-        writeVendorRaw(g, characteristic, byteArrayOf(1, 0) + wear.toByteArray(), ZH_CMD_SET_TIME)
+        writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_SET_TIME)
     }
 
     private fun appendProtoTag(out: MutableList<Byte>, fieldNumber: Int, wireType: Int) =
@@ -748,16 +798,26 @@ class WatchSyncActivity : AppCompatActivity() {
      */
     @Suppress("DEPRECATION")
     private fun enableVendorResponseNotifications(g: BluetoothGatt) {
-        val char01 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_01_UUID)
-        if (char01 == null) {
+        // Both channels matter: CHAR_01 delivers response data, CHAR_02 delivers the flow-control
+        // frames that drive every command we send. Subscribing only to CHAR_01 (what this did
+        // before) means the watch's "ready, send the packets" is never heard, so no command we
+        // write is ever actually delivered.
+        enableNotificationsFor(g, ZH_PROTOBUF_CHAR_01_UUID)
+        enableNotificationsFor(g, ZH_PROTOBUF_CHAR_02_UUID)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun enableNotificationsFor(g: BluetoothGatt, charUuid: UUID) {
+        val characteristic = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(charUuid)
+        if (characteristic == null) {
             appendLog(getString(R.string.watch_sync_log_no_notify_char))
             return
         }
-        val cccd = char01.getDescriptor(CCCD_UUID)
+        val cccd = characteristic.getDescriptor(CCCD_UUID)
         enqueueGattOp {
             try {
-                val registered = g.setCharacteristicNotification(char01, true)
-                appendLog(getString(R.string.watch_sync_log_notify_registered, registered))
+                val registered = g.setCharacteristicNotification(characteristic, true)
+                appendLog(getString(R.string.watch_sync_log_notify_registered, "$charUuid=$registered"))
                 if (cccd != null) {
                     cccd.value = android.bluetooth.BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
                     g.writeDescriptor(cccd)
@@ -765,6 +825,18 @@ class WatchSyncActivity : AppCompatActivity() {
                     appendLog(getString(R.string.watch_sync_log_no_cccd))
                     runNextGattOp()
                 }
+            } catch (e: SecurityException) {
+                appendLog(getString(R.string.watch_sync_log_permission_error))
+                runNextGattOp()
+            }
+        }
+    }
+
+    /** The SDK chunks to a 244-byte payload; Android gives 20 unless we negotiate up. */
+    private fun requestVendorMtu(g: BluetoothGatt) {
+        enqueueGattOp {
+            try {
+                if (!g.requestMtu(ZH_DESIRED_MTU)) runNextGattOp()
             } catch (e: SecurityException) {
                 appendLog(getString(R.string.watch_sync_log_permission_error))
                 runNextGattOp()
@@ -972,14 +1044,101 @@ class WatchSyncActivity : AppCompatActivity() {
         batteryResult.setText(R.string.watch_sync_card_battery_checking)
     }
 
+    /**
+     * Queues a command for the header → ready → packets → done handshake described on
+     * [outgoingCommands]. Writing the payload straight to CHAR_02 (what this used to do) makes the
+     * watch discard it: it only accepts data packets for a transfer it has already acknowledged.
+     */
+    @Synchronized
     private fun writeVendorPacket(
         g: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic,
         wearBytes: ByteArray,
         cmdId: Int? = null,
     ) {
-        // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
-        writeVendorRaw(g, characteristic, byteArrayOf(1, 0) + wearBytes, cmdId)
+        outgoingCommands.addLast(cmdId to wearBytes)
+        if (currentOutgoing == null) startNextVendorCommandLocked()
+    }
+
+    /** Writes the header frame that opens the handshake for the next queued command. */
+    private fun startNextVendorCommandLocked() {
+        val next = outgoingCommands.removeFirstOrNull()
+        if (next == null) {
+            currentOutgoing = null
+            currentOutgoingCmdId = null
+            return
+        }
+        val g = gatt
+        val char02 = g?.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
+        if (g == null || char02 == null) {
+            currentOutgoing = null
+            currentOutgoingCmdId = null
+            return
+        }
+        val (cmdId, wearBytes) = next
+        currentOutgoing = wearBytes
+        currentOutgoingCmdId = cmdId
+
+        val chunkSize = (vendorPayloadSize - 2).coerceAtLeast(1)
+        val count = (wearBytes.size + chunkSize - 1) / chunkSize
+        currentOutgoingPacketCount = count
+        val header = byteArrayOf(0, 0, 0, 0, (count and 0xFF).toByte(), ((count shr 8) and 0xFF).toByte())
+        writeVendorRaw(g, char02, header, cmdId)
+    }
+
+    /** Step 3: the watch acknowledged the header, so stream the payload out in indexed chunks. */
+    private fun sendCurrentVendorChunks() {
+        val wearBytes = currentOutgoing ?: return
+        val g = gatt ?: return
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
+        val chunkSize = (vendorPayloadSize - 2).coerceAtLeast(1)
+        for (index in 1..currentOutgoingPacketCount) {
+            val start = (index - 1) * chunkSize
+            val end = minOf(start + chunkSize, wearBytes.size)
+            val chunk = wearBytes.copyOfRange(start, end)
+            val framed = byteArrayOf((index and 0xFF).toByte(), ((index shr 8) and 0xFF).toByte()) + chunk
+            writeVendorRaw(g, char02, framed, currentOutgoingCmdId)
+        }
+    }
+
+    /** Resends a single packet the watch reported as lost ([ZH_FLOW_PACKET_LOST]). */
+    private fun resendVendorChunk(index: Int) {
+        val wearBytes = currentOutgoing ?: return
+        val g = gatt ?: return
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
+        val chunkSize = (vendorPayloadSize - 2).coerceAtLeast(1)
+        val start = (index - 1) * chunkSize
+        if (index < 1 || start >= wearBytes.size) return
+        val end = minOf(start + chunkSize, wearBytes.size)
+        val framed = byteArrayOf((index and 0xFF).toByte(), ((index shr 8) and 0xFF).toByte()) +
+            wearBytes.copyOfRange(start, end)
+        writeVendorRaw(g, char02, framed, currentOutgoingCmdId)
+    }
+
+    /**
+     * CHAR_02 notifications are the watch's flow control for commands we send (decompiled from
+     * BluetoothService.j(byte[])) — distinct from CHAR_01, which carries actual response data.
+     */
+    @Synchronized
+    private fun handleVendorFlowControl(data: ByteArray) {
+        if (data.size < 6) return
+        if (data[0] != 0.toByte() || data[1] != 0.toByte() || data[2] != 1.toByte()) return
+        when (data[3].toInt()) {
+            ZH_FLOW_READY_FOR_DATA -> {
+                appendLog(getString(R.string.watch_sync_log_flow_ready, currentOutgoingPacketCount))
+                sendCurrentVendorChunks()
+            }
+            ZH_FLOW_ALL_RECEIVED -> {
+                appendLog(getString(R.string.watch_sync_log_flow_received, currentOutgoingCmdId ?: -1))
+                startNextVendorCommandLocked()
+            }
+            ZH_FLOW_PACKET_LOST -> {
+                val index = (data[4].toInt() and 0xFF) or ((data[5].toInt() and 0xFF) shl 8)
+                appendLog(getString(R.string.watch_sync_log_flow_resend, index))
+                resendVendorChunk(index)
+            }
+            ZH_FLOW_DEVICE_BUSY -> appendLog(getString(R.string.watch_sync_log_flow_busy))
+        }
     }
 
     /**

@@ -211,6 +211,12 @@
     <string name="watch_sync_card_battery_title">Battery</string>
     <string name="watch_sync_card_battery_subtitle">Read the watch\'s battery level.</string>
     <string name="watch_sync_card_battery_checking">Checking…</string>
+    <string name="watch_sync_card_heart_rate_title">Heart rate</string>
+    <string name="watch_sync_card_heart_rate_subtitle">Stream live heart rate from the watch.</string>
+    <string name="watch_sync_start_heart_rate">Start</string>
+    <string name="watch_sync_stop_heart_rate">Stop</string>
+    <string name="watch_sync_card_heart_rate_live">%1$d bpm (updated live)</string>
+    <string name="watch_sync_card_heart_rate_enabling">Enabling…</string>
     <string name="watch_sync_show_log">Show technical log ▾</string>
     <string name="watch_sync_hide_log">Hide technical log ▴</string>
     <string name="watch_sync_log_not_connected">Not connected to a watch.</string>
@@ -250,6 +256,9 @@
     <string name="watch_sync_log_qr_result">QR contents: %1$s</string>
     <string name="watch_sync_log_qr_no_mac">No Bluetooth MAC address found in that QR — it\'s likely just an app-download link, not a pairing code.</string>
     <string name="watch_sync_log_qr_mac_found">Found MAC address in QR: %1$s — connecting directly.</string>
+    <string name="watch_sync_log_heart_rate_enable_sent">Real-time heart rate enable request sent (cmd 731).</string>
+    <string name="watch_sync_log_heart_rate_disable_sent">Real-time heart rate disabled (cmd 731).</string>
+    <string name="watch_sync_log_heart_rate_reading">Heart rate: %1$d bpm</string>
 
     <!-- Auto Scheduler -->
     <string name="title_auto_scheduler">Auto Scheduler</string>

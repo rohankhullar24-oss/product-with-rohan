@@ -77,6 +77,18 @@ class WatchSyncActivity : AppCompatActivity() {
         private const val ZH_CMD_REQUEST_BIND_STATE = 16
         private const val ZH_CMD_SEND_APP_BIND_RESULT = 18
 
+        // Real-time heart rate: cmd 731 (setRealTimeHeartRateConfig), confirmed against the real
+        // NoiseFit app's own generated protobuf classes (com.zh.ble.wear.protobuf.SettingMenuProtos,
+        // decompiled from a later NoiseFit build than the one WATCH_SYNC_PROTOCOL.md was originally
+        // written against). SEWear.settingMenu is field 15; SESettingMenu.realTimeHeartRateSettings
+        // is field 38 (the enable/config request); the watch pushes readings back, unsolicited, as
+        // SESettingMenu.realTimeHeartRateData, field 39 (SERealTimeHeartRateData{ timestamp: field 1
+        // uint32, value: field 2 uint32 } — both confirmed via SettingMenuProtos' writeTo()).
+        private const val ZH_CMD_SET_REALTIME_HEART_RATE = 731
+        private const val ZH_SETTING_MENU_FIELD = 15
+        private const val ZH_REALTIME_HR_SETTINGS_FIELD = 38
+        private const val ZH_REALTIME_HR_DATA_FIELD = 39
+
         // Fixed 6-byte ACKs the SDK writes back on CHAR_01 while receiving a multi-packet reply
         // (decompiled from com.zhapp.ble.a: a.d() / outer a()) — [0,0,1,X,0,0] where X=1 means
         // "header received, send data" and X=0 means "all packets received".
@@ -99,6 +111,8 @@ class WatchSyncActivity : AppCompatActivity() {
     private lateinit var timeResult: TextView
     private lateinit var notificationResult: TextView
     private lateinit var batteryResult: TextView
+    private lateinit var heartRateResult: TextView
+    private lateinit var heartRateButton: Button
 
     private val handler = Handler(Looper.getMainLooper())
     private val foundDevices = LinkedHashMap<String, BluetoothDevice>()
@@ -109,6 +123,7 @@ class WatchSyncActivity : AppCompatActivity() {
     private var expectedPacketCount = 0
     private var receivedPackets: Array<ByteArray?>? = null
     private var receivedPacketNum = 0
+    private var heartRateStreaming = false
 
     // Requests that expect an async reply over CHAR_01 (bind-state check, battery) are matched
     // to their response FIFO, in send order — a single shared field here would let a manual
@@ -232,10 +247,13 @@ class WatchSyncActivity : AppCompatActivity() {
         timeResult = findViewById(R.id.time_result)
         notificationResult = findViewById(R.id.notification_result)
         batteryResult = findViewById(R.id.battery_result)
+        heartRateResult = findViewById(R.id.heart_rate_result)
+        heartRateButton = findViewById(R.id.button_toggle_heart_rate)
 
         findViewById<Button>(R.id.button_scan_qr).setOnClickListener { scanQrCode() }
         findViewById<Button>(R.id.button_send_notification).setOnClickListener { sendTestNotification() }
         findViewById<Button>(R.id.button_read_battery).setOnClickListener { requestVendorBattery() }
+        heartRateButton.setOnClickListener { toggleRealTimeHeartRate() }
         logToggle.setOnClickListener {
             val show = logScroll.visibility != View.VISIBLE
             logScroll.visibility = if (show) View.VISIBLE else View.GONE
@@ -435,7 +453,11 @@ class WatchSyncActivity : AppCompatActivity() {
             appendLog(getString(R.string.watch_sync_log_permission_error))
             null
         }
-        requestBondIfNeeded(device)
+        // requestBondIfNeeded() is called once GATT actually reaches STATE_CONNECTED (see
+        // gattCallback.onConnectionStateChange), not here. Calling createBond() while a
+        // connectGatt() is still in flight is a known-flaky Android BLE pattern — many stacks
+        // let it return true / transition through BOND_BONDED without ever showing the watch's
+        // own confirmation prompt, so the app reports "paired" while the watch never did.
     }
 
     /**
@@ -487,6 +509,7 @@ class WatchSyncActivity : AppCompatActivity() {
                     statusHeadline.text = getString(R.string.watch_sync_status_connected_headline, name)
                     statusSubtitle.setText(R.string.watch_sync_status_connected_subtitle)
                 }
+                requestBondIfNeeded(g.device)
                 try {
                     g.discoverServices()
                 } catch (e: SecurityException) {
@@ -494,11 +517,13 @@ class WatchSyncActivity : AppCompatActivity() {
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 resetGattOpQueue()
+                heartRateStreaming = false
                 runOnUiThread {
                     appendLog(getString(R.string.watch_sync_log_disconnected))
                     statusHeadline.setText(R.string.watch_sync_status_not_connected)
                     statusSubtitle.setText(R.string.watch_sync_status_disconnected_subtitle)
                     sectionControls.visibility = View.GONE
+                    heartRateButton.setText(R.string.watch_sync_start_heart_rate)
                 }
             }
         }
@@ -511,7 +536,10 @@ class WatchSyncActivity : AppCompatActivity() {
                 timeResult.setText(R.string.watch_sync_card_time_pending)
                 notificationResult.setText(R.string.watch_sync_card_notification_subtitle)
                 batteryResult.setText(R.string.watch_sync_card_battery_subtitle)
+                heartRateResult.setText(R.string.watch_sync_card_heart_rate_subtitle)
+                heartRateButton.setText(R.string.watch_sync_start_heart_rate)
             }
+            heartRateStreaming = false
 
             val ctsChar = g.getService(CTS_SERVICE_UUID)?.getCharacteristic(CTS_CHAR_UUID)
             val zhTimeChar = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
@@ -788,6 +816,75 @@ class WatchSyncActivity : AppCompatActivity() {
         appendLog(getString(R.string.watch_sync_log_bind_device_sent))
     }
 
+    /**
+     * SEWear{ id: 731, settingMenu: SESettingMenu{ realTimeHeartRateSettings: SERealTimeHeartRateSettings{
+     *   switch: <bool>, frequency: <uint32 seconds>, overtime: <uint32 seconds, auto-shutoff> } } }
+     * — field numbers confirmed from the real NoiseFit app's generated protobuf classes
+     * (SettingMenuProtos.SEWear.SETTING_MENU_FIELD_NUMBER=15, SESettingMenu.
+     * REAL_TIME_HEART_RATE_SETTINGS_FIELD_NUMBER=38, and SERealTimeHeartRateSettings' own
+     * switch/frequency/automaticShutdownTime = fields 1/2/3, all confirmed via writeTo()). The
+     * watch streams readings back unsolicited over CHAR_01 (see handleVendorResponsePacket) as
+     * long as the config stays enabled; there's no separate "get one reading" request.
+     */
+    private fun toggleRealTimeHeartRate() {
+        val g = gatt
+        if (g == null) {
+            appendLog(getString(R.string.watch_sync_log_not_connected))
+            return
+        }
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
+        if (char02 == null) {
+            appendLog(getString(R.string.watch_sync_log_no_vendor_service))
+            return
+        }
+        val enable = !heartRateStreaming
+        heartRateStreaming = enable
+
+        val settings = mutableListOf<Byte>()
+        appendProtoTag(settings, 1, 0); appendVarint(settings, if (enable) 1 else 0) // switch (bool)
+        appendProtoTag(settings, 2, 0); appendVarint(settings, 5) // frequency: every 5 seconds
+        appendProtoTag(settings, 3, 0); appendVarint(settings, 0) // overtime: 0 = no auto-shutoff
+
+        val settingMenu = mutableListOf<Byte>()
+        appendProtoTag(settingMenu, ZH_REALTIME_HR_SETTINGS_FIELD, 2)
+        appendVarint(settingMenu, settings.size.toLong())
+        settingMenu.addAll(settings)
+
+        val wear = mutableListOf<Byte>()
+        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SET_REALTIME_HEART_RATE.toLong())
+        appendProtoTag(wear, ZH_SETTING_MENU_FIELD, 2)
+        appendVarint(wear, settingMenu.size.toLong())
+        wear.addAll(settingMenu)
+
+        writeVendorPacket(g, char02, wear.toByteArray(), ZH_CMD_SET_REALTIME_HEART_RATE)
+        heartRateButton.setText(if (enable) R.string.watch_sync_stop_heart_rate else R.string.watch_sync_start_heart_rate)
+        if (enable) {
+            appendLog(getString(R.string.watch_sync_log_heart_rate_enable_sent))
+            heartRateResult.setText(R.string.watch_sync_card_heart_rate_enabling)
+        } else {
+            appendLog(getString(R.string.watch_sync_log_heart_rate_disable_sent))
+            heartRateResult.setText(R.string.watch_sync_card_heart_rate_subtitle)
+        }
+    }
+
+    /**
+     * Unsolicited push from the watch (no request/response correlation — arrives any time real-time
+     * HR streaming is enabled): SEWear{ settingMenu: SESettingMenu{ realTimeHeartRateData:
+     * SERealTimeHeartRateData{ timestamp: <uint32>, value: <uint32 bpm> } } }, fields confirmed the
+     * same way as the enable request above. Returns true if this message was a heart-rate reading
+     * (so the caller can skip its normal request/response dispatch).
+     */
+    private fun handlePossibleRealTimeHeartRate(wearBytes: ByteArray): Boolean {
+        val settingMenuBytes = parseProtoFields(wearBytes)[ZH_SETTING_MENU_FIELD]?.firstOrNull()?.bytes ?: return false
+        val hrDataBytes = parseProtoFields(settingMenuBytes)[ZH_REALTIME_HR_DATA_FIELD]?.firstOrNull()?.bytes ?: return false
+        val bpm = parseProtoFields(hrDataBytes)[2]?.firstOrNull()?.varintValue ?: return false
+        runOnUiThread {
+            appendLog(getString(R.string.watch_sync_log_heart_rate_reading, bpm.toInt()))
+            heartRateResult.text = getString(R.string.watch_sync_card_heart_rate_live, bpm.toInt())
+        }
+        return true
+    }
+
     private fun sendTestNotification() {
         val g = gatt
         if (g == null) {
@@ -879,6 +976,8 @@ class WatchSyncActivity : AppCompatActivity() {
         receivedPackets = null
         expectedPacketCount = 0
         receivedPacketNum = 0
+
+        if (handlePossibleRealTimeHeartRate(merged)) return
 
         val cmdId = popPendingResponse()
         if (cmdId == ZH_CMD_GET_BATTERY) {

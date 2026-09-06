@@ -19,10 +19,12 @@ exactly how to find out more.
   `reminder-app/app/src/main/java/online/productwithrohan/reminders/WatchSyncActivity.kt`.
   It hand-encodes/decodes the protobuf wire format directly (no protobuf
   runtime dependency) since we only need a handful of fields.
-- **Working today:** time sync, push-notification-to-watch, battery read.
-- **Not yet implemented:** steps / heart-rate / sleep / SpO2 history — these
-  go through a different, more complex "big data" chunked transfer that
-  hasn't been fully reverse-engineered. See "What's NOT done yet" below.
+- **Working today:** time sync, push-notification-to-watch, battery read,
+  app-level device binding, real-time heart rate.
+- **Not yet implemented:** steps / distance / calories / sleep / SpO2
+  *history* — these go through a different, more complex "big data" chunked
+  transfer (CHAR_03) that hasn't been fully reverse-engineered. See "What's
+  NOT done yet" below.
 
 ## How this was derived (repeatable if you need more)
 
@@ -200,15 +202,25 @@ Confirmed on real hardware: the watch only shows itself as visibly "paired"
 when **both** of these happen. Neither one alone is enough.
 
 **Layer 1 — OS-level Bluetooth bonding.** Standard Android API, nothing
-vendor-specific: `BluetoothDevice.createBond()`, called right after
-`connectGatt()`. This is what makes the watch display its native **"Pair
-with this device?"** confirmation on its own screen (checkmark/X) — the
-user must physically confirm it there. Listen for
-`BluetoothDevice.ACTION_BOND_STATE_CHANGED` to track `BOND_BONDING` →
-`BOND_BONDED`. GATT reads/writes on this watch work fine without bonding
-(it doesn't gate its characteristics behind encryption), which is exactly
-why this layer was easy to miss — the app "worked" long before pairing
-actually did anything.
+vendor-specific: `BluetoothDevice.createBond()`. This is what makes the
+watch display its native **"Pair with this device?"** confirmation on its
+own screen (checkmark/X) — the user must physically confirm it there.
+Listen for `BluetoothDevice.ACTION_BOND_STATE_CHANGED` to track
+`BOND_BONDING` → `BOND_BONDED`. GATT reads/writes on this watch work fine
+without bonding (it doesn't gate its characteristics behind encryption),
+which is exactly why this layer was easy to miss — the app "worked" long
+before pairing actually did anything.
+
+**Timing matters**: `createBond()` must be called only after GATT actually
+reaches `STATE_CONNECTED` (in `onConnectionStateChange`), not right after
+firing `connectGatt()`. Calling it while a `connectGatt()` is still in
+flight is a known-flaky pattern on Android's BLE stack — on some devices it
+silently no-ops or transitions straight to `BOND_BONDED` without the watch
+ever showing its own confirmation prompt, which reads to the user as "the
+app says paired but the watch doesn't agree." Symptom seen on real
+hardware; fixed by moving the `requestBondIfNeeded()` call from
+`onDeviceSelected()` into `onConnectionStateChange`'s `STATE_CONNECTED`
+branch.
 
 Real app orchestration reference: `com.noise.wear.bt.BTHelper` also calls
 `createBond`, but via reflection with an explicit transport argument
@@ -273,19 +285,65 @@ end that we have not read closely). On top of that:
   (date range? day id? a `FitnessTypeId` list?) hasn't been confirmed by
   reading `ControlBleTools.java`'s call sites for those methods in full.
 
-Real-time heart rate is a separate, probably-simpler path: enable via
-`setRealTimeHeartRateConfig` (cmd 731) / `realTimeDataSwitch` (cmd 164),
-after which the watch is expected to push continuous readings
-(`SEContinuousHeartRateData`, field 6 of `SEFitness`) — likely over CHAR_01
-using the same framing we already have working, but this hasn't been
-tried against real hardware.
+### Real-time heart rate — cmd id **731**, implemented and shipped
 
-**Recommended next step**: pick ONE of these (real-time HR is probably the
-better first target — reuses the CHAR_01 framing we already have proven
-working, no CHAR_03 needed) and read `ControlBleTools.java` +
-`BluetoothService.java` closely for that exact path before writing code,
-the same way we did for time-sync/notifications/battery above. Don't guess
-the request payload shape — find the exact call site and read the builder.
+Confirmed by decompiling a later NoiseFit build than the rest of this doc —
+that build ships the vendor SDK's actual generated protobuf classes (not
+hand-obfuscated wrappers), so these field numbers are read straight out of
+`SettingMenuProtos.java`'s `_FIELD_NUMBER` constants and `writeTo()` methods,
+not guessed:
+
+```
+Enable/disable request:
+SEWear{ id: 731, settingMenu: SESettingMenu{ realTimeHeartRateSettings: SERealTimeHeartRateSettings{
+  switch:   <bool>            // field 1, writeBool
+  frequency: <uint32 seconds> // field 2, writeUInt32 — how often the watch samples
+  overtime:  <uint32 seconds> // field 3, writeUInt32 — auto-shutoff, 0 = disabled
+} } }
+```
+`SEWear.settingMenu` is field **15**; `SESettingMenu.realTimeHeartRateSettings`
+is field **38**. `SESettingMenu` is itself a big oneof (same shape as `SEWear`)
+covering ~40 different settings — don't confuse `realTimeHeartRateSettings`
+(38, the request) with `realTimeHeartRateData` (39, the response, below).
+
+Once enabled, the watch pushes readings **unsolicited** over CHAR_01 (no
+request/response correlation — it just arrives whenever a new reading is
+ready, using the same header/ACK/reassembly framing already implemented for
+battery/bind), as:
+```
+SEWear{ settingMenu: SESettingMenu{ realTimeHeartRateData: SERealTimeHeartRateData{
+  timestamp: <uint32>      // field 1, writeUInt32
+  value:     <uint32 bpm>  // field 2, writeUInt32
+} } }
+```
+`SESettingMenu.realTimeHeartRateData` is field **39**. This matches the SDK's
+own `RealTimeHeartRateCallback.onDataResult(long timestamp, int value)`
+signature exactly (`com.zhapp.ble.callback.RealTimeHeartRateCallback`),
+confirming the field mapping.
+
+Note: the exact runtime dispatch code that routes an incoming `SEWear` to
+this callback (inside `com.zhapp.ble.parsing.BleParsing`) could **not** be
+decompiled — it's one giant generated `run()` method and jadx hits an
+internal `RegionMakerVisitor` error on it (visible as `JADX ERROR` comments
+in the decompiled output). That's a decompiler limitation on the dispatcher,
+not uncertainty about the message shape: the field numbers and wire types
+above come directly from the generated protobuf message classes themselves
+(`SettingMenuProtos.java`), which decompiled cleanly and are a much more
+reliable source than reverse-engineering the dispatcher would have been
+anyway. Implemented in `WatchSyncActivity.toggleRealTimeHeartRate()` /
+`handlePossibleRealTimeHeartRate()`.
+
+**Recommended next step for steps/distance/calories**: still CHAR_03 — see
+above. Don't guess the request payload shape; if picking this up, ask for a
+fresh NoiseFit APK extract (see "How this was derived" above) and decompile
+**all** `classes*.dex` files including any that look unrelated — the vendor
+SDK's own code (`com.zhapp.ble.*`, `com.zh.ble.wear.protobuf.*`) turned out
+to live in specific dex files (in the build analyzed here: `classes9.dex`
+for `com.zhapp.ble`, `classes8.dex` for `com.zh.ble.wear.protobuf`) that
+aren't predictable in advance — a class referenced via `import` in one dex
+can be *defined* in a completely different one thanks to how D8/R8 splits
+multidex output, so a partial dex extract can silently be missing the one
+file that actually matters.
 
 ## Full Apricot command-id catalog
 
@@ -351,8 +409,8 @@ IDs nobody reads:
   fix), QR fallback, standard-CTS path (unused by this watch but kept for
   watches that do speak standard Bluetooth).
 - `reminder-app/app/src/main/res/layout/activity_watch_sync.xml` — UI:
-  scan/QR buttons, device list, "Send test notification" and "Read battery
-  (vendor protocol)" buttons, scrolling log.
+  scan/QR buttons, device list, "Send test notification", "Read battery
+  (vendor protocol)", and "Start/Stop" heart-rate buttons, scrolling log.
 - `reminder-app/app/src/main/res/values/strings.xml` — all `watch_sync_*`
   strings.
 - `reminder-app/app/src/main/AndroidManifest.xml` — BLE permissions incl.
@@ -363,4 +421,8 @@ PRs so far (all on `rohankhullar24-oss/product-with-rohan`, branch
 convention — see AGENTS.md/session history if that convention needs
 re-deriving): #81–83 (initial feature + QR + the "0 devices" scan bug fix),
 #84 (Location-toggle scan fix), #85 (characteristic property logging), #86
-(vendor time-sync + notifications + battery — the work this doc describes).
+(vendor time-sync + notifications + battery), #87–91 (write-without-response
+fix, device-binding handshake, GATT op queue, real OS-level pairing, bind
+confirmation fix), and this round (real-time heart rate; fixed
+`createBond()` being called before GATT connects, which could leave the app
+reporting "paired" while the watch never showed its own confirmation).

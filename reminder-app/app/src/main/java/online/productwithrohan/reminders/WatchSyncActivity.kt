@@ -12,7 +12,10 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Build
@@ -226,12 +229,20 @@ class WatchSyncActivity : AppCompatActivity() {
         }
 
         appendLog(getString(R.string.watch_sync_log_intro))
+
+        ContextCompat.registerReceiver(
+            this,
+            bondStateReceiver,
+            IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED),
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
     }
 
     override fun onDestroy() {
         super.onDestroy()
         stopScan()
         gatt?.close()
+        unregisterReceiver(bondStateReceiver)
     }
 
     // --- permissions & scanning -------------------------------------------------
@@ -395,6 +406,42 @@ class WatchSyncActivity : AppCompatActivity() {
         } catch (e: SecurityException) {
             appendLog(getString(R.string.watch_sync_log_permission_error))
             null
+        }
+        requestBondIfNeeded(device)
+    }
+
+    /**
+     * Real OS-level Bluetooth pairing (distinct from GATT connect, and from the vendor-protocol
+     * "device binding" handshake above) — confirmed on real hardware: the watch shows a native
+     * "Pair with this device?" confirmation on its own screen only when the phone actually calls
+     * createBond(). This is what makes the watch show up as paired at all; our GATT reads/writes
+     * work without it, which is why this was easy to miss.
+     */
+    @Suppress("DEPRECATION")
+    private fun requestBondIfNeeded(device: BluetoothDevice) {
+        try {
+            if (device.bondState == BluetoothDevice.BOND_BONDED) {
+                appendLog(getString(R.string.watch_sync_log_already_bonded))
+                return
+            }
+            appendLog(getString(R.string.watch_sync_log_bonding_requested))
+            device.createBond()
+        } catch (e: SecurityException) {
+            appendLog(getString(R.string.watch_sync_log_permission_error))
+        }
+    }
+
+    private val bondStateReceiver = object : BroadcastReceiver() {
+        @Suppress("DEPRECATION")
+        override fun onReceive(context: Context, intent: Intent) {
+            if (intent.action != BluetoothDevice.ACTION_BOND_STATE_CHANGED) return
+            val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) ?: return
+            if (device.address != gatt?.device?.address) return
+            when (intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)) {
+                BluetoothDevice.BOND_BONDING -> appendLog(getString(R.string.watch_sync_log_bonding_in_progress))
+                BluetoothDevice.BOND_BONDED -> appendLog(getString(R.string.watch_sync_log_bonded))
+                BluetoothDevice.BOND_NONE -> appendLog(getString(R.string.watch_sync_log_bond_failed_or_removed))
+            }
         }
     }
 

@@ -67,14 +67,15 @@ class WatchSyncActivity : AppCompatActivity() {
         private const val ZH_CMD_SET_TIME = 48
         private const val ZH_CMD_SEND_APP_NOTIFICATION = 179
         private const val ZH_CMD_GET_BATTERY = 33
-        // App-level "device binding" handshake — separate from BLE's own pairing/bonding, and
-        // likely what makes the watch actually show itself as paired to this phone (rather than
-        // just accepting GATT connections from anyone). Not confirmed against the app's own
-        // consumer code (couldn't find it in the decompiled tree), only against the protobuf
-        // wire format itself: request cmd 16 returns a SEBindCheck carrying a watch-generated
-        // bindRandomKey; cmd 17 is presumed to complete the handshake by echoing that key back.
+        // App-level "device binding" handshake — separate from BLE's own pairing/bonding
+        // (BluetoothDevice.createBond(), which is what makes the watch show its native pairing
+        // prompt). Confirmed against the real app's own consumer code
+        // (com.noisefit_zhsdk.handler.ZhConnectHandler): cmd 16 checks the bind state; if the
+        // response's bindCheckResult is SUCCESS, cmd 18 confirms the bind with an app-generated
+        // random token (not anything derived from the watch). Cmd 17 ("bindDevice") is only ever
+        // called by the real app with a null argument, so it isn't part of this confirmation step.
         private const val ZH_CMD_REQUEST_BIND_STATE = 16
-        private const val ZH_CMD_BIND_DEVICE = 17
+        private const val ZH_CMD_SEND_APP_BIND_RESULT = 18
 
         // Fixed 6-byte ACKs the SDK writes back on CHAR_01 while receiving a multi-packet reply
         // (decompiled from com.zhapp.ble.a: a.d() / outer a()) — [0,0,1,X,0,0] where X=1 means
@@ -681,8 +682,8 @@ class WatchSyncActivity : AppCompatActivity() {
     }
 
     /**
-     * SEWear{ id: 16 } — bare request. Presumed reply: SEWear{ bindAccount: SEBindAccount{
-     * bindCheck: SEBindCheck{ bindRandomKey, bindCheckResult, ... } } } — see handleBindStateResponse.
+     * SEWear{ id: 16 } — bare request. Reply: SEWear{ bindAccount: SEBindAccount{
+     * bindCheck: SEBindCheck{ bindCheckResult, ... } } } — see handleBindStateResponse.
      */
     private fun requestDeviceBindState(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
         val wear = mutableListOf<Byte>()
@@ -693,39 +694,50 @@ class WatchSyncActivity : AppCompatActivity() {
         appendLog(getString(R.string.watch_sync_log_bind_request_sent))
     }
 
+    /**
+     * Confirmed against the real NoiseFit app's own consumer code (com.noisefit_zhsdk.handler.
+     * ZhConnectHandler.T()/bindDevice$1.onDeviceInfo) — this replaces an earlier, incorrect guess
+     * that echoed the response's bindRandomKey field back via cmd 17. The real gating field is
+     * bindCheck.bindCheckResult (field 3, enum SEBindCheckResult; SUCCESS = 0), not the random
+     * key. On SUCCESS the app generates its OWN random token locally (not derived from the watch
+     * at all) and sends it via cmd 18 (sendAppBindResult) to actually complete the bind.
+     */
     private fun handleBindStateResponse(wearBytes: ByteArray) {
         val bindAccountBytes = parseProtoFields(wearBytes)[3]?.firstOrNull()?.bytes
         val bindCheckBytes = bindAccountBytes?.let { parseProtoFields(it)[2]?.firstOrNull()?.bytes }
-        val randomKey = bindCheckBytes?.let { parseProtoFields(it)[2]?.firstOrNull()?.bytes }?.toString(Charsets.UTF_8)
-        runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_state_received, randomKey ?: "?")) }
+        val bindCheckResult = bindCheckBytes?.let { parseProtoFields(it)[3]?.firstOrNull()?.varintValue }
+        runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_state_received, bindCheckResult?.toString() ?: "?")) }
         val g = gatt
         val char02 = g?.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
-        if (g == null || char02 == null || randomKey == null) {
+        if (g == null || char02 == null || bindCheckResult != 0L) { // 0 = SEBindCheckResult.SUCCESS
             runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_no_key)) }
             return
         }
-        sendBindDevice(g, char02, randomKey)
+        sendAppBindResult(g, char02)
     }
 
     /**
-     * SEWear{ id: 17, bindAccount: SEBindAccount{ bindCheck: SEBindCheck{ deviceVerify: false,
-     * bindRandomKey: <echoed from the cmd-16 response> } } } — echoing the watch's own
-     * challenge key back is the best-effort read of this handshake; unconfirmed against real
-     * consumer code, so treat the result as a hypothesis until the watch's own UI confirms it.
+     * SEWear{ id: 18, bindAccount: SEBindAccount{ bindResult: SEBindResult{
+     * bindResultType: SUCCESS(0), userId: <locally-generated token>, phoneType: ANDROID(0) } } }
+     * — the actual bind-confirmation command (cmd 17/"bindDevice" itself is only ever called
+     * with a null string in the real app, so it's not the confirmation step).
      */
-    private fun sendBindDevice(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, randomKey: String) {
-        val bindCheck = mutableListOf<Byte>()
-        appendProtoTag(bindCheck, 1, 0); appendVarint(bindCheck, 0) // deviceVerify = false
-        appendProtoString(bindCheck, 2, randomKey) // bindRandomKey (echoed)
+    private fun sendAppBindResult(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+        val token = java.util.UUID.randomUUID().toString()
+
+        val bindResult = mutableListOf<Byte>()
+        appendProtoTag(bindResult, 1, 0); appendVarint(bindResult, 0) // bindResultType = SUCCESS
+        appendProtoString(bindResult, 2, token) // userId
+        appendProtoTag(bindResult, 3, 0); appendVarint(bindResult, 0) // phoneType = ANDROID
 
         val bindAccount = mutableListOf<Byte>()
-        appendProtoTag(bindAccount, 2, 2); appendVarint(bindAccount, bindCheck.size.toLong()); bindAccount.addAll(bindCheck)
+        appendProtoTag(bindAccount, 3, 2); appendVarint(bindAccount, bindResult.size.toLong()); bindAccount.addAll(bindResult)
 
         val wear = mutableListOf<Byte>()
-        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_BIND_DEVICE.toLong())
+        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SEND_APP_BIND_RESULT.toLong())
         appendProtoTag(wear, 3, 2); appendVarint(wear, bindAccount.size.toLong()); wear.addAll(bindAccount)
 
-        lastVendorWriteCmdId = ZH_CMD_BIND_DEVICE
+        lastVendorWriteCmdId = ZH_CMD_SEND_APP_BIND_RESULT
         writeVendorPacket(g, characteristic, wear.toByteArray())
         appendLog(getString(R.string.watch_sync_log_bind_device_sent))
     }

@@ -163,6 +163,11 @@ class WatchSyncActivity : AppCompatActivity() {
     private var currentOutgoing: ByteArray? = null
     private var currentOutgoingCmdId: Int? = null
     private var currentOutgoingPacketCount = 0
+    // A command occupies the channel from its header until its last chunk is written — NOT until
+    // the watch acknowledges receipt. sendBleData2() in the SDK sets its ready flag as soon as the
+    // chunks are out, and this watch never sends the "fully received" frame at all, so waiting for
+    // one strands every later command in the queue forever.
+    private var outgoingInFlight = false
     private var vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
 
     // Requests that expect an async reply over CHAR_01 (bind-state check, battery) are matched
@@ -231,6 +236,7 @@ class WatchSyncActivity : AppCompatActivity() {
         currentOutgoing = null
         currentOutgoingCmdId = null
         currentOutgoingPacketCount = 0
+        outgoingInFlight = false
         vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
     }
 
@@ -1122,24 +1128,25 @@ class WatchSyncActivity : AppCompatActivity() {
         cmdId: Int? = null,
     ) {
         outgoingCommands.addLast(cmdId to wearBytes)
-        if (currentOutgoing == null) startNextVendorCommandLocked()
+        if (!outgoingInFlight) startNextVendorCommandLocked()
     }
 
     /** Writes the header frame that opens the handshake for the next queued command. */
     private fun startNextVendorCommandLocked() {
         val next = outgoingCommands.removeFirstOrNull()
         if (next == null) {
-            currentOutgoing = null
-            currentOutgoingCmdId = null
+            outgoingInFlight = false
             return
         }
         val g = gatt
         val char02 = g?.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
         if (g == null || char02 == null) {
+            outgoingInFlight = false
             currentOutgoing = null
             currentOutgoingCmdId = null
             return
         }
+        outgoingInFlight = true
         val (cmdId, wearBytes) = next
         currentOutgoing = wearBytes
         currentOutgoingCmdId = cmdId
@@ -1192,11 +1199,14 @@ class WatchSyncActivity : AppCompatActivity() {
             ZH_FLOW_READY_FOR_DATA -> {
                 appendLog(getString(R.string.watch_sync_log_flow_ready, currentOutgoingPacketCount))
                 sendCurrentVendorChunks()
-            }
-            ZH_FLOW_ALL_RECEIVED -> {
-                appendLog(getString(R.string.watch_sync_log_flow_received, currentOutgoingCmdId ?: -1))
+                // The channel is free once the chunks are written; this watch sends no
+                // "fully received" frame, so anything waiting on one would never be sent.
+                // currentOutgoing stays set so a resend request can still be served.
+                outgoingInFlight = false
                 startNextVendorCommandLocked()
             }
+            ZH_FLOW_ALL_RECEIVED ->
+                appendLog(getString(R.string.watch_sync_log_flow_received, currentOutgoingCmdId ?: -1))
             ZH_FLOW_PACKET_LOST -> {
                 val index = (data[4].toInt() and 0xFF) or ((data[5].toInt() and 0xFF) shl 8)
                 appendLog(getString(R.string.watch_sync_log_flow_resend, index))

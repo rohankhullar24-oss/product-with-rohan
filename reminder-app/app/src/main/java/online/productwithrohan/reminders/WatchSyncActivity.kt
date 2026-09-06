@@ -1266,14 +1266,15 @@ class WatchSyncActivity : AppCompatActivity() {
                 resendVendorChunk(index)
             }
             ZH_FLOW_DEVICE_BUSY -> {
-                appendLog(getString(R.string.watch_sync_log_flow_busy))
+                val cmdId = currentOutgoingCmdId ?: -1
                 if (currentOutgoing != null && currentOutgoingBusyRetries < ZH_BUSY_MAX_RETRIES) {
                     currentOutgoingBusyRetries++
+                    appendLog(getString(R.string.watch_sync_log_flow_busy, cmdId, currentOutgoingBusyRetries, ZH_BUSY_MAX_RETRIES))
                     handler.postDelayed({ retryCurrentVendorHeader() }, ZH_BUSY_RETRY_DELAY_MS)
                 } else {
                     // Retries exhausted (or nothing left to retry) — give up on this command
                     // rather than leaving every command behind it stuck forever.
-                    appendLog(getString(R.string.watch_sync_log_flow_busy_giving_up))
+                    appendLog(getString(R.string.watch_sync_log_flow_busy_giving_up, cmdId, currentOutgoingBusyRetries))
                     currentOutgoingBusyRetries = 0
                     outgoingInFlight = false
                     startNextVendorCommandLocked()

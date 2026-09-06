@@ -236,8 +236,8 @@
     <string name="watch_sync_log_flow_ready">Watch accepted the command header — sending %1$d packet(s).</string>
     <string name="watch_sync_log_flow_received">Watch confirmed it fully received command %1$d ✓</string>
     <string name="watch_sync_log_flow_resend">Watch asked for packet %1$d again — resending.</string>
-    <string name="watch_sync_log_flow_busy">Watch reported it\'s busy — command will retry.</string>
-    <string name="watch_sync_log_flow_busy_giving_up">Watch stayed busy after retrying — giving up on this command and moving to the next one.</string>
+    <string name="watch_sync_log_flow_busy">Vendor cmd %1$d busy — retry %2$d/%3$d</string>
+    <string name="watch_sync_log_flow_busy_giving_up">Vendor cmd %1$d stayed busy after %2$d retries — giving up on it and moving to the next command.</string>
     <string name="watch_sync_log_response_hex">Watch reply (raw): %1$s</string>
     <string name="watch_sync_log_bind_state_received">Watch reports already bound: %1$s</string>
     <string name="watch_sync_log_bind_no_key">Bind check did not succeed — app-level bind confirmation not attempted.</string>

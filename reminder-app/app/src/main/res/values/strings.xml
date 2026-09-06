@@ -239,6 +239,8 @@
     <string name="watch_sync_log_flow_busy">Vendor cmd %1$d busy — retry %2$d/%3$d</string>
     <string name="watch_sync_log_flow_busy_giving_up">Vendor cmd %1$d stayed busy after %2$d retries — giving up on it and moving to the next command.</string>
     <string name="watch_sync_log_response_hex">Watch reply (raw): %1$s</string>
+    <string name="watch_sync_log_vendor_response_source">Vendor response: commandId=%1$d source=%2$s poppedPending=%3$d bindConfirmed=%4$b</string>
+    <string name="watch_sync_log_bind_verify_ignored">Watch sent another pairing-confirmation message (cmd 17) after bind already succeeded — ignoring it, bind stays confirmed.</string>
     <string name="watch_sync_log_bind_state_received">Watch reports already bound: %1$s</string>
     <string name="watch_sync_log_bind_no_key">Bind check did not succeed — app-level bind confirmation not attempted.</string>
     <string name="watch_sync_log_bind_confirm_requested">Asking the watch to show its pairing confirmation (cmd 17) — confirm it on the watch\'s screen.</string>

@@ -155,6 +155,12 @@ class WatchSyncActivity : AppCompatActivity() {
     private var receivedPacketNum = 0
     private var heartRateStreaming = false
     private var bindStateReplyReceived = false
+    // Set once cmd 17 has returned bindCheckResult == SUCCESS and cmd 18 has been sent. cmd 17's
+    // dispatch has no waiter of its own — it's routed purely by the id the watch echoes back, so
+    // without this flag a LATER id:17 message (this watch's own binding-state notifications
+    // appear to keep arriving after the bind, e.g. an eventual OVER_TIME) re-enters
+    // handleBindVerifyResponse, logs a false failure, and would resend cmd 18.
+    private var bindConfirmed = false
 
     // Outgoing vendor commands. A command is NOT delivered by writing its bytes to CHAR_02 —
     // that's what every earlier version of this screen did, and it's why nothing the app sent
@@ -261,6 +267,7 @@ class WatchSyncActivity : AppCompatActivity() {
         outgoingInFlight = false
         confirmedChunkIndices.clear()
         currentOutgoingBusyRetries = 0
+        bindConfirmed = false
         vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
     }
 
@@ -979,6 +986,16 @@ class WatchSyncActivity : AppCompatActivity() {
      * the cmd-18 confirmation that completes the bind.
      */
     private fun handleBindVerifyResponse(wearBytes: ByteArray) {
+        if (bindConfirmed) {
+            // cmd 17 has no waiter of its own — it's dispatched purely on the id the watch
+            // echoes back, so a LATER id:17 message (this watch appears to keep sending binding-
+            // state notifications after the bind, observed as a subsequent OVER_TIME) would
+            // otherwise re-run this whole handler: log a false failure over an already-completed
+            // bind, and resend cmd 18. Once bindCheckResult == SUCCESS has been acted on, ignore
+            // every id:17 message after it for this connection.
+            runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_verify_ignored)) }
+            return
+        }
         val bindAccountBytes = parseProtoFields(wearBytes)[3]?.firstOrNull()?.bytes
         val bindCheckBytes = bindAccountBytes?.let { parseProtoFields(it)[2]?.firstOrNull()?.bytes }
         // A bindCheck that carries no bindCheckResult is SUCCESS: protobuf omits a field holding
@@ -993,6 +1010,7 @@ class WatchSyncActivity : AppCompatActivity() {
             runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_no_key)) }
             return
         }
+        bindConfirmed = true
         sendAppBindResult(g, char02)
         // Enqueued right after cmd 18 rather than tied to its GATT-write completion — the
         // vendor command queue already serializes them, and bindCheckResult == 0 is confirmation
@@ -1347,7 +1365,24 @@ class WatchSyncActivity : AppCompatActivity() {
         // that arrives late — cmd 17's, which waits for someone to physically tap the watch —
         // would otherwise be matched against whatever request happened to be queued next.
         val replyId = parseProtoFields(merged)[1]?.firstOrNull()?.varintValue?.toInt()
-        val cmdId = popPendingResponse().let { if (replyId != null && replyId != 0) replyId else it }
+        val poppedPending = popPendingResponse()
+        val cmdId = if (replyId != null && replyId != 0) replyId else poppedPending
+        // Diagnostic: which command this got routed to, and whether anything was actually
+        // pending for it — "unsolicited" here (nothing pending, but the watch echoed a real id)
+        // is the signature of a push we never asked for, as opposed to a genuine reply to a
+        // request we're still waiting on.
+        val responseSource = if (poppedPending == null && replyId != null && replyId != 0) "unsolicited" else "pending-request"
+        runOnUiThread {
+            appendLog(
+                getString(
+                    R.string.watch_sync_log_vendor_response_source,
+                    cmdId ?: -1,
+                    responseSource,
+                    poppedPending ?: -1,
+                    bindConfirmed,
+                )
+            )
+        }
         when (cmdId) {
             ZH_CMD_GET_BATTERY -> handleBatteryResponse(merged)
             ZH_CMD_REQUEST_BIND_STATE -> handleBindStateResponse(merged)

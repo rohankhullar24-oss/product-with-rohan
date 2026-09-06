@@ -123,23 +123,39 @@ class WatchSyncActivity : AppCompatActivity() {
     private var expectedPacketCount = 0
     private var receivedPackets: Array<ByteArray?>? = null
     private var receivedPacketNum = 0
-    private var pendingResponseCmdId: Int? = null
-    private var lastVendorWriteCmdId: Int? = null
     private var heartRateStreaming = false
+
+    // Requests that expect an async reply over CHAR_01 (bind-state check, battery) are matched
+    // to their response FIFO, in send order — a single shared field here would let a manual
+    // battery check clobber an in-flight automatic bind-state request's expected id, and
+    // mis-route whichever reply arrives second into the wrong handler.
+    private val pendingResponseCmdIds = ArrayDeque<Int>()
+
+    @Synchronized
+    private fun pushPendingResponse(cmdId: Int) {
+        pendingResponseCmdIds.addLast(cmdId)
+    }
+
+    @Synchronized
+    private fun popPendingResponse(): Int? = pendingResponseCmdIds.removeFirstOrNull()
 
     // Android's BluetoothGatt allows only ONE outstanding write/read/descriptor-write at a
     // time — issuing a second before the first's callback fires silently drops it (this is
     // exactly what was happening: enabling notifications, the bind request, and time sync were
     // all fired back-to-back in onServicesDiscovered, so most of them never actually went out).
     // Every raw GATT operation must go through this queue instead of calling the API directly.
-    private val gattOpQueue = ArrayDeque<() -> Unit>()
+    // Each queued op carries the vendor cmd id it corresponds to (or null) so
+    // onCharacteristicWrite can tell which write just completed — a single shared "last cmd id"
+    // field would get overwritten by a second op queued before the first one's callback fires.
+    private val gattOpQueue = ArrayDeque<Pair<Int?, () -> Unit>>()
     private var gattOpInFlight = false
+    private var currentGattOpCmdId: Int? = null
 
     // GATT callbacks land on their own dispatch thread, not the main thread these functions are
     // otherwise called from (button clicks) — synchronize queue mutation against that race.
     @Synchronized
-    private fun enqueueGattOp(op: () -> Unit) {
-        gattOpQueue.addLast(op)
+    private fun enqueueGattOp(cmdId: Int? = null, op: () -> Unit) {
+        gattOpQueue.addLast(cmdId to op)
         if (!gattOpInFlight) runNextGattOpLocked()
     }
 
@@ -147,19 +163,30 @@ class WatchSyncActivity : AppCompatActivity() {
     private fun runNextGattOp() = runNextGattOpLocked()
 
     private fun runNextGattOpLocked() {
-        val op = gattOpQueue.removeFirstOrNull()
-        if (op == null) {
+        val next = gattOpQueue.removeFirstOrNull()
+        if (next == null) {
             gattOpInFlight = false
+            currentGattOpCmdId = null
             return
         }
         gattOpInFlight = true
-        op()
+        currentGattOpCmdId = next.first
+        try {
+            next.second()
+        } catch (e: Exception) {
+            // An op that throws (e.g. a GATT call racing a connection that just closed) must
+            // still release the queue, or every op behind it stalls for the rest of this
+            // connection's lifetime.
+            runNextGattOpLocked()
+        }
     }
 
     @Synchronized
     private fun resetGattOpQueue() {
         gattOpQueue.clear()
         gattOpInFlight = false
+        currentGattOpCmdId = null
+        pendingResponseCmdIds.clear()
     }
 
     private val bluetoothManager by lazy { getSystemService(BluetoothManager::class.java) }
@@ -470,6 +497,11 @@ class WatchSyncActivity : AppCompatActivity() {
 
     private val gattCallback = object : BluetoothGattCallback() {
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, newState: Int) {
+            // This callback instance is shared across reconnects; a late callback from a GATT
+            // that onDeviceSelected already superseded and closed must not touch the new
+            // connection's queue/UI state (e.g. a stray DISCONNECTED from the old gatt
+            // resetting the op queue mid-operation on the new one).
+            if (g !== gatt) return
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 runOnUiThread {
                     appendLog(getString(R.string.watch_sync_log_connected))
@@ -497,6 +529,7 @@ class WatchSyncActivity : AppCompatActivity() {
         }
 
         override fun onServicesDiscovered(g: BluetoothGatt, status: Int) {
+            if (g !== gatt) return
             runOnUiThread {
                 logServices(g.services)
                 sectionControls.visibility = View.VISIBLE
@@ -544,11 +577,14 @@ class WatchSyncActivity : AppCompatActivity() {
         }
 
         override fun onCharacteristicWrite(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+            if (g !== gatt) return
+            // Capture before runNextGattOp() below advances the queue to the next op.
+            val cmdId = currentGattOpCmdId
             runOnUiThread {
                 if (status != BluetoothGatt.GATT_SUCCESS) {
                     appendLog(getString(R.string.watch_sync_log_write_failed, status))
                     if (characteristic.uuid == CTS_CHAR_UUID ||
-                        (characteristic.uuid == ZH_PROTOBUF_CHAR_02_UUID && lastVendorWriteCmdId == ZH_CMD_SET_TIME)
+                        (characteristic.uuid == ZH_PROTOBUF_CHAR_02_UUID && cmdId == ZH_CMD_SET_TIME)
                     ) {
                         timeResult.setText(R.string.watch_sync_card_time_failed)
                     }
@@ -560,7 +596,7 @@ class WatchSyncActivity : AppCompatActivity() {
                     // here only means the phone's Bluetooth stack sent the packet — the watch
                     // gives no acknowledgment either way. Check the watch's own display to confirm.
                     appendLog(getString(R.string.watch_sync_log_vendor_write_sent))
-                    if (lastVendorWriteCmdId == ZH_CMD_SET_TIME) {
+                    if (cmdId == ZH_CMD_SET_TIME) {
                         timeResult.setText(R.string.watch_sync_card_time_sent_unconfirmed)
                     }
                 }
@@ -570,6 +606,7 @@ class WatchSyncActivity : AppCompatActivity() {
 
         @Suppress("DEPRECATION")
         override fun onCharacteristicRead(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+            if (g !== gatt) return
             if (characteristic.uuid == BATTERY_CHAR_UUID) {
                 runOnUiThread {
                     val percent = characteristic.value?.firstOrNull()?.toInt()?.and(0xFF)
@@ -585,11 +622,13 @@ class WatchSyncActivity : AppCompatActivity() {
         }
 
         override fun onDescriptorWrite(g: BluetoothGatt, descriptor: android.bluetooth.BluetoothGattDescriptor, status: Int) {
+            if (g !== gatt) return
             runNextGattOp()
         }
 
         @Suppress("DEPRECATION")
         override fun onCharacteristicChanged(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+            if (g !== gatt) return
             if (characteristic.uuid != ZH_PROTOBUF_CHAR_01_UUID) return
             handleVendorResponsePacket(g, characteristic.value ?: return)
         }
@@ -670,8 +709,7 @@ class WatchSyncActivity : AppCompatActivity() {
         appendProtoTag(wear, 5, 2); appendVarint(wear, systemTime.size.toLong()); wear.addAll(systemTime) // systemTime
 
         // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
-        lastVendorWriteCmdId = ZH_CMD_SET_TIME
-        writeVendorRaw(g, characteristic, byteArrayOf(1, 0) + wear.toByteArray())
+        writeVendorRaw(g, characteristic, byteArrayOf(1, 0) + wear.toByteArray(), ZH_CMD_SET_TIME)
     }
 
     private fun appendProtoTag(out: MutableList<Byte>, fieldNumber: Int, wireType: Int) =
@@ -716,9 +754,8 @@ class WatchSyncActivity : AppCompatActivity() {
     private fun requestDeviceBindState(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
         val wear = mutableListOf<Byte>()
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_REQUEST_BIND_STATE.toLong())
-        pendingResponseCmdId = ZH_CMD_REQUEST_BIND_STATE
-        lastVendorWriteCmdId = ZH_CMD_REQUEST_BIND_STATE
-        writeVendorPacket(g, characteristic, wear.toByteArray())
+        pushPendingResponse(ZH_CMD_REQUEST_BIND_STATE)
+        writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_REQUEST_BIND_STATE)
         appendLog(getString(R.string.watch_sync_log_bind_request_sent))
     }
 
@@ -749,9 +786,19 @@ class WatchSyncActivity : AppCompatActivity() {
      * bindResultType: SUCCESS(0), userId: <locally-generated token>, phoneType: ANDROID(0) } } }
      * — the actual bind-confirmation command (cmd 17/"bindDevice" itself is only ever called
      * with a null string in the real app, so it's not the confirmation step).
+     *
+     * Token recipe per WATCH_SYNC_PROTOCOL.md, confirmed against the real app's own code:
+     * UUID.randomUUID() + Random(10,10000) + userId, then substring(30). We have no real
+     * account/userId here, so ANDROID_ID stands in for that component.
      */
+    @Suppress("HardwareIds")
     private fun sendAppBindResult(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
-        val token = java.util.UUID.randomUUID().toString()
+        val userId = android.provider.Settings.Secure.getString(
+            contentResolver,
+            android.provider.Settings.Secure.ANDROID_ID,
+        ) ?: ""
+        val randomComponent = (10 until 10000).random()
+        val token = (java.util.UUID.randomUUID().toString() + randomComponent + userId).substring(30)
 
         val bindResult = mutableListOf<Byte>()
         appendProtoTag(bindResult, 1, 0); appendVarint(bindResult, 0) // bindResultType = SUCCESS
@@ -765,8 +812,7 @@ class WatchSyncActivity : AppCompatActivity() {
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SEND_APP_BIND_RESULT.toLong())
         appendProtoTag(wear, 3, 2); appendVarint(wear, bindAccount.size.toLong()); wear.addAll(bindAccount)
 
-        lastVendorWriteCmdId = ZH_CMD_SEND_APP_BIND_RESULT
-        writeVendorPacket(g, characteristic, wear.toByteArray())
+        writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_SEND_APP_BIND_RESULT)
         appendLog(getString(R.string.watch_sync_log_bind_device_sent))
     }
 
@@ -810,8 +856,7 @@ class WatchSyncActivity : AppCompatActivity() {
         appendVarint(wear, settingMenu.size.toLong())
         wear.addAll(settingMenu)
 
-        lastVendorWriteCmdId = ZH_CMD_SET_REALTIME_HEART_RATE
-        writeVendorPacket(g, char02, wear.toByteArray())
+        writeVendorPacket(g, char02, wear.toByteArray(), ZH_CMD_SET_REALTIME_HEART_RATE)
         heartRateButton.setText(if (enable) R.string.watch_sync_stop_heart_rate else R.string.watch_sync_start_heart_rate)
         if (enable) {
             appendLog(getString(R.string.watch_sync_log_heart_rate_enable_sent))
@@ -866,8 +911,7 @@ class WatchSyncActivity : AppCompatActivity() {
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SEND_APP_NOTIFICATION.toLong())
         appendProtoTag(wear, 13, 2); appendVarint(wear, notification.size.toLong()); wear.addAll(notification)
 
-        lastVendorWriteCmdId = ZH_CMD_SEND_APP_NOTIFICATION
-        writeVendorPacket(g, char02, wear.toByteArray())
+        writeVendorPacket(g, char02, wear.toByteArray(), ZH_CMD_SEND_APP_NOTIFICATION)
         appendLog(getString(R.string.watch_sync_log_notification_sent))
         notificationResult.setText(R.string.watch_sync_card_notification_result)
     }
@@ -887,16 +931,20 @@ class WatchSyncActivity : AppCompatActivity() {
         // over CHAR_01 with a SEWear{ device: SEDevice{ deviceBatteryStatus: { capacity } } }.
         val wear = mutableListOf<Byte>()
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_GET_BATTERY.toLong())
-        pendingResponseCmdId = ZH_CMD_GET_BATTERY
-        lastVendorWriteCmdId = ZH_CMD_GET_BATTERY
-        writeVendorPacket(g, char02, wear.toByteArray())
+        pushPendingResponse(ZH_CMD_GET_BATTERY)
+        writeVendorPacket(g, char02, wear.toByteArray(), ZH_CMD_GET_BATTERY)
         appendLog(getString(R.string.watch_sync_log_battery_request_sent))
         batteryResult.setText(R.string.watch_sync_card_battery_checking)
     }
 
-    private fun writeVendorPacket(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, wearBytes: ByteArray) {
+    private fun writeVendorPacket(
+        g: BluetoothGatt,
+        characteristic: BluetoothGattCharacteristic,
+        wearBytes: ByteArray,
+        cmdId: Int? = null,
+    ) {
         // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
-        writeVendorRaw(g, characteristic, byteArrayOf(1, 0) + wearBytes)
+        writeVendorRaw(g, characteristic, byteArrayOf(1, 0) + wearBytes, cmdId)
     }
 
     /**
@@ -931,8 +979,7 @@ class WatchSyncActivity : AppCompatActivity() {
 
         if (handlePossibleRealTimeHeartRate(merged)) return
 
-        val cmdId = pendingResponseCmdId
-        pendingResponseCmdId = null
+        val cmdId = popPendingResponse()
         if (cmdId == ZH_CMD_GET_BATTERY) {
             handleBatteryResponse(merged)
         } else if (cmdId == ZH_CMD_REQUEST_BIND_STATE) {
@@ -951,8 +998,13 @@ class WatchSyncActivity : AppCompatActivity() {
      * successful GATT_SUCCESS callback only confirms the phone's local stack sent the packet,
      * NOT that the watch received or processed it (write-without-response gets no peripheral ack).
      */
-    private fun writeVendorRaw(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, bytes: ByteArray) {
-        enqueueGattOp {
+    private fun writeVendorRaw(
+        g: BluetoothGatt,
+        characteristic: BluetoothGattCharacteristic,
+        bytes: ByteArray,
+        cmdId: Int? = null,
+    ) {
+        enqueueGattOp(cmdId) {
             try {
                 @Suppress("DEPRECATION")
                 characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE

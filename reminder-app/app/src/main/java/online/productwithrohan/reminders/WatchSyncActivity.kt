@@ -118,6 +118,12 @@ class WatchSyncActivity : AppCompatActivity() {
         private const val ZH_DEFAULT_PAYLOAD_SIZE = 244
         private const val ZH_DESIRED_MTU = ZH_DEFAULT_PAYLOAD_SIZE + 3
 
+        // A busy reply means the watch is still finishing the transaction we just collided
+        // with, not a permanent failure — retry the header a bounded number of times rather
+        // than either stalling forever (the previous behavior) or retrying without limit.
+        private const val ZH_BUSY_MAX_RETRIES = 5
+        private const val ZH_BUSY_RETRY_DELAY_MS = 250L
+
         private const val SCAN_TIMEOUT_MS = 12_000L
         private const val BIND_RESPONSE_TIMEOUT_MS = 8_000L
         private val MAC_ADDRESS_REGEX = Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
@@ -169,6 +175,13 @@ class WatchSyncActivity : AppCompatActivity() {
     // one strands every later command in the queue forever.
     private var outgoingInFlight = false
     private var vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
+    // Which packet indices of the CURRENT command have actually completed their GATT write
+    // (onCharacteristicWrite fired), as opposed to merely been queued. The next vendor command's
+    // header must not go out until this set covers every index — starting it any earlier (e.g.
+    // right when READY_FOR_DATA arrives, before the chunks it triggers have actually gone over
+    // the air) collides with the watch mid-transaction and gets answered with "busy".
+    private val confirmedChunkIndices = mutableSetOf<Int>()
+    private var currentOutgoingBusyRetries = 0
 
     // Requests that expect an async reply over CHAR_01 (bind-state check, battery) are matched
     // to their response FIFO, in send order — a single shared field here would let a manual
@@ -192,15 +205,21 @@ class WatchSyncActivity : AppCompatActivity() {
     // Each queued op carries the vendor cmd id it corresponds to (or null) so
     // onCharacteristicWrite can tell which write just completed — a single shared "last cmd id"
     // field would get overwritten by a second op queued before the first one's callback fires.
-    private val gattOpQueue = ArrayDeque<Pair<Int?, () -> Unit>>()
+    // onWriteComplete fires from onCharacteristicWrite once THIS op's write has actually
+    // completed (as opposed to op() merely having been invoked, which only means the write was
+    // handed to the local Bluetooth stack) — see writeVendorRaw/onVendorChunkWriteConfirmed.
+    private data class GattOp(val cmdId: Int?, val onWriteComplete: (() -> Unit)?, val run: () -> Unit)
+
+    private val gattOpQueue = ArrayDeque<GattOp>()
     private var gattOpInFlight = false
     private var currentGattOpCmdId: Int? = null
+    private var currentGattOpOnWriteComplete: (() -> Unit)? = null
 
     // GATT callbacks land on their own dispatch thread, not the main thread these functions are
     // otherwise called from (button clicks) — synchronize queue mutation against that race.
     @Synchronized
-    private fun enqueueGattOp(cmdId: Int? = null, op: () -> Unit) {
-        gattOpQueue.addLast(cmdId to op)
+    private fun enqueueGattOp(cmdId: Int? = null, onWriteComplete: (() -> Unit)? = null, op: () -> Unit) {
+        gattOpQueue.addLast(GattOp(cmdId, onWriteComplete, op))
         if (!gattOpInFlight) runNextGattOpLocked()
     }
 
@@ -212,12 +231,14 @@ class WatchSyncActivity : AppCompatActivity() {
         if (next == null) {
             gattOpInFlight = false
             currentGattOpCmdId = null
+            currentGattOpOnWriteComplete = null
             return
         }
         gattOpInFlight = true
-        currentGattOpCmdId = next.first
+        currentGattOpCmdId = next.cmdId
+        currentGattOpOnWriteComplete = next.onWriteComplete
         try {
-            next.second()
+            next.run()
         } catch (e: Exception) {
             // An op that throws (e.g. a GATT call racing a connection that just closed) must
             // still release the queue, or every op behind it stalls for the rest of this
@@ -231,12 +252,15 @@ class WatchSyncActivity : AppCompatActivity() {
         gattOpQueue.clear()
         gattOpInFlight = false
         currentGattOpCmdId = null
+        currentGattOpOnWriteComplete = null
         pendingResponseCmdIds.clear()
         outgoingCommands.clear()
         currentOutgoing = null
         currentOutgoingCmdId = null
         currentOutgoingPacketCount = 0
         outgoingInFlight = false
+        confirmedChunkIndices.clear()
+        currentOutgoingBusyRetries = 0
         vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
     }
 
@@ -635,6 +659,7 @@ class WatchSyncActivity : AppCompatActivity() {
             if (g !== gatt) return
             // Capture before runNextGattOp() below advances the queue to the next op.
             val cmdId = currentGattOpCmdId
+            val onWriteComplete = currentGattOpOnWriteComplete
             runOnUiThread {
                 if (status != BluetoothGatt.GATT_SUCCESS) {
                     appendLog(getString(R.string.watch_sync_log_write_failed, status))
@@ -656,6 +681,10 @@ class WatchSyncActivity : AppCompatActivity() {
                     }
                 }
             }
+            // This write has actually left the phone's Bluetooth stack now — only at this point,
+            // not when the op was merely enqueued, is it safe for a chunk-completion callback to
+            // treat this packet as delivered (see onVendorChunkWriteConfirmed).
+            if (status == BluetoothGatt.GATT_SUCCESS) onWriteComplete?.invoke()
             runNextGattOp()
         }
 
@@ -1150,6 +1179,8 @@ class WatchSyncActivity : AppCompatActivity() {
         val (cmdId, wearBytes) = next
         currentOutgoing = wearBytes
         currentOutgoingCmdId = cmdId
+        currentOutgoingBusyRetries = 0
+        confirmedChunkIndices.clear()
 
         val chunkSize = (vendorPayloadSize - 2).coerceAtLeast(1)
         val count = (wearBytes.size + chunkSize - 1) / chunkSize
@@ -1164,12 +1195,13 @@ class WatchSyncActivity : AppCompatActivity() {
         val g = gatt ?: return
         val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
         val chunkSize = (vendorPayloadSize - 2).coerceAtLeast(1)
+        confirmedChunkIndices.clear()
         for (index in 1..currentOutgoingPacketCount) {
             val start = (index - 1) * chunkSize
             val end = minOf(start + chunkSize, wearBytes.size)
             val chunk = wearBytes.copyOfRange(start, end)
             val framed = byteArrayOf((index and 0xFF).toByte(), ((index shr 8) and 0xFF).toByte()) + chunk
-            writeVendorRaw(g, char02, framed, currentOutgoingCmdId)
+            writeVendorRaw(g, char02, framed, currentOutgoingCmdId, onWriteComplete = { onVendorChunkWriteConfirmed(index) })
         }
     }
 
@@ -1184,7 +1216,26 @@ class WatchSyncActivity : AppCompatActivity() {
         val end = minOf(start + chunkSize, wearBytes.size)
         val framed = byteArrayOf((index and 0xFF).toByte(), ((index shr 8) and 0xFF).toByte()) +
             wearBytes.copyOfRange(start, end)
-        writeVendorRaw(g, char02, framed, currentOutgoingCmdId)
+        writeVendorRaw(g, char02, framed, currentOutgoingCmdId, onWriteComplete = { onVendorChunkWriteConfirmed(index) })
+    }
+
+    /**
+     * Fires once packet [index] of the current command has actually completed its GATT write
+     * (not merely been queued for one). Only when every packet 1..currentOutgoingPacketCount has
+     * been confirmed this way is it safe to release the vendor-command channel and start the
+     * next queued command's header. Using a set of indices (rather than a running count) keeps
+     * this correct across a [ZH_FLOW_PACKET_LOST] resend of a packet that was already confirmed.
+     */
+    @Synchronized
+    private fun onVendorChunkWriteConfirmed(index: Int) {
+        if (currentOutgoingPacketCount <= 0) return
+        confirmedChunkIndices.add(index)
+        if (confirmedChunkIndices.size >= currentOutgoingPacketCount) {
+            confirmedChunkIndices.clear()
+            outgoingInFlight = false
+            currentOutgoingBusyRetries = 0
+            startNextVendorCommandLocked()
+        }
     }
 
     /**
@@ -1199,11 +1250,13 @@ class WatchSyncActivity : AppCompatActivity() {
             ZH_FLOW_READY_FOR_DATA -> {
                 appendLog(getString(R.string.watch_sync_log_flow_ready, currentOutgoingPacketCount))
                 sendCurrentVendorChunks()
-                // The channel is free once the chunks are written; this watch sends no
-                // "fully received" frame, so anything waiting on one would never be sent.
-                // currentOutgoing stays set so a resend request can still be served.
-                outgoingInFlight = false
-                startNextVendorCommandLocked()
+                // The channel is freed by onVendorChunkWriteConfirmed once every chunk's GATT
+                // write has actually completed — NOT here. Advancing here (as this used to)
+                // starts the next command's header while these chunks are merely queued, not yet
+                // sent, which races the watch: it's still processing this command when the next
+                // header arrives and answers "busy". This watch also sends no "fully received"
+                // frame, so the GATT-write completion is the only completion signal available.
+                // currentOutgoing stays set either way so a resend request can still be served.
             }
             ZH_FLOW_ALL_RECEIVED ->
                 appendLog(getString(R.string.watch_sync_log_flow_received, currentOutgoingCmdId ?: -1))
@@ -1212,8 +1265,31 @@ class WatchSyncActivity : AppCompatActivity() {
                 appendLog(getString(R.string.watch_sync_log_flow_resend, index))
                 resendVendorChunk(index)
             }
-            ZH_FLOW_DEVICE_BUSY -> appendLog(getString(R.string.watch_sync_log_flow_busy))
+            ZH_FLOW_DEVICE_BUSY -> {
+                appendLog(getString(R.string.watch_sync_log_flow_busy))
+                if (currentOutgoing != null && currentOutgoingBusyRetries < ZH_BUSY_MAX_RETRIES) {
+                    currentOutgoingBusyRetries++
+                    handler.postDelayed({ retryCurrentVendorHeader() }, ZH_BUSY_RETRY_DELAY_MS)
+                } else {
+                    // Retries exhausted (or nothing left to retry) — give up on this command
+                    // rather than leaving every command behind it stuck forever.
+                    appendLog(getString(R.string.watch_sync_log_flow_busy_giving_up))
+                    currentOutgoingBusyRetries = 0
+                    outgoingInFlight = false
+                    startNextVendorCommandLocked()
+                }
+            }
         }
+    }
+
+    /** Re-sends just the header of the current command after a busy reply — see [ZH_FLOW_DEVICE_BUSY]. */
+    private fun retryCurrentVendorHeader() {
+        val g = gatt ?: return
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
+        if (currentOutgoing == null || currentOutgoingPacketCount <= 0) return
+        val count = currentOutgoingPacketCount
+        val header = byteArrayOf(0, 0, 0, 0, (count and 0xFF).toByte(), ((count shr 8) and 0xFF).toByte())
+        writeVendorRaw(g, char02, header, currentOutgoingCmdId)
     }
 
     /**
@@ -1288,8 +1364,9 @@ class WatchSyncActivity : AppCompatActivity() {
         characteristic: BluetoothGattCharacteristic,
         bytes: ByteArray,
         cmdId: Int? = null,
+        onWriteComplete: (() -> Unit)? = null,
     ) {
-        enqueueGattOp(cmdId) {
+        enqueueGattOp(cmdId, onWriteComplete) {
             try {
                 @Suppress("DEPRECATION")
                 characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE

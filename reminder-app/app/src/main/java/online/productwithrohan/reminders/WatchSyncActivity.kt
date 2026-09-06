@@ -631,8 +631,13 @@ class WatchSyncActivity : AppCompatActivity() {
             if (ctsChar != null) {
                 writeCurrentTime(g, ctsChar)
             } else if (zhTimeChar != null) {
+                // NOT sent here: queuing cmd 48 immediately behind cmd 16 raced them for the
+                // vendor command channel and starved cmd 16 of its own reply (confirmed on
+                // hardware — only cmd 48's reply ever arrived, and the bind request timed out).
+                // Deferred until the bind sequence has somewhere to put it without contention:
+                // handleBindStateResponse (already bound) or handleBindVerifyResponse (fresh
+                // bind, once bindCheckResult == 0).
                 runOnUiThread { appendLog(getString(R.string.watch_sync_log_vendor_protocol)) }
-                writeVendorTimeSync(g, zhTimeChar)
             } else {
                 runOnUiThread {
                     appendLog(getString(R.string.watch_sync_log_no_cts))
@@ -934,12 +939,15 @@ class WatchSyncActivity : AppCompatActivity() {
         runOnUiThread {
             appendLog(getString(R.string.watch_sync_log_bind_state_received, alreadyBound?.toString() ?: "?"))
         }
-        if (alreadyBound == true) {
-            runOnUiThread { appendLog(getString(R.string.watch_sync_log_already_bound)) }
-            return
-        }
         val g = gatt ?: return
         val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
+        if (alreadyBound == true) {
+            runOnUiThread { appendLog(getString(R.string.watch_sync_log_already_bound)) }
+            // Safe to time-sync now — cmd 16 already got its reply, so this can't race it for
+            // the vendor command channel the way sending it at connect time did.
+            writeVendorTimeSync(g, char02)
+            return
+        }
         requestDeviceBindConfirmation(g, char02)
     }
 
@@ -986,6 +994,10 @@ class WatchSyncActivity : AppCompatActivity() {
             return
         }
         sendAppBindResult(g, char02)
+        // Enqueued right after cmd 18 rather than tied to its GATT-write completion — the
+        // vendor command queue already serializes them, and bindCheckResult == 0 is confirmation
+        // enough that time-sync no longer has a bind-critical command to race.
+        writeVendorTimeSync(g, char02)
     }
 
     /**

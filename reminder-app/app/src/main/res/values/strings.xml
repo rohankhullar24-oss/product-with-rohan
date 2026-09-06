@@ -224,6 +224,11 @@
     <string name="watch_sync_log_bind_state_received">Bind state received, random key: %1$s</string>
     <string name="watch_sync_log_bind_no_key">No bind key in the watch\'s response — binding not attempted.</string>
     <string name="watch_sync_log_bind_device_sent">Bind confirmation sent — check the watch\'s screen/settings to see if it now shows as paired.</string>
+    <string name="watch_sync_log_already_bonded">Already Bluetooth-paired with this watch.</string>
+    <string name="watch_sync_log_bonding_requested">Requesting Bluetooth pairing — check the watch\'s screen and confirm the pairing prompt there.</string>
+    <string name="watch_sync_log_bonding_in_progress">Pairing in progress — confirm on the watch\'s screen.</string>
+    <string name="watch_sync_log_bonded">Bluetooth pairing succeeded ✓</string>
+    <string name="watch_sync_log_bond_failed_or_removed">Pairing failed, was rejected, or was removed.</string>
     <string name="watch_sync_log_found">Found: %1$s (%2$s)</string>
     <string name="watch_sync_log_scan_failed">Scan failed (error %1$d).</string>
     <string name="watch_sync_log_scan_done">Scan stopped. %1$d device(s) found.</string>

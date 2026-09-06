@@ -877,7 +877,13 @@ class WatchSyncActivity : AppCompatActivity() {
     private fun handleBindStateResponse(wearBytes: ByteArray) {
         val bindAccountBytes = parseProtoFields(wearBytes)[3]?.firstOrNull()?.bytes
         val bindCheckBytes = bindAccountBytes?.let { parseProtoFields(it)[2]?.firstOrNull()?.bytes }
-        val bindCheckResult = bindCheckBytes?.let { parseProtoFields(it)[3]?.firstOrNull()?.varintValue }
+        // Protobuf does not put a field on the wire when it holds its default value, so a
+        // bindCheck message that carries no bindCheckResult means SUCCESS (0) — reading the
+        // absence as "no result" is what previously stopped the bind here, one step short of
+        // sending cmd 18. Only a genuinely missing bindCheck message is a real failure.
+        val bindCheckResult = bindCheckBytes?.let {
+            parseProtoFields(it)[3]?.firstOrNull()?.varintValue ?: 0L
+        }
         runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_state_received, bindCheckResult?.toString() ?: "?")) }
         val g = gatt
         val char02 = g?.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
@@ -1171,6 +1177,11 @@ class WatchSyncActivity : AppCompatActivity() {
         expectedPacketCount = 0
         receivedPacketNum = 0
 
+        // The watch's replies are the one thing we can't reconstruct after the fact, and a field
+        // we parse as "absent" looks identical to one we decoded to the wrong number — log the
+        // raw bytes so a reply can always be decoded by hand instead of guessed at.
+        runOnUiThread { appendLog(getString(R.string.watch_sync_log_response_hex, bytesToHex(merged))) }
+
         if (handlePossibleRealTimeHeartRate(merged)) return
 
         val cmdId = popPendingResponse()
@@ -1179,6 +1190,12 @@ class WatchSyncActivity : AppCompatActivity() {
         } else if (cmdId == ZH_CMD_REQUEST_BIND_STATE) {
             handleBindStateResponse(merged)
         }
+    }
+
+    private fun bytesToHex(bytes: ByteArray): String {
+        val shown = if (bytes.size > 120) bytes.copyOfRange(0, 120) else bytes
+        val hex = shown.joinToString(" ") { "%02X".format(it) }
+        return if (bytes.size > 120) "$hex … (${bytes.size} bytes)" else hex
     }
 
     private fun writeAckFrame(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, ack: ByteArray) {

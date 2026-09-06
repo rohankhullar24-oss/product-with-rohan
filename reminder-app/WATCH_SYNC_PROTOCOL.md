@@ -194,6 +194,63 @@ SEWear{ device: SEDevice{ deviceBatteryStatus: SEDeviceBatteryStatus{
 ```
 `SEDevice.deviceBatteryStatus` is field 2 (message). `SEWear.device` is field 4.
 
+### Pairing — two separate layers, both required
+
+Confirmed on real hardware: the watch only shows itself as visibly "paired"
+when **both** of these happen. Neither one alone is enough.
+
+**Layer 1 — OS-level Bluetooth bonding.** Standard Android API, nothing
+vendor-specific: `BluetoothDevice.createBond()`, called right after
+`connectGatt()`. This is what makes the watch display its native **"Pair
+with this device?"** confirmation on its own screen (checkmark/X) — the
+user must physically confirm it there. Listen for
+`BluetoothDevice.ACTION_BOND_STATE_CHANGED` to track `BOND_BONDING` →
+`BOND_BONDED`. GATT reads/writes on this watch work fine without bonding
+(it doesn't gate its characteristics behind encryption), which is exactly
+why this layer was easy to miss — the app "worked" long before pairing
+actually did anything.
+
+Real app orchestration reference: `com.noise.wear.bt.BTHelper` also calls
+`createBond`, but via reflection with an explicit transport argument
+(`createBond(int transport)`, transport=1/BR-EDR) — that class is for
+**Bluetooth Calling (HFP audio) pairing**, a different feature, and uses
+classic Bluetooth discovery (`BluetoothAdapter.startDiscovery()`/
+`ACTION_FOUND`) rather than BLE scanning. Don't confuse the two — Watch
+Sync uses the plain public `createBond()` (transport auto-detected),
+matching the data-sync pairing flow, not the calling one.
+
+**Layer 2 — app-level "device binding"** — cmd 16 + cmd 18. This is
+`com.zhapp.ble`'s own concept, separate from OS bonding, and is what
+`com.noisefit_zhsdk.handler.ZhConnectHandler` (the real app's connect
+handler for this exact watch family) actually does:
+
+```
+Request:  SEWear{ id: 16 }                                    — requestDeviceBindState
+Response: SEWear{ bindAccount: SEBindAccount{ bindCheck: SEBindCheck{
+            bindCheckResult: <enum>   // field 3 — THIS is the gating field, not bindRandomKey
+          } } }
+```
+`SEBindCheckResult`: `SUCCESS=0`, `REFUSE=1`, `OVER_TIME=2`,
+`VERIFICATION_FAILED=3`. If and only if `bindCheckResult == SUCCESS`, the
+real app generates its **own random token locally** — `UUID.randomUUID()
++ Random(10,10000) + userId`, then `.substring(30)` — it is NOT derived
+from anything the watch sent — and confirms with:
+
+```
+SEWear{ id: 18, bindAccount: SEBindAccount{ bindResult: SEBindResult{
+  bindResultType: SUCCESS(0)      // field 1, enum SEBindResultType
+  userId: <locally-generated token>  // field 2, string
+  phoneType: ANDROID(0)           // field 3, enum SEPhoneType (ANDROID=0, IOS=1)
+} } }
+```
+`SEBindAccount.bindResult` is field 3. Cmd **17** ("bindDevice") is a red
+herring for this step — the real app only ever calls it with a `null`
+string argument (it's used to *kick off* the cmd-16 check internally, not
+to confirm anything) — an earlier version of this doc/implementation
+incorrectly had cmd 17 echoing the response's `bindRandomKey` field back;
+that was never confirmed against real consumer code and has been replaced
+with the above, which is.
+
 ## What's NOT done yet: steps / heart rate / sleep history
 
 This is the big remaining piece and it's genuinely more work — don't

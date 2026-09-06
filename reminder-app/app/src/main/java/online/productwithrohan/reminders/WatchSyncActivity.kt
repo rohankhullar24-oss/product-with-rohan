@@ -75,6 +75,14 @@ class WatchSyncActivity : AppCompatActivity() {
         // random token (not anything derived from the watch). Cmd 17 ("bindDevice") is only ever
         // called by the real app with a null argument, so it isn't part of this confirmation step.
         private const val ZH_CMD_REQUEST_BIND_STATE = 16
+        // Cmd 17 is what actually makes the watch show its "pair with this phone?" confirmation:
+        // a.a(17) builds SEWear{ id:17, bindAccount{ bindCheck{ deviceVerify: true } } }. Cmd 16
+        // only ASKS whether the watch is already bound (its reply is a plain bool,
+        // SEBindAccount.requestBindingStatus, matching RequestDeviceBindStateCallBack
+        // .onBindState(boolean)) — it never prompts anyone. An earlier version of
+        // WATCH_SYNC_PROTOCOL.md called cmd 17 a red herring; it is the opposite, it's the step
+        // that was missing, and without it the watch stays on its "Download App & Pair" screen.
+        private const val ZH_CMD_BIND_DEVICE = 17
         private const val ZH_CMD_SEND_APP_BIND_RESULT = 18
 
         // Real-time heart rate: cmd 731 (setRealTimeHeartRateConfig), confirmed against the real
@@ -140,6 +148,7 @@ class WatchSyncActivity : AppCompatActivity() {
     private var receivedPackets: Array<ByteArray?>? = null
     private var receivedPacketNum = 0
     private var heartRateStreaming = false
+    private var bindStateReplyReceived = false
 
     // Outgoing vendor commands. A command is NOT delivered by writing its bytes to CHAR_02 —
     // that's what every earlier version of this screen did, and it's why nothing the app sent
@@ -845,22 +854,25 @@ class WatchSyncActivity : AppCompatActivity() {
     }
 
     /**
-     * SEWear{ id: 16 } — bare request. Reply: SEWear{ bindAccount: SEBindAccount{
-     * bindCheck: SEBindCheck{ bindCheckResult, ... } } } — see handleBindStateResponse.
+     * SEWear{ id: 16 } — bare request, meaning "are you already bound?". Reply:
+     * SEWear{ id:16, bindAccount: SEBindAccount{ requestBindingStatus: <bool> } }. This only
+     * reports state; cmd 17 is what actually asks the watch to prompt the user.
      */
     private fun requestDeviceBindState(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
         val wear = mutableListOf<Byte>()
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_REQUEST_BIND_STATE.toLong())
+        bindStateReplyReceived = false
         pushPendingResponse(ZH_CMD_REQUEST_BIND_STATE)
         writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_REQUEST_BIND_STATE)
         appendLog(getString(R.string.watch_sync_log_bind_request_sent))
-        // This is the request whose response gates the watch's own "Download App & Pair" screen
-        // (its reply is what triggers the cmd-18 confirmation that actually completes binding) —
-        // if it never gets a reply, the watch never leaves that screen. Surface that explicitly
-        // instead of leaving it indistinguishable from "still waiting".
+        // Without a reply here the bind sequence never even starts, and the watch stays on its
+        // "Download App & Pair" screen — so say so rather than leaving it looking like a wait.
+        // Tracked by its own flag: the pending-response queue is keyed by send order, and cmd 17's
+        // reply legitimately arrives much later (it waits for a tap on the watch), which would
+        // make a queue-based check here report a timeout that didn't happen.
         val bindGatt = g
         handler.postDelayed({
-            if (bindGatt === gatt && pendingResponseCmdIds.contains(ZH_CMD_REQUEST_BIND_STATE)) {
+            if (bindGatt === gatt && !bindStateReplyReceived) {
                 appendLog(getString(R.string.watch_sync_log_no_bind_response, BIND_RESPONSE_TIMEOUT_MS / 1000))
             }
         }, BIND_RESPONSE_TIMEOUT_MS)
@@ -875,19 +887,66 @@ class WatchSyncActivity : AppCompatActivity() {
      * at all) and sends it via cmd 18 (sendAppBindResult) to actually complete the bind.
      */
     private fun handleBindStateResponse(wearBytes: ByteArray) {
+        bindStateReplyReceived = true
+        // Reply shape confirmed on real hardware (raw bytes 08 10 1A 02 08 00):
+        // SEWear{ id:16, bindAccount{ requestBindingStatus: <bool, field 1> } } — a plain
+        // "am I bound?" answer, matching RequestDeviceBindStateCallBack.onBindState(boolean).
+        // There is no bindCheck in this reply; that only comes back from cmd 17.
+        val bindAccountBytes = parseProtoFields(wearBytes)[3]?.firstOrNull()?.bytes
+        val alreadyBound = bindAccountBytes
+            ?.let { parseProtoFields(it)[1]?.firstOrNull()?.varintValue }
+            ?.let { it != 0L }
+        runOnUiThread {
+            appendLog(getString(R.string.watch_sync_log_bind_state_received, alreadyBound?.toString() ?: "?"))
+        }
+        if (alreadyBound == true) {
+            runOnUiThread { appendLog(getString(R.string.watch_sync_log_already_bound)) }
+            return
+        }
+        val g = gatt ?: return
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
+        requestDeviceBindConfirmation(g, char02)
+    }
+
+    /**
+     * SEWear{ id: 17, bindAccount: SEBindAccount{ bindCheck: SEBindCheck{ deviceVerify: true } } }
+     * — built by com.zhapp.ble.a.a(17) in the SDK. This is the command that puts the watch into
+     * its "confirm this phone" state, so the reply only arrives once the user taps the watch.
+     */
+    private fun requestDeviceBindConfirmation(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+        val bindCheck = mutableListOf<Byte>()
+        appendProtoTag(bindCheck, 1, 0); appendVarint(bindCheck, 1) // deviceVerify = true
+
+        val bindAccount = mutableListOf<Byte>()
+        appendProtoTag(bindAccount, 2, 2); appendVarint(bindAccount, bindCheck.size.toLong()); bindAccount.addAll(bindCheck)
+
+        val wear = mutableListOf<Byte>()
+        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_BIND_DEVICE.toLong())
+        appendProtoTag(wear, 3, 2); appendVarint(wear, bindAccount.size.toLong()); wear.addAll(bindAccount)
+
+        pushPendingResponse(ZH_CMD_BIND_DEVICE)
+        writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_BIND_DEVICE)
+        runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_confirm_requested)) }
+    }
+
+    /**
+     * Reply to cmd 17, once the user has answered on the watch: SEWear{ id:17, bindAccount{
+     * bindCheck{ bindCheckResult: <enum, field 3> } } }. SEBindCheckResult: SUCCESS=0, REFUSE=1,
+     * OVER_TIME=2, VERIFICATION_FAILED=3 (BindDeviceStateCallBack.VerifyCode). Only SUCCESS earns
+     * the cmd-18 confirmation that completes the bind.
+     */
+    private fun handleBindVerifyResponse(wearBytes: ByteArray) {
         val bindAccountBytes = parseProtoFields(wearBytes)[3]?.firstOrNull()?.bytes
         val bindCheckBytes = bindAccountBytes?.let { parseProtoFields(it)[2]?.firstOrNull()?.bytes }
-        // Protobuf does not put a field on the wire when it holds its default value, so a
-        // bindCheck message that carries no bindCheckResult means SUCCESS (0) — reading the
-        // absence as "no result" is what previously stopped the bind here, one step short of
-        // sending cmd 18. Only a genuinely missing bindCheck message is a real failure.
-        val bindCheckResult = bindCheckBytes?.let {
-            parseProtoFields(it)[3]?.firstOrNull()?.varintValue ?: 0L
+        // A bindCheck that carries no bindCheckResult is SUCCESS: protobuf omits a field holding
+        // its default value, and SEBindCheckResult.SUCCESS is 0.
+        val result = bindCheckBytes?.let { parseProtoFields(it)[3]?.firstOrNull()?.varintValue ?: 0L }
+        runOnUiThread {
+            appendLog(getString(R.string.watch_sync_log_bind_verify_result, result?.toString() ?: "?"))
         }
-        runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_state_received, bindCheckResult?.toString() ?: "?")) }
         val g = gatt
         val char02 = g?.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
-        if (g == null || char02 == null || bindCheckResult != 0L) { // 0 = SEBindCheckResult.SUCCESS
+        if (g == null || char02 == null || result != 0L) {
             runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_no_key)) }
             return
         }
@@ -1184,11 +1243,16 @@ class WatchSyncActivity : AppCompatActivity() {
 
         if (handlePossibleRealTimeHeartRate(merged)) return
 
-        val cmdId = popPendingResponse()
-        if (cmdId == ZH_CMD_GET_BATTERY) {
-            handleBatteryResponse(merged)
-        } else if (cmdId == ZH_CMD_REQUEST_BIND_STATE) {
-            handleBindStateResponse(merged)
+        // The watch echoes the command id in field 1 of its reply (visible as "08 10" = id 16 in
+        // a bind-state reply), so route on that rather than on the order we sent things: a reply
+        // that arrives late — cmd 17's, which waits for someone to physically tap the watch —
+        // would otherwise be matched against whatever request happened to be queued next.
+        val replyId = parseProtoFields(merged)[1]?.firstOrNull()?.varintValue?.toInt()
+        val cmdId = popPendingResponse().let { if (replyId != null && replyId != 0) replyId else it }
+        when (cmdId) {
+            ZH_CMD_GET_BATTERY -> handleBatteryResponse(merged)
+            ZH_CMD_REQUEST_BIND_STATE -> handleBindStateResponse(merged)
+            ZH_CMD_BIND_DEVICE -> handleBindVerifyResponse(merged)
         }
     }
 

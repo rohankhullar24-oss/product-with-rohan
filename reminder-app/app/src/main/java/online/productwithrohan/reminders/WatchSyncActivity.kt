@@ -127,6 +127,18 @@ class WatchSyncActivity : AppCompatActivity() {
         private const val SCAN_TIMEOUT_MS = 12_000L
         private const val BIND_RESPONSE_TIMEOUT_MS = 8_000L
         private val MAC_ADDRESS_REGEX = Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
+
+        // TEMPORARY debugging aid for the cmd18/cmd48 bind-persistence question — see
+        // handleTimeSyncResponse/schedulePostBindVerification. Not a protocol change: this is the
+        // watch's own observed cmd 48 (setTime) success reply, SEWear{ id:48 (field 1),
+        // field 100: 0 (varint) }, used only to detect when it's safe to fire the one-shot
+        // verification re-read of cmd 16.
+        private val ZH_CMD_48_SUCCESS_BYTES = byteArrayOf(0x08, 0x30, 0xA0.toByte(), 0x06, 0x00)
+        // Approximately 2-3 seconds, per the debugging request — started only once cmd 48's
+        // successful response has been received AND the vendor command queue is idle, never at
+        // the moment cmd 48 is queued or transmitted.
+        private const val POST_BIND_VERIFY_DELAY_MS = 2500L
+        private const val POST_BIND_VERIFY_QUEUE_POLL_MS = 250L
     }
 
     private lateinit var adapter: SimpleListAdapter<BluetoothDevice>
@@ -161,6 +173,14 @@ class WatchSyncActivity : AppCompatActivity() {
     // appear to keep arriving after the bind, e.g. an eventual OVER_TIME) re-enters
     // handleBindVerifyResponse, logs a false failure, and would resend cmd 18.
     private var bindConfirmed = false
+
+    // TEMPORARY debugging state for the post-bind persistence check (see
+    // schedulePostBindVerification). postBindVerificationScheduled makes the whole check one-shot
+    // per connection/binding attempt; awaitingPostBindVerification routes the verification's own
+    // cmd 16 reply to handlePostBindVerificationResponse instead of the normal handleBindStateResponse
+    // (which would otherwise re-fire cmd 48 and loop).
+    private var postBindVerificationScheduled = false
+    private var awaitingPostBindVerification = false
 
     // Outgoing vendor commands. A command is NOT delivered by writing its bytes to CHAR_02 —
     // that's what every earlier version of this screen did, and it's why nothing the app sent
@@ -268,6 +288,8 @@ class WatchSyncActivity : AppCompatActivity() {
         confirmedChunkIndices.clear()
         currentOutgoingBusyRetries = 0
         bindConfirmed = false
+        postBindVerificationScheduled = false
+        awaitingPostBindVerification = false
         vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
     }
 
@@ -926,6 +948,18 @@ class WatchSyncActivity : AppCompatActivity() {
     }
 
     /**
+     * SEWear{ id:16, bindAccount{ requestBindingStatus: <bool, field 1> } } — shared by the
+     * original bind-state request and the temporary post-bind verification re-read below; both
+     * get the identical reply shape back from cmd 16 (raw bytes e.g. 08 10 1A 02 08 00/08 01).
+     */
+    private fun parseAlreadyBound(wearBytes: ByteArray): Boolean? {
+        val bindAccountBytes = parseProtoFields(wearBytes)[3]?.firstOrNull()?.bytes
+        return bindAccountBytes
+            ?.let { parseProtoFields(it)[1]?.firstOrNull()?.varintValue }
+            ?.let { it != 0L }
+    }
+
+    /**
      * Confirmed against the real NoiseFit app's own consumer code (com.noisefit_zhsdk.handler.
      * ZhConnectHandler.T()/bindDevice$1.onDeviceInfo) — this replaces an earlier, incorrect guess
      * that echoed the response's bindRandomKey field back via cmd 17. The real gating field is
@@ -939,10 +973,7 @@ class WatchSyncActivity : AppCompatActivity() {
         // SEWear{ id:16, bindAccount{ requestBindingStatus: <bool, field 1> } } — a plain
         // "am I bound?" answer, matching RequestDeviceBindStateCallBack.onBindState(boolean).
         // There is no bindCheck in this reply; that only comes back from cmd 17.
-        val bindAccountBytes = parseProtoFields(wearBytes)[3]?.firstOrNull()?.bytes
-        val alreadyBound = bindAccountBytes
-            ?.let { parseProtoFields(it)[1]?.firstOrNull()?.varintValue }
-            ?.let { it != 0L }
+        val alreadyBound = parseAlreadyBound(wearBytes)
         runOnUiThread {
             appendLog(getString(R.string.watch_sync_log_bind_state_received, alreadyBound?.toString() ?: "?"))
         }
@@ -956,6 +987,28 @@ class WatchSyncActivity : AppCompatActivity() {
             return
         }
         requestDeviceBindConfirmation(g, char02)
+    }
+
+    /**
+     * TEMPORARY debugging path (see the class-level POST_BIND_VERIFY_* constants): handles the
+     * reply to the one-shot verification cmd 16 sent by schedulePostBindVerification, routed here
+     * instead of handleBindStateResponse (via awaitingPostBindVerification) so it can never
+     * re-trigger cmd 48 / cmd 17 or loop. Only logs and parses bound=true/false — no protocol
+     * changes are made based on the result.
+     */
+    private fun handlePostBindVerificationResponse(wearBytes: ByteArray) {
+        awaitingPostBindVerification = false
+        val bound = parseAlreadyBound(wearBytes)
+        runOnUiThread {
+            appendLog(getString(R.string.watch_sync_log_post_bind_verify_response, bytesToHex(wearBytes)))
+            appendLog(
+                getString(
+                    R.string.watch_sync_log_post_bind_verify_result,
+                    bound?.toString() ?: "?",
+                    if (bound == true) "persisted" else "NOT persisted",
+                )
+            )
+        }
     }
 
     /**
@@ -1049,8 +1102,60 @@ class WatchSyncActivity : AppCompatActivity() {
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SEND_APP_BIND_RESULT.toLong())
         appendProtoTag(wear, 3, 2); appendVarint(wear, bindAccount.size.toLong()); wear.addAll(bindAccount)
 
-        writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_SEND_APP_BIND_RESULT)
+        val wearBytes = wear.toByteArray()
+        // Exact bytes handed to the vendor command/chunking layer, logged immediately before
+        // transmission — not a reconstruction — so the actual cmd 18 payload can be diffed
+        // against the decompiled SDK/official protocol if the watch turns out not to persist it.
+        appendLog(getString(R.string.watch_sync_log_cmd18_raw_payload, bytesToHex(wearBytes)))
+        writeVendorPacket(g, characteristic, wearBytes, ZH_CMD_SEND_APP_BIND_RESULT)
         appendLog(getString(R.string.watch_sync_log_bind_device_sent))
+    }
+
+    /**
+     * TEMPORARY debugging path: handles cmd 48's (setTime) response. Its only job is to detect
+     * the watch's known success reply (08 30 A0 06 00) and, if this cmd 48 is the one fired right
+     * after a fresh cmd 18 bind confirmation (bindConfirmed == true), kick off the one-shot
+     * post-bind verification. On the already-bound path (handleBindStateResponse) bindConfirmed
+     * is never set, so this never fires there.
+     */
+    private fun handleTimeSyncResponse(wearBytes: ByteArray) {
+        if (!wearBytes.contentEquals(ZH_CMD_48_SUCCESS_BYTES)) return
+        runOnUiThread { appendLog(getString(R.string.watch_sync_log_cmd48_completed, bytesToHex(wearBytes))) }
+        if (bindConfirmed) schedulePostBindVerification()
+    }
+
+    /**
+     * TEMPORARY debugging aid, one-shot per connection (guarded by postBindVerificationScheduled,
+     * reset in resetGattOpQueue): schedules a fresh cmd 16 to see whether the watch persisted the
+     * bind cmd 18 just confirmed. The delay is started here, from cmd 48's successful-response
+     * handler, never from where cmd 48 is queued or transmitted.
+     */
+    private fun schedulePostBindVerification() {
+        if (postBindVerificationScheduled) return
+        postBindVerificationScheduled = true
+        handler.postDelayed({ sendPostBindVerificationCmd16() }, POST_BIND_VERIFY_DELAY_MS)
+    }
+
+    /**
+     * Fires the scheduled verification cmd 16 once the vendor command queue and GATT op queue are
+     * both idle — re-polling briefly rather than sending into an in-flight command, but never
+     * looping indefinitely since nothing else queues behind cmd 48 in the bind flow.
+     */
+    private fun sendPostBindVerificationCmd16() {
+        val g = gatt ?: return
+        if (outgoingInFlight || gattOpInFlight) {
+            handler.postDelayed({ sendPostBindVerificationCmd16() }, POST_BIND_VERIFY_QUEUE_POLL_MS)
+            return
+        }
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
+        awaitingPostBindVerification = true
+        // Identical cmd 16 payload construction to requestDeviceBindState — SEWear{ id: 16 },
+        // no protocol change, just re-sent to see whether the bind persisted.
+        val wear = mutableListOf<Byte>()
+        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_REQUEST_BIND_STATE.toLong())
+        pushPendingResponse(ZH_CMD_REQUEST_BIND_STATE)
+        writeVendorPacket(g, char02, wear.toByteArray(), ZH_CMD_REQUEST_BIND_STATE)
+        appendLog(getString(R.string.watch_sync_log_post_bind_verify_sent))
     }
 
     /**
@@ -1385,8 +1490,10 @@ class WatchSyncActivity : AppCompatActivity() {
         }
         when (cmdId) {
             ZH_CMD_GET_BATTERY -> handleBatteryResponse(merged)
-            ZH_CMD_REQUEST_BIND_STATE -> handleBindStateResponse(merged)
+            ZH_CMD_REQUEST_BIND_STATE ->
+                if (awaitingPostBindVerification) handlePostBindVerificationResponse(merged) else handleBindStateResponse(merged)
             ZH_CMD_BIND_DEVICE -> handleBindVerifyResponse(merged)
+            ZH_CMD_SET_TIME -> handleTimeSyncResponse(merged)
         }
     }
 

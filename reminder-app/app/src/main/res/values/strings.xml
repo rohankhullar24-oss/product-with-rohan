@@ -249,9 +249,11 @@
     <string name="watch_sync_log_bind_device_sent">App-level bind confirmation sent (cmd 18, with a fresh app-generated token).</string>
     <string name="watch_sync_log_cmd18_raw_payload">Vendor cmd 18 payload (raw): %1$s</string>
     <string name="watch_sync_log_cmd48_completed">Vendor cmd 48 completed successfully (raw: %1$s).</string>
-    <string name="watch_sync_log_post_bind_verify_sent">Post-bind verification cmd 16 sent</string>
-    <string name="watch_sync_log_post_bind_verify_response">Post-bind verification cmd 16 response (raw): %1$s</string>
-    <string name="watch_sync_log_post_bind_verify_result">Post-bind verification: bound=%1$s — binding %2$s.</string>
+    <string name="watch_sync_log_fresh_bind_complete">Fresh bind complete.</string>
+    <string name="watch_sync_log_disconnecting_for_verify">Disconnecting for persistence verification.</string>
+    <string name="watch_sync_log_reconnected_for_verify">Reconnected for persistence verification.</string>
+    <string name="watch_sync_log_reconnect_verify_response">Post-reconnect cmd16 response (raw): %1$s</string>
+    <string name="watch_sync_log_reconnect_verify_result">Post-reconnect binding state: bound=%1$s.</string>
     <string name="watch_sync_log_already_bonded">Already Bluetooth-paired with this watch.</string>
     <string name="watch_sync_log_bonding_requested">Requesting Bluetooth pairing — check the watch\'s screen and confirm the pairing prompt there.</string>
     <string name="watch_sync_log_bonding_in_progress">Pairing in progress — confirm on the watch\'s screen.</string>

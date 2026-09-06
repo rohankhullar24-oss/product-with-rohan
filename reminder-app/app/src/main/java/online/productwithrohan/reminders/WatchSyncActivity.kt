@@ -128,17 +128,25 @@ class WatchSyncActivity : AppCompatActivity() {
         private const val BIND_RESPONSE_TIMEOUT_MS = 8_000L
         private val MAC_ADDRESS_REGEX = Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
 
-        // TEMPORARY debugging aid for the cmd18/cmd48 bind-persistence question — see
-        // handleTimeSyncResponse/schedulePostBindVerification. Not a protocol change: this is the
+        // TEMPORARY debugging aid for the cmd18 bind-persistence question — see
+        // handleTimeSyncResponse/schedulePersistenceReconnect. Not a protocol change: this is the
         // watch's own observed cmd 48 (setTime) success reply, SEWear{ id:48 (field 1),
-        // field 100: 0 (varint) }, used only to detect when it's safe to fire the one-shot
-        // verification re-read of cmd 16.
+        // field 100: 0 (varint) }, used only to detect when it's safe to disconnect for the
+        // one-shot persistence-across-reconnect check.
+        //
+        // A same-session cmd 16 re-read was tried first and came back bound=false, but decompiling
+        // the real NoiseFit SDK showed the official app never re-checks cmd 16 in the same
+        // connection either (ZhConnectHandler.Y(), the post-cmd18 "connect success" path, never
+        // calls requestDeviceBindState) — it only re-asks cmd 16 on the NEXT connection. So a
+        // same-session false doesn't prove persistence failed; this now disconnects and
+        // reconnects before re-asking, matching what the real app's own flow implies is the only
+        // point it would ever find out.
         private val ZH_CMD_48_SUCCESS_BYTES = byteArrayOf(0x08, 0x30, 0xA0.toByte(), 0x06, 0x00)
         // Approximately 2-3 seconds, per the debugging request — started only once cmd 48's
         // successful response has been received AND the vendor command queue is idle, never at
         // the moment cmd 48 is queued or transmitted.
-        private const val POST_BIND_VERIFY_DELAY_MS = 2500L
-        private const val POST_BIND_VERIFY_QUEUE_POLL_MS = 250L
+        private const val PERSISTENCE_RECONNECT_DELAY_MS = 2500L
+        private const val PERSISTENCE_RECONNECT_QUEUE_POLL_MS = 250L
     }
 
     private lateinit var adapter: SimpleListAdapter<BluetoothDevice>
@@ -174,13 +182,19 @@ class WatchSyncActivity : AppCompatActivity() {
     // handleBindVerifyResponse, logs a false failure, and would resend cmd 18.
     private var bindConfirmed = false
 
-    // TEMPORARY debugging state for the post-bind persistence check (see
-    // schedulePostBindVerification). postBindVerificationScheduled makes the whole check one-shot
-    // per connection/binding attempt; awaitingPostBindVerification routes the verification's own
-    // cmd 16 reply to handlePostBindVerificationResponse instead of the normal handleBindStateResponse
-    // (which would otherwise re-fire cmd 48 and loop).
-    private var postBindVerificationScheduled = false
-    private var awaitingPostBindVerification = false
+    // TEMPORARY debugging state for the persistence-across-reconnect check (see
+    // schedulePersistenceReconnect). persistenceReconnectScheduled makes the whole check one-shot
+    // per binding attempt and IS reset per-connection like bindConfirmed. The other two
+    // deliberately survive resetGattOpQueue (called mid-flow by the disconnect and again by the
+    // reconnect's onDeviceSelected) since their whole job is to carry state across that boundary:
+    // pendingPersistenceReconnectDevice tells the DISCONNECTED callback to immediately reconnect
+    // instead of just sitting disconnected, and awaitingReconnectBindVerification routes the
+    // reconnect's own cmd 16 reply to handleReconnectVerificationResponse instead of the normal
+    // handleBindStateResponse (which would otherwise auto-fire cmd 17/cmd 48 on this diagnostic
+    // reconnect).
+    private var persistenceReconnectScheduled = false
+    private var pendingPersistenceReconnectDevice: BluetoothDevice? = null
+    private var awaitingReconnectBindVerification = false
 
     // Outgoing vendor commands. A command is NOT delivered by writing its bytes to CHAR_02 —
     // that's what every earlier version of this screen did, and it's why nothing the app sent
@@ -288,8 +302,7 @@ class WatchSyncActivity : AppCompatActivity() {
         confirmedChunkIndices.clear()
         currentOutgoingBusyRetries = 0
         bindConfirmed = false
-        postBindVerificationScheduled = false
-        awaitingPostBindVerification = false
+        persistenceReconnectScheduled = false
         vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
     }
 
@@ -607,8 +620,15 @@ class WatchSyncActivity : AppCompatActivity() {
             // resetting the op queue mid-operation on the new one).
             if (g !== gatt) return
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                // awaitingReconnectBindVerification survives the disconnect deliberately (see its
+                // declaration) — true here means this CONNECTED is the diagnostic reconnect this
+                // TEMPORARY debugging flow itself triggered, not a normal user-initiated connect.
+                val isPersistenceReconnect = awaitingReconnectBindVerification
                 runOnUiThread {
                     appendLog(getString(R.string.watch_sync_log_connected))
+                    if (isPersistenceReconnect) {
+                        appendLog(getString(R.string.watch_sync_log_reconnected_for_verify))
+                    }
                     val name = deviceName(g.device) ?: g.device.address
                     statusHeadline.text = getString(R.string.watch_sync_status_connected_headline, name)
                     statusSubtitle.setText(R.string.watch_sync_status_connected_subtitle)
@@ -628,6 +648,15 @@ class WatchSyncActivity : AppCompatActivity() {
                     statusSubtitle.setText(R.string.watch_sync_status_disconnected_subtitle)
                     sectionControls.visibility = View.GONE
                     heartRateButton.setText(R.string.watch_sync_start_heart_rate)
+                }
+                // TEMPORARY debugging path: a disconnect we triggered ourselves via
+                // beginPersistenceReconnect() (never a normal/user-initiated disconnect, which
+                // leaves this null) reconnects immediately instead of just sitting disconnected —
+                // this is the disconnect/reconnect boundary the persistence check needs to cross.
+                val reconnectDevice = pendingPersistenceReconnectDevice
+                if (reconnectDevice != null) {
+                    pendingPersistenceReconnectDevice = null
+                    runOnUiThread { onDeviceSelected(reconnectDevice) }
                 }
             }
         }
@@ -990,24 +1019,20 @@ class WatchSyncActivity : AppCompatActivity() {
     }
 
     /**
-     * TEMPORARY debugging path (see the class-level POST_BIND_VERIFY_* constants): handles the
-     * reply to the one-shot verification cmd 16 sent by schedulePostBindVerification, routed here
-     * instead of handleBindStateResponse (via awaitingPostBindVerification) so it can never
-     * re-trigger cmd 48 / cmd 17 or loop. Only logs and parses bound=true/false — no protocol
-     * changes are made based on the result.
+     * TEMPORARY debugging path (see the class-level PERSISTENCE_RECONNECT_* constants): handles
+     * the reply to the cmd 16 sent automatically by onServicesDiscovered on the diagnostic
+     * reconnect triggered by schedulePersistenceReconnect, routed here instead of
+     * handleBindStateResponse (via awaitingReconnectBindVerification) so this reconnect can never
+     * auto-fire cmd 17 (re-request pairing) or cmd 48 the way a normal connect's bind-state
+     * response would. Only logs and parses bound=true/false — no protocol changes, and no cmd 19,
+     * are made based on the result; that's a deliberately separate follow-up experiment.
      */
-    private fun handlePostBindVerificationResponse(wearBytes: ByteArray) {
-        awaitingPostBindVerification = false
+    private fun handleReconnectVerificationResponse(wearBytes: ByteArray) {
+        awaitingReconnectBindVerification = false
         val bound = parseAlreadyBound(wearBytes)
         runOnUiThread {
-            appendLog(getString(R.string.watch_sync_log_post_bind_verify_response, bytesToHex(wearBytes)))
-            appendLog(
-                getString(
-                    R.string.watch_sync_log_post_bind_verify_result,
-                    bound?.toString() ?: "?",
-                    if (bound == true) "persisted" else "NOT persisted",
-                )
-            )
+            appendLog(getString(R.string.watch_sync_log_reconnect_verify_response, bytesToHex(wearBytes)))
+            appendLog(getString(R.string.watch_sync_log_reconnect_verify_result, bound?.toString() ?: "?"))
         }
     }
 
@@ -1114,48 +1139,55 @@ class WatchSyncActivity : AppCompatActivity() {
     /**
      * TEMPORARY debugging path: handles cmd 48's (setTime) response. Its only job is to detect
      * the watch's known success reply (08 30 A0 06 00) and, if this cmd 48 is the one fired right
-     * after a fresh cmd 18 bind confirmation (bindConfirmed == true), kick off the one-shot
-     * post-bind verification. On the already-bound path (handleBindStateResponse) bindConfirmed
-     * is never set, so this never fires there.
+     * after a fresh cmd 18 bind confirmation (bindConfirmed == true), mark the fresh bind flow
+     * complete and kick off the one-shot persistence-across-reconnect check. On the already-bound
+     * path (handleBindStateResponse) bindConfirmed is never set, so this never fires there.
      */
     private fun handleTimeSyncResponse(wearBytes: ByteArray) {
         if (!wearBytes.contentEquals(ZH_CMD_48_SUCCESS_BYTES)) return
         runOnUiThread { appendLog(getString(R.string.watch_sync_log_cmd48_completed, bytesToHex(wearBytes))) }
-        if (bindConfirmed) schedulePostBindVerification()
+        if (bindConfirmed) {
+            runOnUiThread { appendLog(getString(R.string.watch_sync_log_fresh_bind_complete)) }
+            schedulePersistenceReconnect()
+        }
     }
 
     /**
-     * TEMPORARY debugging aid, one-shot per connection (guarded by postBindVerificationScheduled,
-     * reset in resetGattOpQueue): schedules a fresh cmd 16 to see whether the watch persisted the
-     * bind cmd 18 just confirmed. The delay is started here, from cmd 48's successful-response
-     * handler, never from where cmd 48 is queued or transmitted.
+     * TEMPORARY debugging aid, one-shot per binding attempt (guarded by
+     * persistenceReconnectScheduled, reset in resetGattOpQueue): waits for the vendor/GATT queues
+     * to go idle, then intentionally disconnects and reconnects before re-asking cmd 16 — a
+     * same-session re-read was tried first and returned bound=false, but the decompiled SDK shows
+     * the official app never re-checks cmd 16 within the same connection either, so that result
+     * didn't prove persistence failed. The delay is started here, from cmd 48's
+     * successful-response handler, never from where cmd 48 is queued or transmitted.
      */
-    private fun schedulePostBindVerification() {
-        if (postBindVerificationScheduled) return
-        postBindVerificationScheduled = true
-        handler.postDelayed({ sendPostBindVerificationCmd16() }, POST_BIND_VERIFY_DELAY_MS)
+    private fun schedulePersistenceReconnect() {
+        if (persistenceReconnectScheduled) return
+        persistenceReconnectScheduled = true
+        handler.postDelayed({ beginPersistenceReconnect() }, PERSISTENCE_RECONNECT_DELAY_MS)
     }
 
     /**
-     * Fires the scheduled verification cmd 16 once the vendor command queue and GATT op queue are
-     * both idle — re-polling briefly rather than sending into an in-flight command, but never
-     * looping indefinitely since nothing else queues behind cmd 48 in the bind flow.
+     * Disconnects once the vendor command queue and GATT op queue are both idle — re-polling
+     * briefly rather than disconnecting mid-command, but never looping indefinitely since nothing
+     * else queues behind cmd 48 in the bind flow. The actual reconnect is triggered from
+     * gattCallback.onConnectionStateChange's STATE_DISCONNECTED branch once this disconnect
+     * completes, not here — a real link drop, not just a local close()+reopen, is the point.
      */
-    private fun sendPostBindVerificationCmd16() {
+    private fun beginPersistenceReconnect() {
         val g = gatt ?: return
         if (outgoingInFlight || gattOpInFlight) {
-            handler.postDelayed({ sendPostBindVerificationCmd16() }, POST_BIND_VERIFY_QUEUE_POLL_MS)
+            handler.postDelayed({ beginPersistenceReconnect() }, PERSISTENCE_RECONNECT_QUEUE_POLL_MS)
             return
         }
-        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
-        awaitingPostBindVerification = true
-        // Identical cmd 16 payload construction to requestDeviceBindState — SEWear{ id: 16 },
-        // no protocol change, just re-sent to see whether the bind persisted.
-        val wear = mutableListOf<Byte>()
-        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_REQUEST_BIND_STATE.toLong())
-        pushPendingResponse(ZH_CMD_REQUEST_BIND_STATE)
-        writeVendorPacket(g, char02, wear.toByteArray(), ZH_CMD_REQUEST_BIND_STATE)
-        appendLog(getString(R.string.watch_sync_log_post_bind_verify_sent))
+        pendingPersistenceReconnectDevice = g.device
+        awaitingReconnectBindVerification = true
+        runOnUiThread { appendLog(getString(R.string.watch_sync_log_disconnecting_for_verify)) }
+        try {
+            g.disconnect()
+        } catch (e: SecurityException) {
+            appendLog(getString(R.string.watch_sync_log_permission_error))
+        }
     }
 
     /**
@@ -1491,7 +1523,7 @@ class WatchSyncActivity : AppCompatActivity() {
         when (cmdId) {
             ZH_CMD_GET_BATTERY -> handleBatteryResponse(merged)
             ZH_CMD_REQUEST_BIND_STATE ->
-                if (awaitingPostBindVerification) handlePostBindVerificationResponse(merged) else handleBindStateResponse(merged)
+                if (awaitingReconnectBindVerification) handleReconnectVerificationResponse(merged) else handleBindStateResponse(merged)
             ZH_CMD_BIND_DEVICE -> handleBindVerifyResponse(merged)
             ZH_CMD_SET_TIME -> handleTimeSyncResponse(merged)
         }

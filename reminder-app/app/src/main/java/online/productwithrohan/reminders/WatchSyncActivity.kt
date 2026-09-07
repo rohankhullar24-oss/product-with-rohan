@@ -131,6 +131,15 @@ class WatchSyncActivity : AppCompatActivity() {
         // The watch's own observed cmd 48 (setTime) success reply, SEWear{ id:48 (field 1),
         // field 100: 0 (varint) } — logged so the sync log shows time-sync actually landing.
         private val ZH_CMD_48_SUCCESS_BYTES = byteArrayOf(0x08, 0x30, 0xA0.toByte(), 0x06, 0x00)
+
+        // ACTION_BOND_STATE_CHANGED's reason extra. BluetoothDevice.EXTRA_REASON is @hide, so the
+        // key is spelled out; reading an extra by name is an ordinary Bundle lookup and is not
+        // subject to the non-SDK interface restrictions.
+        private const val EXTRA_BOND_REASON = "android.bluetooth.device.extra.REASON"
+        // Sentinels distinct from every real BOND_* / UNBOND_REASON_* value (which start at 0), so
+        // "the platform didn't tell us" never reads as a genuine code.
+        private const val BOND_REASON_UNKNOWN = -1
+        private const val BOND_STATE_UNKNOWN = -1
     }
 
     private lateinit var adapter: SimpleListAdapter<BluetoothDevice>
@@ -348,6 +357,7 @@ class WatchSyncActivity : AppCompatActivity() {
         findViewById<Button>(R.id.button_scan_qr).setOnClickListener { scanQrCode() }
         findViewById<Button>(R.id.button_send_notification).setOnClickListener { sendTestNotification() }
         findViewById<Button>(R.id.button_read_battery).setOnClickListener { requestVendorBattery() }
+        findViewById<Button>(R.id.button_request_bond).setOnClickListener { requestBondOnDemand() }
         heartRateButton.setOnClickListener { toggleRealTimeHeartRate() }
         logToggle.setOnClickListener {
             val show = logScroll.visibility != View.VISIBLE
@@ -561,11 +571,13 @@ class WatchSyncActivity : AppCompatActivity() {
             connectingDeviceAddress = null
             null
         }
-        // requestBondIfNeeded() is called once GATT actually reaches STATE_CONNECTED (see
-        // gattCallback.onConnectionStateChange), not here. Calling createBond() while a
-        // connectGatt() is still in flight is a known-flaky Android BLE pattern — many stacks
-        // let it return true / transition through BOND_BONDED without ever showing the watch's
-        // own confirmation prompt, so the app reports "paired" while the watch never did.
+        // No bonding is requested from here, and none is requested on connect either — it's on
+        // demand via the pairing card's button (requestBondOnDemand). Two separate reasons:
+        // nothing in Watch Sync needs a bond, and calling createBond() while a connectGatt() is
+        // still in flight is a known-flaky Android BLE pattern — many stacks let it return true /
+        // transition through BOND_BONDED without ever showing the watch's own confirmation
+        // prompt, so the app reports "paired" while the watch never did. The button can only fire
+        // once a GATT connection exists, so it can't reintroduce that race.
     }
 
     /** Bond/connection lifecycle audit: BluetoothDevice.bondState as a readable name, for logging. */
@@ -573,7 +585,29 @@ class WatchSyncActivity : AppCompatActivity() {
         BluetoothDevice.BOND_NONE -> "BOND_NONE"
         BluetoothDevice.BOND_BONDING -> "BOND_BONDING"
         BluetoothDevice.BOND_BONDED -> "BOND_BONDED"
+        BOND_STATE_UNKNOWN -> "NOT_REPORTED"
         else -> "UNKNOWN($state)"
+    }
+
+    /**
+     * Names for the reason codes carried by ACTION_BOND_STATE_CHANGED's hidden REASON extra
+     * (AOSP's BluetoothDevice.UNBOND_REASON_* constants). These have never been public API, so
+     * the numbers are matched literally rather than by symbol, and anything unrecognised is
+     * reported as its raw value rather than guessed at — an OEM build is free to report a code
+     * that isn't in this list.
+     */
+    private fun bondFailureReasonName(reason: Int): String = when (reason) {
+        0 -> "AUTH_FAILED"
+        1 -> "AUTH_REJECTED — the watch declined the pairing"
+        2 -> "AUTH_CANCELED"
+        3 -> "REMOTE_DEVICE_DOWN — the watch was unreachable"
+        4 -> "DISCOVERY_IN_PROGRESS"
+        5 -> "AUTH_TIMEOUT — nobody confirmed on the watch in time"
+        6 -> "REPEATED_ATTEMPTS"
+        7 -> "REMOTE_AUTH_CANCELED"
+        9 -> "REMOVED — the bond was deleted, not a failed attempt"
+        BOND_REASON_UNKNOWN -> "not reported by this Android build"
+        else -> "unrecognised code"
     }
 
     /** Bond/connection lifecycle audit: reads bondState defensively — this is a plain getter, but every other device/gatt call in this file guards SecurityException, so this does too rather than being the one silent exception to that pattern. */
@@ -596,6 +630,22 @@ class WatchSyncActivity : AppCompatActivity() {
      * ACTION_BOND_STATE_CHANGED listener is what actually reports how that existing negotiation
      * resolves.
      */
+    /**
+     * On-demand entry point for the pairing card's button. OS bonding is optional here — every
+     * Watch Sync feature (notifications, battery, heart rate, the app-level cmd 16/17/18 bind)
+     * works unbonded, because this watch doesn't gate its characteristics behind encryption. It
+     * is offered as a button rather than run automatically because requesting it on connect is
+     * what produced a "pairing failed" error on the watch's own screen.
+     */
+    private fun requestBondOnDemand() {
+        val device = gatt?.device
+        if (device == null) {
+            appendLog(getString(R.string.watch_sync_log_not_connected))
+            return
+        }
+        requestBondIfNeeded(device)
+    }
+
     @Suppress("DEPRECATION")
     private fun requestBondIfNeeded(device: BluetoothDevice) {
         val previousBondState = readBondState(device)
@@ -628,14 +678,41 @@ class WatchSyncActivity : AppCompatActivity() {
             val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) ?: return
             if (device.address != gatt?.device?.address) return
             val newBondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)
+            val previousBondState =
+                intent.getIntExtra(BluetoothDevice.EXTRA_PREVIOUS_BOND_STATE, BOND_STATE_UNKNOWN)
             // Bond/connection lifecycle audit: raw state-transition line, independent of the
             // human-readable ones below — this is the ground truth for whether Android itself
-            // changed the bond, regardless of anything this app requested.
-            appendLog(getString(R.string.watch_sync_log_bond_state_changed, bondStateName(newBondState)))
+            // changed the bond, regardless of anything this app requested. The transition's
+            // DIRECTION is what distinguishes a rejected pairing attempt (BONDING -> NONE) from an
+            // existing bond being removed (BONDED -> NONE); logging only the new state conflated
+            // the two, which is why "pairing failed, was rejected, or was removed" could never say
+            // which had happened.
+            appendLog(
+                getString(
+                    R.string.watch_sync_log_bond_state_changed,
+                    bondStateName(previousBondState),
+                    bondStateName(newBondState),
+                )
+            )
             when (newBondState) {
                 BluetoothDevice.BOND_BONDING -> appendLog(getString(R.string.watch_sync_log_bonding_in_progress))
                 BluetoothDevice.BOND_BONDED -> appendLog(getString(R.string.watch_sync_log_bonded))
-                BluetoothDevice.BOND_NONE -> appendLog(getString(R.string.watch_sync_log_bond_failed_or_removed))
+                BluetoothDevice.BOND_NONE -> {
+                    appendLog(getString(R.string.watch_sync_log_bond_failed_or_removed))
+                    // Android reports WHY the bond ended, but only through an extra that has never
+                    // been part of the public SDK (BluetoothDevice.EXTRA_REASON is @hide). Reading
+                    // it by its literal key is a plain Bundle lookup, not a hidden-API call, so
+                    // it's unaffected by the non-SDK interface restrictions — it just returns the
+                    // fallback on builds that don't supply it.
+                    val reason = intent.getIntExtra(EXTRA_BOND_REASON, BOND_REASON_UNKNOWN)
+                    appendLog(
+                        getString(
+                            R.string.watch_sync_log_bond_failure_reason,
+                            reason,
+                            bondFailureReasonName(reason),
+                        )
+                    )
+                }
             }
         }
     }
@@ -660,7 +737,11 @@ class WatchSyncActivity : AppCompatActivity() {
                     statusHeadline.text = getString(R.string.watch_sync_status_connected_headline, name)
                     statusSubtitle.setText(R.string.watch_sync_status_connected_subtitle)
                 }
-                requestBondIfNeeded(g.device)
+                // OS-level bonding is deliberately NOT requested here — see requestBondIfNeeded's
+                // docs. It gates no feature on this watch, and requesting it automatically is what
+                // produced a "pairing failed" error on the watch's own screen. The button on the
+                // pairing card calls it on demand instead.
+                runOnUiThread { appendLog(getString(R.string.watch_sync_log_bond_not_auto_requested)) }
                 try {
                     g.discoverServices()
                 } catch (e: SecurityException) {

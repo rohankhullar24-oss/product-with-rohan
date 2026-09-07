@@ -169,6 +169,15 @@ class WatchSyncActivity : AppCompatActivity() {
     private var gatt: BluetoothGatt? = null
     private var scanning = false
 
+    // Bond/connection lifecycle audit (see the bonding investigation below): the address a
+    // connectGatt() is currently in flight for (set right before the call, cleared on
+    // STATE_DISCONNECTED). onDeviceSelected uses this to refuse a second connectGatt() for the
+    // SAME device while one is still resolving — starting a fresh connectGatt() mid-negotiation
+    // is a known-flaky Android BLE pattern and a plausible contributor to the OS bond instability
+    // observed on reconnect. A different device selected mid-flight still supersedes it, same as
+    // before — this only blocks re-selecting the device already being connected to.
+    private var connectingDeviceAddress: String? = null
+
     // CHAR_01 multi-packet response reassembly state (mirrors the decompiled SDK's fields).
     private var expectedPacketCount = 0
     private var receivedPackets: Array<ByteArray?>? = null
@@ -557,6 +566,16 @@ class WatchSyncActivity : AppCompatActivity() {
     // --- connect & sync -----------------------------------------------------
 
     private fun onDeviceSelected(device: BluetoothDevice) {
+        // Bond/connection lifecycle audit: refuse a second connectGatt() for the SAME device
+        // while one is already resolving (between this call and STATE_CONNECTED/DISCONNECTED) —
+        // repeatedly interrupting a connect negotiation mid-flight is a known-flaky Android BLE
+        // pattern and matches the duplicate "Connecting…" entries seen when this screen's device
+        // list or QR flow re-fires a selection before the prior attempt finished. A different
+        // device is still allowed to supersede an in-flight one, same as always.
+        if (connectingDeviceAddress == device.address) {
+            appendLog(getString(R.string.watch_sync_log_connect_already_in_flight, device.address))
+            return
+        }
         stopScan()
         val name = deviceName(device) ?: device.address
         appendLog(getString(R.string.watch_sync_log_connecting, name))
@@ -564,10 +583,13 @@ class WatchSyncActivity : AppCompatActivity() {
         sectionControls.visibility = View.GONE
         resetGattOpQueue()
         gatt?.close()
+        connectingDeviceAddress = device.address
+        appendLog(getString(R.string.watch_sync_log_bond_state_before_connect, device.address, bondStateName(readBondState(device))))
         gatt = try {
             device.connectGatt(this, false, gattCallback)
         } catch (e: SecurityException) {
             appendLog(getString(R.string.watch_sync_log_permission_error))
+            connectingDeviceAddress = null
             null
         }
         // requestBondIfNeeded() is called once GATT actually reaches STATE_CONNECTED (see
@@ -577,21 +599,53 @@ class WatchSyncActivity : AppCompatActivity() {
         // own confirmation prompt, so the app reports "paired" while the watch never did.
     }
 
+    /** Bond/connection lifecycle audit: BluetoothDevice.bondState as a readable name, for logging. */
+    private fun bondStateName(state: Int): String = when (state) {
+        BluetoothDevice.BOND_NONE -> "BOND_NONE"
+        BluetoothDevice.BOND_BONDING -> "BOND_BONDING"
+        BluetoothDevice.BOND_BONDED -> "BOND_BONDED"
+        else -> "UNKNOWN($state)"
+    }
+
+    /** Bond/connection lifecycle audit: reads bondState defensively — this is a plain getter, but every other device/gatt call in this file guards SecurityException, so this does too rather than being the one silent exception to that pattern. */
+    private fun readBondState(device: BluetoothDevice): Int = try {
+        device.bondState
+    } catch (e: SecurityException) {
+        BluetoothDevice.BOND_NONE
+    }
+
     /**
      * Real OS-level Bluetooth pairing (distinct from GATT connect, and from the vendor-protocol
      * "device binding" handshake above) — confirmed on real hardware: the watch shows a native
      * "Pair with this device?" confirmation on its own screen only when the phone actually calls
      * createBond(). This is what makes the watch show up as paired at all; our GATT reads/writes
      * work without it, which is why this was easy to miss.
+     *
+     * Bond/connection lifecycle audit: BOND_BONDING is now handled separately from BOND_NONE —
+     * a createBond() call while a bonding negotiation is already in progress is a second,
+     * redundant request rather than a legitimate new one, and bondStateReceiver's
+     * ACTION_BOND_STATE_CHANGED listener is what actually reports how that existing negotiation
+     * resolves.
      */
     @Suppress("DEPRECATION")
     private fun requestBondIfNeeded(device: BluetoothDevice) {
+        val previousBondState = readBondState(device)
+        if (previousBondState == BluetoothDevice.BOND_BONDED) {
+            appendLog(getString(R.string.watch_sync_log_already_bonded))
+            return
+        }
+        if (previousBondState == BluetoothDevice.BOND_BONDING) {
+            appendLog(getString(R.string.watch_sync_log_bonding_already_in_progress))
+            return
+        }
+        appendLog(getString(R.string.watch_sync_log_bonding_requested))
+        appendLog(
+            getString(
+                R.string.watch_sync_log_create_bond_called,
+                bondStateName(previousBondState),
+            )
+        )
         try {
-            if (device.bondState == BluetoothDevice.BOND_BONDED) {
-                appendLog(getString(R.string.watch_sync_log_already_bonded))
-                return
-            }
-            appendLog(getString(R.string.watch_sync_log_bonding_requested))
             device.createBond()
         } catch (e: SecurityException) {
             appendLog(getString(R.string.watch_sync_log_permission_error))
@@ -604,7 +658,12 @@ class WatchSyncActivity : AppCompatActivity() {
             if (intent.action != BluetoothDevice.ACTION_BOND_STATE_CHANGED) return
             val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) ?: return
             if (device.address != gatt?.device?.address) return
-            when (intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)) {
+            val newBondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)
+            // Bond/connection lifecycle audit: raw state-transition line, independent of the
+            // human-readable ones below — this is the ground truth for whether Android itself
+            // changed the bond, regardless of anything this app requested.
+            appendLog(getString(R.string.watch_sync_log_bond_state_changed, bondStateName(newBondState)))
+            when (newBondState) {
                 BluetoothDevice.BOND_BONDING -> appendLog(getString(R.string.watch_sync_log_bonding_in_progress))
                 BluetoothDevice.BOND_BONDED -> appendLog(getString(R.string.watch_sync_log_bonded))
                 BluetoothDevice.BOND_NONE -> appendLog(getString(R.string.watch_sync_log_bond_failed_or_removed))
@@ -619,12 +678,18 @@ class WatchSyncActivity : AppCompatActivity() {
             // connection's queue/UI state (e.g. a stray DISCONNECTED from the old gatt
             // resetting the op queue mid-operation on the new one).
             if (g !== gatt) return
+            // Bond/connection lifecycle audit: this connect attempt is no longer in flight either
+            // way — CONNECTED and DISCONNECTED are the two terminal outcomes of the window
+            // connectingDeviceAddress guards in onDeviceSelected.
+            connectingDeviceAddress = null
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 // awaitingReconnectBindVerification survives the disconnect deliberately (see its
                 // declaration) — true here means this CONNECTED is the diagnostic reconnect this
                 // TEMPORARY debugging flow itself triggered, not a normal user-initiated connect.
                 val isPersistenceReconnect = awaitingReconnectBindVerification
+                val bondStateAtConnect = readBondState(g.device)
                 runOnUiThread {
+                    appendLog(getString(R.string.watch_sync_log_gatt_connected_bond_state, bondStateName(bondStateAtConnect)))
                     appendLog(getString(R.string.watch_sync_log_connected))
                     if (isPersistenceReconnect) {
                         appendLog(getString(R.string.watch_sync_log_reconnected_for_verify))
@@ -640,9 +705,11 @@ class WatchSyncActivity : AppCompatActivity() {
                     runOnUiThread { appendLog(getString(R.string.watch_sync_log_permission_error)) }
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                val bondStateAtDisconnect = readBondState(g.device)
                 resetGattOpQueue()
                 heartRateStreaming = false
                 runOnUiThread {
+                    appendLog(getString(R.string.watch_sync_log_gatt_disconnected_bond_state, bondStateName(bondStateAtDisconnect)))
                     appendLog(getString(R.string.watch_sync_log_disconnected))
                     statusHeadline.setText(R.string.watch_sync_status_not_connected)
                     statusSubtitle.setText(R.string.watch_sync_status_disconnected_subtitle)

@@ -259,6 +259,13 @@
     <string name="watch_sync_log_bonding_in_progress">Pairing in progress — confirm on the watch\'s screen.</string>
     <string name="watch_sync_log_bonded">Bluetooth pairing succeeded ✓</string>
     <string name="watch_sync_log_bond_failed_or_removed">Pairing failed, was rejected, or was removed.</string>
+    <string name="watch_sync_log_connect_already_in_flight">Ignoring duplicate connect request for %1$s — a connection attempt is already in progress.</string>
+    <string name="watch_sync_log_bond_state_before_connect">device=%1$s bondStateBeforeConnect=%2$s</string>
+    <string name="watch_sync_log_bonding_already_in_progress">Bonding already in progress (BOND_BONDING) — waiting for it to resolve instead of starting another createBond().</string>
+    <string name="watch_sync_log_create_bond_called">createBond CALLED reason=bondState!=BOND_BONDED previousBondState=%1$s</string>
+    <string name="watch_sync_log_bond_state_changed">bondStateChanged=%1$s</string>
+    <string name="watch_sync_log_gatt_connected_bond_state">GATT_CONNECTED bondStateAtConnect=%1$s</string>
+    <string name="watch_sync_log_gatt_disconnected_bond_state">GATT_DISCONNECTED bondStateAtDisconnect=%1$s</string>
     <string name="watch_sync_log_found">Found: %1$s (%2$s)</string>
     <string name="watch_sync_log_scan_failed">Scan failed (error %1$d).</string>
     <string name="watch_sync_log_scan_done">Scan stopped. %1$d device(s) found.</string>

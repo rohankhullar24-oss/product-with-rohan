@@ -38,14 +38,7 @@ jobs:
 
       # Both apps and the shared usage-core module are one Gradle build rooted
       # at the repo, so the task is module-qualified and runs from the root.
-      # NOISE_ACCOUNT_USER_ID: TEMPORARY, for the Watch Sync cmd18 bind-persistence experiment —
-      # read by app/build.gradle.kts into a BuildConfig field. A repo secret, not a literal, so a
-      # personal Noise account ID never lands in this public repo's source or history. Empty if
-      # the secret isn't set; WatchSyncActivity logs a clear error and skips cmd 18 rather than
-      # silently sending a blank userId.
       - name: Build debug APK
-        env:
-          NOISE_ACCOUNT_USER_ID: ${{ secrets.NOISE_ACCOUNT_USER_ID }}
         run: ./gradlew :reminder-app:assembleDebug --no-daemon
 
       - name: Upload APK

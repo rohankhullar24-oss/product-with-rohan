@@ -243,7 +243,6 @@
     <string name="watch_sync_log_bind_verify_ignored">Watch sent another pairing-confirmation message (cmd 17) after bind already succeeded — ignoring it, bind stays confirmed.</string>
     <string name="watch_sync_log_bind_state_received">Watch reports already bound: %1$s</string>
     <string name="watch_sync_log_bind_no_key">Bind check did not succeed — app-level bind confirmation not attempted.</string>
-    <string name="watch_sync_log_missing_noise_user_id">NOISE_ACCOUNT_USER_ID was not injected into this build (BuildConfig value is blank) — refusing to send cmd 18 with a blank userId. Rebuild with that value set.</string>
     <string name="watch_sync_log_bind_confirm_requested">Asking the watch to show its pairing confirmation (cmd 17) — confirm it on the watch\'s screen.</string>
     <string name="watch_sync_log_bind_verify_result">Watch pairing confirmation result: %1$s (0 = success, 1 = refused, 2 = timed out, 3 = failed)</string>
     <string name="watch_sync_log_already_bound">Watch says it is already bound to this app.</string>

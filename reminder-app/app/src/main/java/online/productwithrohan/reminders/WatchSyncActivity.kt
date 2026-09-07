@@ -1088,12 +1088,6 @@ class WatchSyncActivity : AppCompatActivity() {
             runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_no_key)) }
             return
         }
-        if (BuildConfig.NOISE_ACCOUNT_USER_ID.isBlank()) {
-            // Fail loudly rather than silently sending cmd 18 with a blank userId — see
-            // sendAppBindResult and app/build.gradle.kts for how this gets injected.
-            runOnUiThread { appendLog(getString(R.string.watch_sync_log_missing_noise_user_id)) }
-            return
-        }
         bindConfirmed = true
         sendAppBindResult(g, char02)
         // Enqueued right after cmd 18 rather than tied to its GATT-write completion — the
@@ -1112,12 +1106,11 @@ class WatchSyncActivity : AppCompatActivity() {
      * (ZhConnectHandler.T()/bindDevice$1.onDeviceInfo): UUID.randomUUID() + Random(10,10000) +
      * colorFitDevice.getUserId(), then substring(30) — where getUserId() is the app-supplied
      * Noise account user ID, not anything device-derived. TEMPORARY, for this one persistence
-     * experiment: BuildConfig.NOISE_ACCOUNT_USER_ID stands in for that component — the real
-     * account ID for this personal/private build, injected at build time (see
-     * app/build.gradle.kts) so it never lands in this public repo's committed source.
+     * experiment: hardcoded to the real account ID for this personal build (this repo is
+     * public, but the user has confirmed that's acceptable for this one-off test).
      */
     private fun sendAppBindResult(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
-        val userId = BuildConfig.NOISE_ACCOUNT_USER_ID
+        val userId = "23955126"
         val randomComponent = (10 until 10000).random()
         val token = (java.util.UUID.randomUUID().toString() + randomComponent + userId).substring(30)
 

@@ -237,12 +237,14 @@ common library:
   manually per release batch. And **CI/release** — `reminder-app.yml`
   builds a debug APK on every push/PR and publishes it to the
   `reminder-app-latest` GitHub Release on pushes to `master`, and to
-  `reminder-app-preview` for branch builds. Note that `-latest` only moves
-  when work reaches `master`: long-lived stacked draft PRs leave it serving
-  a stale APK while branch previews race ahead, which has already caused one
-  multi-session debugging detour (see `reminder-app/WATCH_SYNC_PROTOCOL.md`).
-  `versionCode` being the CI run number is what makes an installed build
-  traceable back to its commit.
+  `reminder-app-preview` for branch builds. Note that `-latest` tracks
+  `master` only: long-lived stacked draft PRs leave it rebuilding code that
+  is several merges behind the actual work, while branch previews race
+  ahead — which has already caused one multi-session debugging detour (see
+  `reminder-app/WATCH_SYNC_PROTOCOL.md`). A release's dates won't show this:
+  `published_at` is pinned to when the tag was created, and the APK asset is
+  replaced in place. `versionCode` being the CI run number is the only thing
+  that makes an installed build traceable back to its commit.
 - **`claude-limits-app/`** — a home-screen widget showing Claude subscription
   usage limits (5-hour session window + weekly cap) that rings an alarm when a
   window resets. No API exists for this data; see `claude-limits-app/README.md`

@@ -250,10 +250,6 @@
     <string name="watch_sync_log_cmd18_raw_payload">Vendor cmd 18 payload (raw): %1$s</string>
     <string name="watch_sync_log_cmd48_completed">Vendor cmd 48 completed successfully (raw: %1$s).</string>
     <string name="watch_sync_log_fresh_bind_complete">Fresh bind complete.</string>
-    <string name="watch_sync_log_disconnecting_for_verify">Disconnecting for persistence verification.</string>
-    <string name="watch_sync_log_reconnected_for_verify">Reconnected for persistence verification.</string>
-    <string name="watch_sync_log_reconnect_verify_response">Post-reconnect cmd16 response (raw): %1$s</string>
-    <string name="watch_sync_log_reconnect_verify_result">Post-reconnect binding state: bound=%1$s.</string>
     <string name="watch_sync_log_already_bonded">Already Bluetooth-paired with this watch.</string>
     <string name="watch_sync_log_bonding_requested">Requesting Bluetooth pairing — check the watch\'s screen and confirm the pairing prompt there.</string>
     <string name="watch_sync_log_bonding_in_progress">Pairing in progress — confirm on the watch\'s screen.</string>

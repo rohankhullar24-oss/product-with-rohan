@@ -264,6 +264,11 @@
     <string name="watch_sync_log_cmd18_reply">Watch answered the bind confirmation (cmd 18): %1$s — bind settled, sending time sync now.</string>
     <string name="watch_sync_log_cmd18_no_reply">No reply to cmd 18 within the grace period — sending time sync anyway.</string>
     <string name="watch_sync_log_connect_already_connected">Already connected to %1$s — ignoring duplicate connect.</string>
+    <string name="watch_sync_log_reconnecting_remembered">Reconnecting to your synced watch (%1$s) — no scan needed.</string>
+    <string name="watch_sync_log_forgot_watch">Watch unsynced from this app. Its Bluetooth pairing is untouched — remove that in Android\'s Bluetooth settings if you want it gone too.</string>
+    <string name="watch_sync_remembered_watch">Synced watch: %1$s</string>
+    <string name="watch_sync_remembered_watch_hint">Reconnects automatically when you open this screen.</string>
+    <string name="watch_sync_forget_watch">Sync a different watch</string>
     <string name="watch_sync_card_bond_title">Bluetooth pairing</string>
     <string name="watch_sync_card_bond_subtitle">Required — nothing works until the watch is paired. Confirm the prompt on the watch\'s own screen; it times out quickly. Tap to try again.</string>
     <string name="watch_sync_request_bond">Retry pairing</string>

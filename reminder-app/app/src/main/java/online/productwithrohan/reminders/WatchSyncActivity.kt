@@ -141,6 +141,13 @@ class WatchSyncActivity : AppCompatActivity() {
         // while erring short reintroduces the exact collision being fixed.
         private const val BIND_RESULT_REPLY_GRACE_MS = 6_000L
 
+        // Which watch to reconnect to on open. Deliberately its own prefs file rather than one of
+        // the Auto Scheduler's, so BackupManager/AutoSchedulerSyncManager don't carry a
+        // device-specific MAC onto a different phone where it means nothing.
+        private const val WATCH_PREFS = "watch_sync"
+        private const val PREF_DEVICE_ADDRESS = "device_address"
+        private const val PREF_DEVICE_NAME = "device_name"
+
         private const val EXTRA_BOND_REASON = "android.bluetooth.device.extra.REASON"
         // Sentinels distinct from every real BOND_* / UNBOND_REASON_* value (which start at 0), so
         // "the platform didn't tell us" never reads as a genuine code.
@@ -150,6 +157,8 @@ class WatchSyncActivity : AppCompatActivity() {
 
     private lateinit var adapter: SimpleListAdapter<BluetoothDevice>
     private lateinit var scanButton: Button
+    private lateinit var rememberedWatchRow: View
+    private lateinit var rememberedWatchLabel: TextView
     private lateinit var logView: TextView
     private lateinit var logScroll: ScrollView
     private lateinit var logToggle: TextView
@@ -368,6 +377,8 @@ class WatchSyncActivity : AppCompatActivity() {
         title = getString(R.string.title_watch_sync)
 
         scanButton = findViewById(R.id.button_scan)
+        rememberedWatchRow = findViewById(R.id.row_remembered_watch)
+        rememberedWatchLabel = findViewById(R.id.text_remembered_watch)
         logView = findViewById(R.id.log_view)
         logScroll = findViewById(R.id.log_scroll)
         logToggle = findViewById(R.id.log_toggle)
@@ -406,6 +417,8 @@ class WatchSyncActivity : AppCompatActivity() {
             if (scanning) stopScan() else requestPermissionsThenScan()
         }
 
+        findViewById<Button>(R.id.button_forget_watch).setOnClickListener { onForgetWatchClicked() }
+
         appendLog(getString(R.string.watch_sync_log_intro))
 
         ContextCompat.registerReceiver(
@@ -414,6 +427,38 @@ class WatchSyncActivity : AppCompatActivity() {
             IntentFilter(BluetoothDevice.ACTION_BOND_STATE_CHANGED),
             ContextCompat.RECEIVER_NOT_EXPORTED,
         )
+
+        // Reconnect to the remembered watch on open. Without this the screen was a dead end every
+        // visit: tap Scan, wait out the scan, pick the watch out of ~50 mostly unnamed
+        // advertisers, and only then start the handshake — even though the same watch had been
+        // connected minutes earlier.
+        updateRememberedWatchUi()
+        requestPermissionsThenAutoConnectOrScan()
+    }
+
+    /**
+     * Forgetting is deliberately app-side only: it clears which watch to auto-reconnect to, and
+     * does NOT remove the OS Bluetooth bond. Dropping the bond here would be a much bigger,
+     * surprising action — nothing works unpaired on this watch — and Android's own Bluetooth
+     * settings are the right place for that.
+     */
+    private fun onForgetWatchClicked() {
+        forgetRememberedDevice()
+        appendLog(getString(R.string.watch_sync_log_forgot_watch))
+        updateRememberedWatchUi()
+        // The button reads "Sync a different watch", so go straight to finding one rather than
+        // clearing the record and leaving the user to hunt for the Scan button. Any existing
+        // connection is left alone until a new device is actually chosen — onDeviceSelected
+        // closes it at that point.
+        requestPermissionsThenScan()
+    }
+
+    private fun updateRememberedWatchUi() {
+        val name = rememberedDeviceName() ?: rememberedDeviceAddress()
+        rememberedWatchRow.visibility = if (name == null) View.GONE else View.VISIBLE
+        if (name != null) {
+            rememberedWatchLabel.text = getString(R.string.watch_sync_remembered_watch, name)
+        }
     }
 
     override fun onDestroy() {
@@ -437,6 +482,65 @@ class WatchSyncActivity : AppCompatActivity() {
 
     private fun requestPermissionsThenScan() {
         if (hasPermissions()) ensureBluetoothOnThenScan() else permissionLauncher.launch(requiredPermissions())
+    }
+
+    /**
+     * Opening this screen used to always mean a fresh scan and hunting the watch out of a list of
+     * ~50 unnamed advertisers, every single time — the screen kept no record of which watch had
+     * ever been chosen. If one is remembered, reconnect straight to it instead.
+     *
+     * No scan is needed to do that: the watch is OS-bonded by this point, so getRemoteDevice(mac)
+     * hands back a usable BluetoothDevice without discovery. If the watch is out of range the
+     * connect simply doesn't complete and Scan is still there as the manual fallback.
+     */
+    private fun requestPermissionsThenAutoConnectOrScan() {
+        if (!hasPermissions()) {
+            permissionLauncher.launch(requiredPermissions())
+            return
+        }
+        val adapter = bluetoothManager?.adapter
+        val remembered = rememberedDeviceAddress()
+        if (adapter == null || !adapter.isEnabled || remembered == null) {
+            ensureBluetoothOnThenScan()
+            return
+        }
+        val device = try {
+            adapter.getRemoteDevice(remembered)
+        } catch (e: IllegalArgumentException) {
+            // A stored value that is no longer a valid MAC — drop it rather than failing forever.
+            forgetRememberedDevice()
+            null
+        }
+        if (device == null) {
+            ensureBluetoothOnThenScan()
+            return
+        }
+        appendLog(getString(R.string.watch_sync_log_reconnecting_remembered, rememberedDeviceName() ?: remembered))
+        onDeviceSelected(device)
+    }
+
+    // --- remembered watch -------------------------------------------------------
+
+    private fun watchPrefs() = getSharedPreferences(WATCH_PREFS, MODE_PRIVATE)
+
+    private fun rememberedDeviceAddress(): String? = watchPrefs().getString(PREF_DEVICE_ADDRESS, null)
+
+    private fun rememberedDeviceName(): String? = watchPrefs().getString(PREF_DEVICE_NAME, null)
+
+    /**
+     * Recorded when a device is chosen, so the next visit reconnects to it instead of scanning.
+     * Stored on selection rather than on a successful connect: a watch that is simply out of
+     * range now is still the watch the user wants next time.
+     */
+    private fun rememberDevice(device: BluetoothDevice) {
+        watchPrefs().edit()
+            .putString(PREF_DEVICE_ADDRESS, device.address)
+            .putString(PREF_DEVICE_NAME, deviceName(device))
+            .apply()
+    }
+
+    private fun forgetRememberedDevice() {
+        watchPrefs().edit().remove(PREF_DEVICE_ADDRESS).remove(PREF_DEVICE_NAME).apply()
     }
 
     private fun ensureBluetoothOnThenScan() {
@@ -594,6 +698,9 @@ class WatchSyncActivity : AppCompatActivity() {
             return
         }
         stopScan()
+        // Remember this watch so the next visit reconnects to it instead of scanning again.
+        rememberDevice(device)
+        updateRememberedWatchUi()
         val name = deviceName(device) ?: device.address
         appendLog(getString(R.string.watch_sync_log_connecting, name))
         statusSubtitle.text = getString(R.string.watch_sync_status_connecting, name)

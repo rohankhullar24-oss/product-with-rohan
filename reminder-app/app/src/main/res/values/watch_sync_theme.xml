@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Watch Sync is deliberately dark regardless of the system setting, matching the reference
+         flow this screen was designed against. It is the only screen in the app that pins its
+         own colour scheme: everything else follows Theme.Reminders (DayNight). -->
+    <color name="watch_bg">#0B0B0F</color>
+    <color name="watch_surface">#17171C</color>
+    <color name="watch_surface_variant">#22222A</color>
+    <color name="watch_on_bg">#FFFFFF</color>
+    <color name="watch_on_bg_muted">#9A9AA6</color>
+    <color name="watch_accent">#2563EB</color>
+    <color name="watch_accent_on">#FFFFFF</color>
+    <color name="watch_outline">#2E2E38</color>
+    <color name="watch_success">#22C55E</color>
+
+    <style name="Theme.Reminders.WatchSync" parent="Theme.Material3.Dark">
+        <item name="colorPrimary">@color/watch_accent</item>
+        <item name="colorOnPrimary">@color/watch_accent_on</item>
+        <item name="android:colorBackground">@color/watch_bg</item>
+        <item name="colorSurface">@color/watch_surface</item>
+        <item name="colorSurfaceVariant">@color/watch_surface_variant</item>
+        <item name="colorOnSurface">@color/watch_on_bg</item>
+        <item name="colorOnSurfaceVariant">@color/watch_on_bg_muted</item>
+        <item name="colorOutline">@color/watch_outline</item>
+        <item name="android:statusBarColor">@color/watch_bg</item>
+        <item name="android:navigationBarColor">@color/watch_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

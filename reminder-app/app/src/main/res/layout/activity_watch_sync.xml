@@ -11,6 +11,98 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <!-- Hero: watch —— phone, with the link's centre badge carrying the state. Idle/scanning
+             shows a hollow badge; connected fills it and shows a tick. The headline and subtitle
+             underneath are the same two TextViews the rest of the screen already drives, so there
+             is one source of truth for connection state, not two. -->
+        <LinearLayout
+            android:id="@+id/hero"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:paddingTop="20dp"
+            android:paddingBottom="26dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp">
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/watch_hero_watch"
+                    android:contentDescription="@string/watch_sync_hero_watch_desc" />
+
+                <View
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/watch_hero_node" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="2dp"
+                    android:layout_weight="1"
+                    android:layerType="software"
+                    android:background="@drawable/watch_hero_link" />
+
+                <ImageView
+                    android:id="@+id/hero_badge"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:background="@drawable/watch_hero_badge_idle"
+                    android:padding="6dp"
+                    android:contentDescription="@string/watch_sync_hero_state_desc" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="2dp"
+                    android:layout_weight="1"
+                    android:layerType="software"
+                    android:background="@drawable/watch_hero_link" />
+
+                <View
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
+                    android:layout_marginEnd="6dp"
+                    android:background="@drawable/watch_hero_node" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/watch_hero_phone"
+                    android:contentDescription="@string/watch_sync_hero_phone_desc" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/hero_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="30dp"
+                android:gravity="center"
+                android:text="@string/watch_sync_status_not_connected"
+                android:textColor="@color/watch_on_bg"
+                android:textSize="26sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/hero_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingStart="24dp"
+                android:paddingEnd="24dp"
+                android:gravity="center"
+                android:text="@string/watch_sync_status_subtitle_idle"
+                android:textColor="@color/watch_on_bg_muted"
+                android:textSize="14sp" />
+        </LinearLayout>
+
         <!-- Device / connection status -->
         <com.google.android.material.card.MaterialCardView
             style="@style/Widget.Material3.CardView.Filled"
@@ -24,42 +116,10 @@
                 android:orientation="vertical"
                 android:padding="20dp">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="⌚"
-                        android:textSize="28sp" />
-
-                    <LinearLayout
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="12dp"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:id="@+id/status_headline"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:text="@string/watch_sync_status_not_connected"
-                            android:textAppearance="?attr/textAppearanceTitleMedium" />
-
-                        <TextView
-                            android:id="@+id/status_subtitle"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="2dp"
-                            android:text="@string/watch_sync_status_subtitle_idle"
-                            android:textAppearance="?attr/textAppearanceBodyMedium"
-                            android:textColor="?attr/colorOnSurfaceVariant" />
-                    </LinearLayout>
-                </LinearLayout>
+                <!-- The connection headline and subtitle live in the hero above, not here. The
+                     Kotlin binds statusHeadline/statusSubtitle straight to those hero TextViews,
+                     so every existing call site keeps working and there is exactly one place
+                     showing connection state. -->
 
                 <!-- Shown only once a watch has been synced: which one, and a way out to a
                      different one. Hidden entirely on a first run, where there is nothing to

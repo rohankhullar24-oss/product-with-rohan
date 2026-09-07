@@ -31,6 +31,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -159,6 +160,7 @@ class WatchSyncActivity : AppCompatActivity() {
     private lateinit var scanButton: Button
     private lateinit var rememberedWatchRow: View
     private lateinit var rememberedWatchLabel: TextView
+    private lateinit var heroBadge: ImageView
     private lateinit var logView: TextView
     private lateinit var logScroll: ScrollView
     private lateinit var logToggle: TextView
@@ -382,8 +384,11 @@ class WatchSyncActivity : AppCompatActivity() {
         logView = findViewById(R.id.log_view)
         logScroll = findViewById(R.id.log_scroll)
         logToggle = findViewById(R.id.log_toggle)
-        statusHeadline = findViewById(R.id.status_headline)
-        statusSubtitle = findViewById(R.id.status_subtitle)
+        // Bound to the hero's title/subtitle. Connection state is written from ~15 call sites;
+        // pointing those at the hero rather than duplicating them keeps one source of truth.
+        statusHeadline = findViewById(R.id.hero_title)
+        statusSubtitle = findViewById(R.id.hero_subtitle)
+        heroBadge = findViewById(R.id.hero_badge)
         cardDevices = findViewById(R.id.card_devices)
         sectionControls = findViewById(R.id.section_controls)
         timeResult = findViewById(R.id.time_result)
@@ -451,6 +456,18 @@ class WatchSyncActivity : AppCompatActivity() {
         // connection is left alone until a new device is actually chosen — onDeviceSelected
         // closes it at that point.
         requestPermissionsThenScan()
+    }
+
+    /**
+     * The hero's centre badge: filled with a tick once connected, hollow otherwise. Driven from
+     * the same two places that already set the headline (STATE_CONNECTED / STATE_DISCONNECTED),
+     * so it can't drift out of step with the text next to it.
+     */
+    private fun setHeroConnected(connected: Boolean) {
+        heroBadge.setBackgroundResource(
+            if (connected) R.drawable.watch_hero_badge else R.drawable.watch_hero_badge_idle
+        )
+        heroBadge.setImageResource(if (connected) R.drawable.watch_hero_tick else 0)
     }
 
     private fun updateRememberedWatchUi() {
@@ -888,6 +905,7 @@ class WatchSyncActivity : AppCompatActivity() {
                     val name = deviceName(g.device) ?: g.device.address
                     statusHeadline.text = getString(R.string.watch_sync_status_connected_headline, name)
                     statusSubtitle.setText(R.string.watch_sync_status_connected_subtitle)
+                    setHeroConnected(true)
                 }
                 // Bonding is requested here, on STATE_CONNECTED, and it is NOT optional: reported
                 // on hardware, nothing in the app works until the watch is actually paired. The
@@ -912,6 +930,7 @@ class WatchSyncActivity : AppCompatActivity() {
                     appendLog(getString(R.string.watch_sync_log_disconnected))
                     statusHeadline.setText(R.string.watch_sync_status_not_connected)
                     statusSubtitle.setText(R.string.watch_sync_status_disconnected_subtitle)
+                    setHeroConnected(false)
                     sectionControls.visibility = View.GONE
                     heartRateButton.setText(R.string.watch_sync_start_heart_rate)
                 }

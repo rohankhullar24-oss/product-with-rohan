@@ -1,0 +1,9 @@
+<!-- The dotted run between watch and phone. A dashed stroke rather than a row of views, so it
+     stretches to whatever width the hero ends up at. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="line">
+    <stroke
+        android:width="2dp"
+        android:color="@color/watch_accent"
+        android:dashWidth="4dp"
+        android:dashGap="5dp" />
+</shape>

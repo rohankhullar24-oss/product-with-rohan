@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="72dp" android:height="96dp"
+    android:viewportWidth="72" android:viewportHeight="96">
+    <!-- Strap above and below, then the case, then the crown. Flat shapes only: this renders at
+         one size inside the hero and never needs to scale up. -->
+    <path android:fillColor="#3A3A44" android:pathData="M24,4 h24 a4,4 0 0 1 4,4 v16 h-32 v-16 a4,4 0 0 1 4,-4 z" />
+    <path android:fillColor="#3A3A44" android:pathData="M20,72 h32 v16 a4,4 0 0 1 -4,4 h-24 a4,4 0 0 1 -4,-4 z" />
+    <path android:fillColor="#5A5A68" android:pathData="M18,20 h36 a10,10 0 0 1 10,10 v36 a10,10 0 0 1 -10,10 h-36 a10,10 0 0 1 -10,-10 v-36 a10,10 0 0 1 10,-10 z" />
+    <path android:fillColor="#0E0E13" android:pathData="M21,23 h30 a8,8 0 0 1 8,8 v34 a8,8 0 0 1 -8,8 h-30 a8,8 0 0 1 -8,-8 v-34 a8,8 0 0 1 8,-8 z" />
+    <path android:fillColor="#6E6E7E" android:pathData="M64,38 h3 a1.5,1.5 0 0 1 1.5,1.5 v9 a1.5,1.5 0 0 1 -1.5,1.5 h-3 z" />
+</vector>

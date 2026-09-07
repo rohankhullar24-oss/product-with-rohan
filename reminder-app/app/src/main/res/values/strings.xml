@@ -269,6 +269,9 @@
     <string name="watch_sync_remembered_watch">Synced watch: %1$s</string>
     <string name="watch_sync_remembered_watch_hint">Reconnects automatically when you open this screen.</string>
     <string name="watch_sync_forget_watch">Sync a different watch</string>
+    <string name="watch_sync_hero_watch_desc">Watch</string>
+    <string name="watch_sync_hero_phone_desc">Phone</string>
+    <string name="watch_sync_hero_state_desc">Connection status</string>
     <string name="watch_sync_card_bond_title">Bluetooth pairing</string>
     <string name="watch_sync_card_bond_subtitle">Required — nothing works until the watch is paired. Confirm the prompt on the watch\'s own screen; it times out quickly. Tap to try again.</string>
     <string name="watch_sync_request_bond">Retry pairing</string>

@@ -215,21 +215,35 @@ common library:
   - **`FakeCallActivity`**, **`ClaudeAlertsActivity`** — the Fake Call task
     type's ringing screen, and a small alerts/status surface.
   - **Watch Sync** (`WatchSyncActivity`) — a third feature area: BLE sync
-    with a Noise ColorFit Pulse 2 Max smartwatch. The watch implements no
-    standard GATT service (no Current Time, no Battery), only a private
-    vendor service speaking a protobuf protocol reverse-engineered from the
-    decompiled NoiseFit app. The activity hand-encodes the protobuf wire
-    format (no runtime dependency) and implements time sync, push
-    notifications to the watch, battery read, real-time heart rate, and a
-    two-layer pairing flow (OS-level `createBond()` plus the vendor's own
-    app-level bind handshake). Commands are *not* delivered by writing bytes
-    to a characteristic — there's a header/ready/chunk handshake, a
-    serialized GATT op queue (Android allows one outstanding GATT operation
-    at a time), and multi-packet response reassembly. **Read
-    `reminder-app/WATCH_SYNC_PROTOCOL.md` before touching this** — it carries
-    the full command catalog, the framing spec, what's confirmed vs.
-    unknown, and a "Which build are you running?" section that explains a
-    class of failure which repeatedly looked like a protocol bug and wasn't.
+    with a Noise ColorFit Pulse 2 Max smartwatch. Working end to end as of
+    2026-09-07 (verified on hardware): pairing, the app-level bind, time
+    sync, push notifications to the watch, battery read, and real-time heart
+    rate. The screen remembers the synced watch in its own `watch_sync`
+    prefs and reconnects on open via `getRemoteDevice(mac)` — no scan.
+
+    The watch implements no standard GATT service (no Current Time, no
+    Battery), only a private vendor service speaking a protobuf protocol
+    reverse-engineered from the decompiled NoiseFit app. The activity
+    hand-encodes the protobuf wire format (no runtime dependency). Pairing is
+    two layers, both required: OS-level `createBond()` — connect with
+    `TRANSPORT_LE` explicitly, never the 3-arg `connectGatt` overload's
+    `TRANSPORT_AUTO`, since this watch is dual-mode — plus the vendor's own
+    cmd 16/17/18 bind handshake. Nothing works until the watch is OS-paired.
+
+    Commands are *not* delivered by writing bytes to a characteristic:
+    there's a header/ready/chunk handshake, a serialized GATT op queue
+    (Android allows one outstanding GATT operation at a time), and
+    multi-packet response reassembly. **Sequencing rule, learned the hard
+    way: never queue a command directly after one the watch has to do real
+    work for — chain it off that command's *reply*.** Doing otherwise cost
+    this feature several sessions of debugging (cmd 48 was interrupting cmd
+    18, silently killing every bind).
+
+    **Read `reminder-app/WATCH_SYNC_PROTOCOL.md` before touching this** — it
+    carries the full command catalog, the framing spec, the root-cause
+    write-up of that bind bug, a list of theories that were wrong and why,
+    and a "Which build are you running?" section explaining a class of
+    failure that repeatedly looked like a protocol bug and wasn't.
 
   Two things worth knowing when touching this app: **versioning** —
   `versionCode` derives from `GITHUB_RUN_NUMBER` (always increasing on every

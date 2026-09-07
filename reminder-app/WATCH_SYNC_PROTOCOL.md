@@ -7,6 +7,15 @@ new chat with no memory of how we got here, this file is self-contained: it
 tells you what's confirmed, what's implemented, what's still unknown, and
 exactly how to find out more.
 
+**This file now covers two unrelated watches.** Everything through "Full
+Apricot command-id catalog" below is the Pulse 2 Max's `zhbraceletsdk`
+protocol — read that first if that's the watch on hand, and see the warning
+in `AGENTS.md` before touching its bind flow, which took many sessions to get
+right. A second, different watch (**FireBoltt 100**) showed up later, speaking
+a different vendor protocol ("DaFit") entirely — see "FireBoltt 100 (DaFit
+protocol)" near the end of this file. Don't mix the two up: they use different
+GATT services, different framing, and different command ids.
+
 ## TL;DR for a new session
 
 - The watch is a **Noise ColorFit Pulse 2 Max**. It does **not** implement any
@@ -670,3 +679,156 @@ this investigation was visible in the app's own on-screen log the whole time.
 It was found by reading that log line by line and asking which command didn't
 get a reply — not by decompiling, and not by any new instrumentation. When
 this feature misbehaves, read the log first.
+
+## FireBoltt 100 (DaFit protocol) — a different watch, a different protocol
+
+A second watch, unrelated to the Pulse 2 Max above, was connected in a later
+session (2026-09-07): a **FireBoltt 100** (MAC `F3:CC:26:CF:B9:10`, name
+"FireBoltt 100" over BLE). Its GATT dump doesn't have the Pulse 2 Max's
+`16186f00` vendor service at all — this is a completely different watch
+family requiring its own protocol work, not a case of the same watch
+behaving differently.
+
+**Status: implemented, UNVERIFIED ON HARDWARE.** Unlike everything above,
+this was not derived by decompiling this watch's own companion app (no
+FireBoltt APK was available in the sandbox this was built in, which also has
+no phone and no watch to test against). Instead it's built directly from a
+real, independent, open-source (AGPLv3) reverse-engineering of the same
+protocol family: **Gadgetbridge**'s DaFit device support
+(`github.com/krzys-h/Gadgetbridge-MT863`, `dafit` branch —
+`service/devices/dafit/{DaFitPacket,DaFitPacketIn,DaFitPacketOut,
+DaFitDeviceSupport}.java` and `devices/dafit/DaFitConstants.java`). That
+project's own comments describe reverse-engineering the "DaFit" Android app
+(package `com.crrepa.band.dafit`) — CRRepa, the same vendor SDK the decompiled
+NoiseFit app bundles (unused) for Noise's *other* watch models, per "How this
+was derived" above. So this is confirmed to be a real, working implementation
+of *some* watch in this protocol family — just not confirmed to be *this*
+watch's exact firmware revision.
+
+**Why this watch is confidently in the DaFit family, not a guess:** its GATT
+dump matches Gadgetbridge's DaFitConstants almost exactly, including a detail
+that's otherwise inexplicable — an extra service `0000fee7` with
+characteristics `0000fea1` (read, notify) and `0000fec9` (read), which
+DaFitConstants' own comment calls "another custom service ... not mentioned
+anywhere in the official app". Real, unrelated code independently seeing the
+same undocumented service on a different watch is strong corroboration, not
+coincidence.
+
+### GATT surface
+
+- Service `0000feea-...` — the DaFit command service.
+  - `0000fee1` — `DATA_STEPS`: read/notify. Doubles as the live pedometer
+    characteristic and the "sync past data" response shape:
+    `{distance:uint24, steps:uint24, calories:uint24}` (byte order within each
+    field not specified by DaFitConstants; implemented as little-endian to
+    match every other multi-byte field in this protocol except the time-sync
+    timestamp below).
+  - `0000fee2` — `DATA_OUT`: write-no-response. Commands, phone → watch.
+  - `0000fee3` — `DATA_IN`: notify. Command replies, watch → phone.
+  - `0000fee5`, `0000fee6` — `DATA_SPECIAL_1`/`DATA_SPECIAL_2`, write-no-
+    response. DaFitConstants marks these `(*)` — referenced in the decompiled
+    app but never observed responding on the watch Gadgetbridge's author had.
+    Not used here.
+- Service `0000fee7-...` — undocumented even in DaFitConstants (see above).
+  Characteristics `0000fea1` (read, notify) and `0000fec9` (read). Not used.
+- Standard `0000180f` Battery Service and `0000180a` Device Information — both
+  present on this watch and already handled by `WatchSyncActivity`'s existing
+  standard-BLE-service code path (confirmed working on this exact watch: the
+  log showed a real battery percentage). No DaFit-specific code needed for
+  battery.
+- No standard Current Time Service (`00001805`) — same situation as the Pulse
+  2 Max, hence the vendor time-sync command below.
+- Notably **no app-level bind handshake** in this protocol family, unlike the
+  Pulse 2 Max's cmd 16/17/18 dance — Gadgetbridge's DaFit support pairs via
+  OS-level Bluetooth bonding alone (already implemented and shared by both
+  watches in `WatchSyncActivity`) and starts sending commands right after.
+
+### Packet framing
+
+Every command, in both directions, is one frame:
+
+```
+byte 0-1: 0xFE, 0xEA                          (fixed header)
+byte 2:   16                                  (MTU==20 framing; every command
+                                                sent from this screen is small
+                                                enough that this always
+                                                applies — the MTU-negotiated
+                                                variant, byte2 = 32 + length
+                                                high byte, is implemented for
+                                                parsing incoming replies but
+                                                never produced when sending)
+byte 3:   packet length & 0xFF                (whole-packet length, header
+                                                included)
+byte 4:   command type
+byte 5+:  payload
+```
+
+No checksum/CRC in this framing (confirmed by reading `DaFitPacketOut`/
+`DaFitPacketIn` directly — they build/parse exactly the bytes above, nothing
+more). A gist covering a *different* watch in a related-looking family
+(`gist.github.com/kabbi/854a541c1a32e15fb0dfa3338f4ee4a9`, Umidigy uWatch2)
+describes an extra CRC-16 on top of the same `FE EA` header — that's a
+different protocol *version* this watch may or may not use; not implemented,
+since the actual Gadgetbridge DaFit source (the more directly-applicable
+reference, corroborated by the `0000fee7` service match above) shows none.
+Worth checking first if commands appear to reach the watch but never take
+effect.
+
+Larger payloads fragment across multiple GATT writes (`DaFitPacketOut`
+implements this), but every command this screen sends is well under one MTU,
+so `WatchSyncActivity`'s `buildDaFitPacket`/`writeDaFitRaw` only implement the
+single-frame case. `handleDaFitDataIn` (parsing replies) does implement the
+multi-fragment reassembly, since a reply could in principle be longer.
+
+### Confirmed-by-source command: time sync — cmd id **49**
+
+```
+payload = { (time >> 24) & 0xFF, (time >> 16) & 0xFF, (time >> 8) & 0xFF,
+            time & 0xFF, 8 }
+```
+
+The timestamp is **big-endian** — unlike essentially every other multi-byte
+field in this protocol family, which is little-endian. This isn't a guess:
+DaFitConstants' own comment spells out the shift order (`time >> 24, time >>
+16, time >> 8, time`), matching only a big-endian encoding. The trailing
+constant byte `8`'s meaning isn't explained by DaFitConstants either, and is
+sent as-is rather than guessed at.
+
+**The timestamp itself needs an unusual conversion.** DaFitConstants states
+outright: "The watch stores all dates in GMT+8 time zone with seconds
+resolution", and its `LocalTimeToWatchTime()` helper converts by taking the
+*wall-clock* date/time fields (whatever the phone's local zone is) and
+re-reading them back out as if they were already GMT+8 — producing an epoch
+second that's deliberately "wrong" relative to true UTC, by exactly the
+phone's own zone offset, because that's what the watch's firmware expects on
+the wire. `WatchSyncActivity.dafitWatchTimestamp()` mirrors this exactly.
+Skipping this conversion (sending a plain `System.currentTimeMillis() / 1000`)
+would very likely still "work" in the sense of the watch accepting the write,
+but show the wrong clock time on-screen for anyone not in GMT+8.
+
+### What's NOT implemented
+
+Everything else in `DaFitConstants` — alarms, notifications, weather push,
+step goal, sleep/heart-rate history (`CMD_QUERY_LAST_DYNAMIC_RATE`,
+`CMD_SYNC_PAST_SLEEP_AND_STEP`, etc.), user profile, watch face, do-not-
+disturb, and so on. The full command table (with the same-shape caveats
+Gadgetbridge's own author noted — `(*)` = only statically reverse-engineered,
+never confirmed responding; `(?)` = not checked at all) is in
+`DaFitConstants.java` at the URL above if a future session needs to add one of
+these. `sendTestNotification` (the existing "push a test notification"
+button) is still wired to the Pulse 2 Max's zhapp cmd 179 only — it does
+nothing on a DaFit-family watch. `CMD_SEND_MESSAGE` (65) is the DaFit
+equivalent if that's wanted next.
+
+### Next step, if this needs to go further
+
+The most valuable thing a future session with the actual FireBoltt phone app
+installed could do is repeat "How this was derived" above against the real
+**Fire-Boltt companion app's** APK (rather than relying on a different,
+though closely-matching, watch's reverse-engineering) — that would move this
+from "confirmed against a real open-source implementation of this protocol
+family" to "confirmed against this exact watch's own app", the same bar the
+Pulse 2 Max section above cleared. Absent that, **test on real hardware
+before trusting any of this** — verify the watch's clock actually changes
+after a time-sync write, and that the steps/distance/calories numbers read
+back match what the watch's own screen shows.

@@ -214,21 +214,33 @@ common library:
     that make deletions propagate instead of resurrecting.
   - **`FakeCallActivity`**, **`ClaudeAlertsActivity`** — the Fake Call task
     type's ringing screen, and a small alerts/status surface.
-  - **Watch Sync** (`WatchSyncActivity`) — a third feature area: BLE sync
-    with a Noise ColorFit Pulse 2 Max smartwatch. Working end to end as of
-    2026-09-07 (verified on hardware): pairing, the app-level bind, time
-    sync, push notifications to the watch, battery read, and real-time heart
-    rate. The screen remembers the synced watch in its own `watch_sync`
-    prefs and reconnects on open via `getRemoteDevice(mac)` — no scan.
+  - **Watch Sync** (`WatchSyncActivity`) — a third feature area: BLE sync,
+    now with **two unrelated watch families**. The **Noise ColorFit Pulse 2
+    Max** is working end to end as of 2026-09-07 (verified on hardware):
+    pairing, the app-level bind, time sync, push notifications to the watch,
+    battery read, and real-time heart rate. A second watch, a **FireBoltt
+    100**, showed up in a later session speaking a completely different
+    vendor protocol ("DaFit") — time sync and live steps/distance/calories
+    are implemented for it, built from a real open-source (Gadgetbridge)
+    reverse-engineering of the same protocol family rather than decompiling
+    this watch's own app, and **not yet verified on hardware**. The screen
+    remembers the synced watch in its own `watch_sync` prefs and reconnects
+    on open via `getRemoteDevice(mac)` — no scan — regardless of which watch
+    family it is.
 
-    The watch implements no standard GATT service (no Current Time, no
-    Battery), only a private vendor service speaking a protobuf protocol
-    reverse-engineered from the decompiled NoiseFit app. The activity
-    hand-encodes the protobuf wire format (no runtime dependency). Pairing is
-    two layers, both required: OS-level `createBond()` — connect with
-    `TRANSPORT_LE` explicitly, never the 3-arg `connectGatt` overload's
-    `TRANSPORT_AUTO`, since this watch is dual-mode — plus the vendor's own
-    cmd 16/17/18 bind handshake. Nothing works until the watch is OS-paired.
+    Neither watch implements the standard Current Time Service; each speaks
+    its own private vendor service instead. The Pulse 2 Max's is a protobuf
+    protocol reverse-engineered from the decompiled NoiseFit app, hand-encoded
+    with no protobuf runtime dependency. The FireBoltt 100's ("DaFit"/CRRepa
+    family — a different vendor than the Pulse 2 Max's zhapp SDK, though the
+    NoiseFit app happens to bundle an unused copy of it too, for other Noise
+    models) uses a simpler `FE EA <len> <cmd> <payload>` framing with no
+    protobuf and, notably, no app-level bind handshake at all — only OS-level
+    Bluetooth pairing is needed. For the Pulse 2 Max, pairing is two layers,
+    both required: OS-level `createBond()` — connect with `TRANSPORT_LE`
+    explicitly, never the 3-arg `connectGatt` overload's `TRANSPORT_AUTO`,
+    since this watch is dual-mode — plus the vendor's own cmd 16/17/18 bind
+    handshake. Nothing works until the watch is OS-paired, on either watch.
 
     Commands are *not* delivered by writing bytes to a characteristic:
     there's a header/ready/chunk handshake, a serialized GATT op queue

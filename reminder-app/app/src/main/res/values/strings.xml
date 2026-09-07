@@ -189,6 +189,12 @@
     <string name="watch_sync_log_scanning">Scanning…</string>
     <string name="watch_sync_log_location_off">Your phone\'s Location is turned OFF — on Android, BLE scans silently find 0 devices while Location is off, even with Bluetooth permission granted. Turn Location on in Settings, then scan again.</string>
     <string name="watch_sync_log_vendor_protocol">No standard Current Time Service — trying this watch\'s vendor time-sync protocol instead…</string>
+    <string name="watch_sync_log_dafit_protocol">No standard Current Time Service, and no zhbraceletsdk vendor service — trying the DaFit vendor protocol instead (unverified on hardware)…</string>
+    <string name="watch_sync_log_dafit_time_sync_sent">DaFit time sync (cmd 49) sent.</string>
+    <string name="watch_sync_log_dafit_steps">DaFit live totals — steps: %1$d, distance: %2$d, calories: %3$d</string>
+    <string name="watch_sync_log_dafit_steps_read_failed">DaFit steps read failed (status %1$d).</string>
+    <string name="watch_sync_log_dafit_bad_header">DaFit response with an unexpected header, ignoring: %1$s</string>
+    <string name="watch_sync_log_dafit_response">DaFit reply — cmd %1$d, payload: %2$s</string>
     <string name="watch_sync_send_test_notification">Send</string>
     <string name="watch_sync_read_battery">Check</string>
     <string name="watch_sync_status_not_connected">No watch connected</string>

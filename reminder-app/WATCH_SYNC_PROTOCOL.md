@@ -245,10 +245,27 @@ vendor-specific: `BluetoothDevice.createBond()`. This is what makes the
 watch display its native **"Pair with this device?"** confirmation on its
 own screen (checkmark/X) — the user must physically confirm it there.
 Listen for `BluetoothDevice.ACTION_BOND_STATE_CHANGED` to track
-`BOND_BONDING` → `BOND_BONDED`. GATT reads/writes on this watch work fine
-without bonding (it doesn't gate its characteristics behind encryption),
-which is exactly why this layer was easy to miss — the app "worked" long
-before pairing actually did anything.
+`BOND_BONDING` → `BOND_BONDED`.
+
+**This layer is not optional, and an earlier revision of this doc was wrong
+to imply otherwise.** It used to claim GATT reads/writes "work fine without
+bonding (it doesn't gate its characteristics behind encryption)". Reported on
+hardware 2026-09-07: until the watch is paired, **nothing happens at all** —
+no responses to any command. The most likely mechanism is that the CCCD write
+enabling CHAR_01 notifications requires an encrypted link, so unbonded it
+appears to succeed while the watch never sends a single notification, which
+presents to the user as a totally dead app. That is also consistent with #94's
+"silent notification-registration failure blocking all responses".
+
+Treat pairing as the first thing to get right, not a cosmetic extra.
+
+**Transport matters.** Use `connectGatt(context, autoConnect, callback,
+BluetoothDevice.TRANSPORT_LE)` — the 4-arg overload, public since API 23 — not
+the 3-arg one, which defaults to `TRANSPORT_AUTO`. This watch is dual-mode (it
+also does Bluetooth Calling over classic BR/EDR), so AUTO can leave Android
+negotiating the classic transport for a device that was only ever found by BLE
+scan, and a `createBond()` that follows then bonds over that same wrong
+transport. Symptom: "pairing failed" on the watch's own screen.
 
 **Timing matters**: `createBond()` must be called only after GATT actually
 reaches `STATE_CONNECTED` (in `onConnectionStateChange`), not right after

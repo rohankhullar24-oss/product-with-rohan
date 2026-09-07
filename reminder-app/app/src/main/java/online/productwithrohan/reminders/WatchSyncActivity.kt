@@ -135,6 +135,12 @@ class WatchSyncActivity : AppCompatActivity() {
         // ACTION_BOND_STATE_CHANGED's reason extra. BluetoothDevice.EXTRA_REASON is @hide, so the
         // key is spelled out; reading an extra by name is an ordinary Bundle lookup and is not
         // subject to the non-SDK interface restrictions.
+        // How long to wait for cmd 18's reply before sending time sync anyway. Generous on
+        // purpose: the whole point of this change is that cmd 48 must never reach the watch while
+        // it is still working on the bind, so erring long costs a few seconds of clock accuracy
+        // while erring short reintroduces the exact collision being fixed.
+        private const val BIND_RESULT_REPLY_GRACE_MS = 6_000L
+
         private const val EXTRA_BOND_REASON = "android.bluetooth.device.extra.REASON"
         // Sentinels distinct from every real BOND_* / UNBOND_REASON_* value (which start at 0), so
         // "the platform didn't tell us" never reads as a genuine code.
@@ -171,6 +177,11 @@ class WatchSyncActivity : AppCompatActivity() {
     // before — this only blocks re-selecting the device already being connected to.
     private var connectingDeviceAddress: String? = null
 
+    // The address we currently hold an established GATT connection to (set at STATE_CONNECTED,
+    // cleared at STATE_DISCONNECTED). connectingDeviceAddress alone can't answer "are we already
+    // connected?", since it is cleared the moment the connection succeeds.
+    private var connectedDeviceAddress: String? = null
+
     // CHAR_01 multi-packet response reassembly state (mirrors the decompiled SDK's fields).
     private var expectedPacketCount = 0
     private var receivedPackets: Array<ByteArray?>? = null
@@ -183,6 +194,19 @@ class WatchSyncActivity : AppCompatActivity() {
     // appear to keep arriving after the bind, e.g. an eventual OVER_TIME) re-enters
     // handleBindVerifyResponse, logs a false failure, and would resend cmd 18.
     private var bindConfirmed = false
+
+    // cmd 18 reply tracking. awaitingBindResultReply gates handleBindResultResponse so a stray
+    // late id:18 message can't re-trigger the follow-up; timeSyncAfterBindSent makes the reply
+    // path and the grace-period fallback mutually exclusive. Both reset per connection.
+    private var awaitingBindResultReply = false
+    private var timeSyncAfterBindSent = false
+
+    private val bindResultTimeout = Runnable {
+        if (!awaitingBindResultReply) return@Runnable
+        awaitingBindResultReply = false
+        runOnUiThread { appendLog(getString(R.string.watch_sync_log_cmd18_no_reply)) }
+        sendTimeSyncAfterBind()
+    }
 
     // Outgoing vendor commands. A command is NOT delivered by writing its bytes to CHAR_02 —
     // that's what every earlier version of this screen did, and it's why nothing the app sent
@@ -290,6 +314,9 @@ class WatchSyncActivity : AppCompatActivity() {
         confirmedChunkIndices.clear()
         currentOutgoingBusyRetries = 0
         bindConfirmed = false
+        awaitingBindResultReply = false
+        timeSyncAfterBindSent = false
+        handler.removeCallbacks(bindResultTimeout)
         vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
     }
 
@@ -555,6 +582,17 @@ class WatchSyncActivity : AppCompatActivity() {
             appendLog(getString(R.string.watch_sync_log_connect_already_in_flight, device.address))
             return
         }
+        // ...and refuse a second connectGatt() for a device we are ALREADY connected to. The
+        // guard above only covers the in-flight window, because connectingDeviceAddress is
+        // cleared at STATE_CONNECTED — so once connected, a re-fired selection sailed straight
+        // through and opened another connection, tearing down the live one with gatt?.close() on
+        // the way. The hardware log showed three full "Connecting… / GATT_CONNECTED / Connected."
+        // cycles before services were discovered even once. Connect/close churn against a
+        // peripheral about to run the bind handshake is exactly what we don't want.
+        if (gatt?.device?.address == device.address && connectedDeviceAddress == device.address) {
+            appendLog(getString(R.string.watch_sync_log_connect_already_connected, device.address))
+            return
+        }
         stopScan()
         val name = deviceName(device) ?: device.address
         appendLog(getString(R.string.watch_sync_log_connecting, name))
@@ -735,6 +773,7 @@ class WatchSyncActivity : AppCompatActivity() {
             // connectingDeviceAddress guards in onDeviceSelected.
             connectingDeviceAddress = null
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                connectedDeviceAddress = g.device.address
                 val bondStateAtConnect = readBondState(g.device)
                 runOnUiThread {
                     appendLog(getString(R.string.watch_sync_log_gatt_connected_bond_state, bondStateName(bondStateAtConnect)))
@@ -757,6 +796,7 @@ class WatchSyncActivity : AppCompatActivity() {
                     runOnUiThread { appendLog(getString(R.string.watch_sync_log_permission_error)) }
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                connectedDeviceAddress = null
                 val bondStateAtDisconnect = readBondState(g.device)
                 resetGattOpQueue()
                 heartRateStreaming = false
@@ -980,6 +1020,9 @@ class WatchSyncActivity : AppCompatActivity() {
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SET_TIME.toLong()) // id
         appendProtoTag(wear, 5, 2); appendVarint(wear, systemTime.size.toLong()); wear.addAll(systemTime) // systemTime
 
+        // cmd 48 answers on CHAR_01 like the others, so register it too — it was previously
+        // missing from the FIFO, which is what made its own reply log as "unsolicited".
+        pushPendingResponse(ZH_CMD_SET_TIME)
         writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_SET_TIME)
     }
 
@@ -1181,11 +1224,28 @@ class WatchSyncActivity : AppCompatActivity() {
             return
         }
         bindConfirmed = true
+        // cmd 48 is deliberately NOT queued here any more. It used to be, on the reasoning that
+        // "the vendor command queue already serializes them" — that reasoning was wrong, and it
+        // is what broke bind persistence. The queue serializes OUR GATT WRITES; it knows nothing
+        // about how long the WATCH takes to process a command. cmd 18 waited for nothing, so the
+        // queue drained the moment its chunk write completed and cmd 48's header reached the
+        // watch mid-bind. Hardware log:
+        //
+        //   Sent to watch            <- cmd 18 header
+        //   Watch accepted the command header — sending 1 packet(s).
+        //   Sent to watch            <- cmd 18 chunk
+        //   Sent to watch            <- cmd 48 header, immediately
+        //   Vendor cmd 48 busy — retry 1/5
+        //
+        // cmd 16 and cmd 17 each got header -> accepted -> chunk -> REPLY. cmd 18 never did,
+        // because cmd 48 interrupted it. 624fa93 already established what that costs: an
+        // interrupted command has its reply dropped outright. So the one command whose whole job
+        // is to persist the bind was the one being cut off, every single time — which is why a
+        // later cmd 16 always came back bound=false.
+        //
+        // cmd 48 now fires from handleBindResultResponse, i.e. only once the watch has actually
+        // answered cmd 18 (or from the fallback below if it never does).
         sendAppBindResult(g, char02)
-        // Enqueued right after cmd 18 rather than tied to its GATT-write completion — the
-        // vendor command queue already serializes them, and bindCheckResult == 0 is confirmation
-        // enough that time-sync no longer has a bind-critical command to race.
-        writeVendorTimeSync(g, char02)
     }
 
     /**
@@ -1223,8 +1283,48 @@ class WatchSyncActivity : AppCompatActivity() {
         // transmission — not a reconstruction — so the actual cmd 18 payload can be diffed
         // against the decompiled SDK/official protocol if the watch turns out not to persist it.
         appendLog(getString(R.string.watch_sync_log_cmd18_raw_payload, bytesToHex(wearBytes)))
+        // Register cmd 18 as awaiting a reply. It never was before, which is why the hardware log
+        // reported cmd 48's own reply as "source=unsolicited poppedPending=-1" — the FIFO was
+        // empty because neither 18 nor 48 was ever pushed onto it. Without this there is no way
+        // to notice that the watch never answered cmd 18, which is precisely the signal that
+        // would have exposed the cmd 48 collision.
+        pushPendingResponse(ZH_CMD_SEND_APP_BIND_RESULT)
         writeVendorPacket(g, characteristic, wearBytes, ZH_CMD_SEND_APP_BIND_RESULT)
         appendLog(getString(R.string.watch_sync_log_bind_device_sent))
+        // Fallback: some firmware may legitimately not answer cmd 18 at all. Rather than lose
+        // time-sync forever in that case, run it after a grace period — long enough that it can't
+        // be the collision we're fixing. Cancelled by handleBindResultResponse if a reply does
+        // arrive, so the normal path stays reply-driven rather than timer-driven.
+        awaitingBindResultReply = true
+        handler.postDelayed(bindResultTimeout, BIND_RESULT_REPLY_GRACE_MS)
+    }
+
+    /**
+     * cmd 18's reply — the confirmation that the watch accepted the bind. This is the point time
+     * sync is safe to send: the watch has finished with the bind command, so cmd 48's header can
+     * no longer interrupt it. Anything queued from here is sequenced after a completed bind
+     * rather than racing one still in progress.
+     */
+    private fun handleBindResultResponse(wearBytes: ByteArray) {
+        if (!awaitingBindResultReply) return
+        awaitingBindResultReply = false
+        handler.removeCallbacks(bindResultTimeout)
+        runOnUiThread {
+            appendLog(getString(R.string.watch_sync_log_cmd18_reply, bytesToHex(wearBytes)))
+        }
+        sendTimeSyncAfterBind()
+    }
+
+    /**
+     * Runs cmd 48 once the bind is settled, from either the reply path or the grace-period
+     * fallback. Guarded so the two can never both fire it.
+     */
+    private fun sendTimeSyncAfterBind() {
+        if (timeSyncAfterBindSent) return
+        timeSyncAfterBindSent = true
+        val g = gatt ?: return
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
+        writeVendorTimeSync(g, char02)
     }
 
     /**
@@ -1576,6 +1676,7 @@ class WatchSyncActivity : AppCompatActivity() {
             ZH_CMD_REQUEST_BIND_STATE ->
                 handleBindStateResponse(merged)
             ZH_CMD_BIND_DEVICE -> handleBindVerifyResponse(merged)
+            ZH_CMD_SEND_APP_BIND_RESULT -> handleBindResultResponse(merged)
             ZH_CMD_SET_TIME -> handleTimeSyncResponse(merged)
         }
     }

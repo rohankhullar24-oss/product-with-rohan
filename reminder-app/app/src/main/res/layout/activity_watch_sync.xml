@@ -61,6 +61,41 @@
                     </LinearLayout>
                 </LinearLayout>
 
+                <!-- Shown only once a watch has been synced: which one, and a way out to a
+                     different one. Hidden entirely on a first run, where there is nothing to
+                     say yet and the Scan button is the whole story. -->
+                <LinearLayout
+                    android:id="@+id/row_remembered_watch"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/text_remembered_watch"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?attr/textAppearanceBodyMedium" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/watch_sync_remembered_watch_hint"
+                        android:textAppearance="?attr/textAppearanceBodySmall"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <Button
+                        android:id="@+id/button_forget_watch"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:paddingStart="0dp"
+                        android:text="@string/watch_sync_forget_watch" />
+                </LinearLayout>
+
                 <Button
                     android:id="@+id/button_scan"
                     android:layout_width="match_parent"

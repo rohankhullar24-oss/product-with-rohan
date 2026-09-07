@@ -1088,6 +1088,12 @@ class WatchSyncActivity : AppCompatActivity() {
             runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_no_key)) }
             return
         }
+        if (BuildConfig.NOISE_ACCOUNT_USER_ID.isBlank()) {
+            // Fail loudly rather than silently sending cmd 18 with a blank userId — see
+            // sendAppBindResult and app/build.gradle.kts for how this gets injected.
+            runOnUiThread { appendLog(getString(R.string.watch_sync_log_missing_noise_user_id)) }
+            return
+        }
         bindConfirmed = true
         sendAppBindResult(g, char02)
         // Enqueued right after cmd 18 rather than tied to its GATT-write completion — the
@@ -1098,20 +1104,20 @@ class WatchSyncActivity : AppCompatActivity() {
 
     /**
      * SEWear{ id: 18, bindAccount: SEBindAccount{ bindResult: SEBindResult{
-     * bindResultType: SUCCESS(0), userId: <locally-generated token>, phoneType: ANDROID(0) } } }
-     * — the actual bind-confirmation command (cmd 17/"bindDevice" itself is only ever called
-     * with a null string in the real app, so it's not the confirmation step).
+     * bindResultType: SUCCESS(0), userId: <token>, phoneType: ANDROID(0) } } } — the actual
+     * bind-confirmation command (cmd 17/"bindDevice" itself is only ever called with a null
+     * string in the real app, so it's not the confirmation step).
      *
-     * Token recipe per WATCH_SYNC_PROTOCOL.md, confirmed against the real app's own code:
-     * UUID.randomUUID() + Random(10,10000) + userId, then substring(30). We have no real
-     * account/userId here, so ANDROID_ID stands in for that component.
+     * Token recipe confirmed directly against the decompiled real SDK
+     * (ZhConnectHandler.T()/bindDevice$1.onDeviceInfo): UUID.randomUUID() + Random(10,10000) +
+     * colorFitDevice.getUserId(), then substring(30) — where getUserId() is the app-supplied
+     * Noise account user ID, not anything device-derived. TEMPORARY, for this one persistence
+     * experiment: BuildConfig.NOISE_ACCOUNT_USER_ID stands in for that component — the real
+     * account ID for this personal/private build, injected at build time (see
+     * app/build.gradle.kts) so it never lands in this public repo's committed source.
      */
-    @Suppress("HardwareIds")
     private fun sendAppBindResult(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
-        val userId = android.provider.Settings.Secure.getString(
-            contentResolver,
-            android.provider.Settings.Secure.ANDROID_ID,
-        ) ?: ""
+        val userId = BuildConfig.NOISE_ACCOUNT_USER_ID
         val randomComponent = (10 until 10000).random()
         val token = (java.util.UUID.randomUUID().toString() + randomComponent + userId).substring(30)
 

@@ -17,6 +17,22 @@ android {
         // Local (non-CI) builds fall back to a fixed baseline above the last manual value.
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 13
         versionName = "3.12"
+
+        // TEMPORARY, for the Watch Sync cmd18 bind-persistence experiment: the real Noise
+        // account user ID, injected at build time from the NOISE_ACCOUNT_USER_ID env var /
+        // Gradle property (a GitHub Actions repository secret in CI) rather than committed as a
+        // literal, so a personal account ID never lands in this public repo's source or history.
+        // Empty string if unset — WatchSyncActivity logs a clear error and skips cmd 18 rather
+        // than silently sending a blank userId.
+        buildConfigField(
+            "String",
+            "NOISE_ACCOUNT_USER_ID",
+            "\"${(project.findProperty("noiseAccountUserId") as String? ?: System.getenv("NOISE_ACCOUNT_USER_ID") ?: "")}\"",
+        )
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     buildTypes {

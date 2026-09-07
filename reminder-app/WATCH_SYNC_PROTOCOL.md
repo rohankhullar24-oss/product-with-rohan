@@ -41,11 +41,19 @@ early September 2026 neither of them could talk to the watch:
 
 | Release | Built from | Trap |
 |---|---|---|
-| `reminder-app-latest` | `master`, on push | Sounds like the one you want. Was published **2026-07-26** and stayed there, because every watch fix sat in unmerged draft PRs (#94, #95). That build predates the fix for commands never being delivered at all. |
-| `reminder-app-preview` | any branch push/PR | Current, but through 2026-09-07 it carried #95's debugging experiment, which **deliberately disconnected the watch ~2.5s after a successful bind**. |
+| `reminder-app-latest` | `master`, on push | Sounds like the one you want, and its APK *was* freshly rebuilt — but only ever from `master`, which lagged two PRs behind. Through 2026-09-06 it served #93's code, predating #94's fix for commands never being delivered at all. |
+| `reminder-app-preview` | any branch push/PR | Current with the branch work, but through 2026-09-07 it carried #95's debugging experiment, which **deliberately disconnected the watch ~2.5s after a successful bind**. |
 
 So the app appeared totally dead on one build and appeared to connect-then-drop
 on the other, for two completely unrelated reasons. Neither was a protocol bug.
+
+Note the shape of the `-latest` trap, because a release date will not reveal
+it: the GitHub Release's `published_at` stays pinned to when the *tag* was
+first created (2026-07-26 here), while CI replaces the APK asset in place on
+every push to `master`. So the release page can look ancient while serving a
+day-old build, or look freshly updated while serving code that is two merges
+behind the actual work. **Neither the release date nor the asset date tells you
+what's in the APK — only `versionCode` does.**
 
 **How to tell which build is on the phone:** the Account screen shows
 `versionName`/`versionCode` at the bottom — the only place the app surfaces
@@ -513,8 +521,8 @@ Then the stall, worth recording because it cost the most time:
 - **#95** — a debugging-only experiment that deliberately disconnected the
   watch ~2.5s after binding, to measure bind persistence across a reconnect.
 - Both sat as **stacked drafts and never merged**, so `reminder-app-latest`
-  kept serving a 2026-07-26 build without #94's fixes. See "Which build are
-  you running?".
+  kept rebuilding from a `master` that had none of #94's fixes. See "Which
+  build are you running?".
 - **#96** — landed #94's transport fixes and #95's bond-lifecycle hardening on
   `master`, and deleted the persistence experiment (the self-inflicted
   disconnect, its auto-reconnect, the dedicated cmd 16 response routing, and

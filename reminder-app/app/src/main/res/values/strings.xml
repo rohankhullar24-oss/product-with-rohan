@@ -261,10 +261,9 @@
     <string name="watch_sync_log_create_bond_called">createBond CALLED reason=bondState!=BOND_BONDED previousBondState=%1$s</string>
     <string name="watch_sync_log_bond_state_changed">bondStateChanged: %1$s → %2$s</string>
     <string name="watch_sync_log_bond_failure_reason">Bond-end reason code %1$d (%2$s)</string>
-    <string name="watch_sync_log_bond_not_auto_requested">OS-level Bluetooth pairing not requested automatically — no Watch Sync feature needs it. Use \"Pair with watch\" below if you want the phone listed as paired on the watch.</string>
-    <string name="watch_sync_card_bond_title">Bluetooth pairing (optional)</string>
-    <string name="watch_sync_card_bond_subtitle">Not needed for notifications, battery or heart rate — those work unpaired.</string>
-    <string name="watch_sync_request_bond">Pair with watch</string>
+    <string name="watch_sync_card_bond_title">Bluetooth pairing</string>
+    <string name="watch_sync_card_bond_subtitle">Required — nothing works until the watch is paired. Confirm the prompt on the watch\'s own screen; it times out quickly. Tap to try again.</string>
+    <string name="watch_sync_request_bond">Retry pairing</string>
     <string name="watch_sync_log_gatt_connected_bond_state">GATT_CONNECTED bondStateAtConnect=%1$s</string>
     <string name="watch_sync_log_gatt_disconnected_bond_state">GATT_DISCONNECTED bondStateAtDisconnect=%1$s</string>
     <string name="watch_sync_log_found">Found: %1$s (%2$s)</string>

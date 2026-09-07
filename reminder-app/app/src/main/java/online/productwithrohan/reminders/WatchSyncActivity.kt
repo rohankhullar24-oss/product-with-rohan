@@ -565,19 +565,25 @@ class WatchSyncActivity : AppCompatActivity() {
         connectingDeviceAddress = device.address
         appendLog(getString(R.string.watch_sync_log_bond_state_before_connect, device.address, bondStateName(readBondState(device))))
         gatt = try {
-            device.connectGatt(this, false, gattCallback)
+            // TRANSPORT_LE explicitly, never the 3-arg overload's TRANSPORT_AUTO. This watch is
+            // dual-mode — it also does Bluetooth Calling over classic BR/EDR — so AUTO can leave
+            // Android negotiating the classic transport for a device we only ever found by BLE
+            // scan, and a createBond() that follows then bonds over that same wrong transport,
+            // which the watch reports as a pairing failure on its own screen. The 4-arg overload
+            // is public API from API 23 and minSdk here is 26.
+            device.connectGatt(this, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
         } catch (e: SecurityException) {
             appendLog(getString(R.string.watch_sync_log_permission_error))
             connectingDeviceAddress = null
             null
         }
-        // No bonding is requested from here, and none is requested on connect either — it's on
-        // demand via the pairing card's button (requestBondOnDemand). Two separate reasons:
-        // nothing in Watch Sync needs a bond, and calling createBond() while a connectGatt() is
-        // still in flight is a known-flaky Android BLE pattern — many stacks let it return true /
-        // transition through BOND_BONDED without ever showing the watch's own confirmation
-        // prompt, so the app reports "paired" while the watch never did. The button can only fire
-        // once a GATT connection exists, so it can't reintroduce that race.
+        // requestBondIfNeeded() is called once GATT actually reaches STATE_CONNECTED (see
+        // gattCallback.onConnectionStateChange), not here. Calling createBond() while a
+        // connectGatt() is still in flight is a known-flaky Android BLE pattern — many stacks
+        // let it return true / transition through BOND_BONDED without ever showing the watch's
+        // own confirmation prompt, so the app reports "paired" while the watch never did.
+        // The pairing card's button re-requests it on an existing connection, so it can't
+        // reintroduce that race either.
     }
 
     /** Bond/connection lifecycle audit: BluetoothDevice.bondState as a readable name, for logging. */
@@ -631,11 +637,11 @@ class WatchSyncActivity : AppCompatActivity() {
      * resolves.
      */
     /**
-     * On-demand entry point for the pairing card's button. OS bonding is optional here — every
-     * Watch Sync feature (notifications, battery, heart rate, the app-level cmd 16/17/18 bind)
-     * works unbonded, because this watch doesn't gate its characteristics behind encryption. It
-     * is offered as a button rather than run automatically because requesting it on connect is
-     * what produced a "pairing failed" error on the watch's own screen.
+     * Manual retry for the pairing card's button. Bonding is still requested automatically on
+     * every connect — it is the crucial step, not an optional one — but the watch's own
+     * confirmation prompt times out quickly, so a missed or failed prompt would otherwise mean
+     * disconnecting and reconnecting just to get another chance at it. This re-requests the bond
+     * on the existing connection instead.
      */
     private fun requestBondOnDemand() {
         val device = gatt?.device
@@ -737,11 +743,14 @@ class WatchSyncActivity : AppCompatActivity() {
                     statusHeadline.text = getString(R.string.watch_sync_status_connected_headline, name)
                     statusSubtitle.setText(R.string.watch_sync_status_connected_subtitle)
                 }
-                // OS-level bonding is deliberately NOT requested here — see requestBondIfNeeded's
-                // docs. It gates no feature on this watch, and requesting it automatically is what
-                // produced a "pairing failed" error on the watch's own screen. The button on the
-                // pairing card calls it on demand instead.
-                runOnUiThread { appendLog(getString(R.string.watch_sync_log_bond_not_auto_requested)) }
+                // Bonding is requested here, on STATE_CONNECTED, and it is NOT optional: reported
+                // on hardware, nothing in the app works until the watch is actually paired. The
+                // protocol doc's claim that this watch "doesn't gate its characteristics behind
+                // encryption" does not hold in practice — the most likely mechanism is that the
+                // CCCD write enabling CHAR_01 notifications needs an encrypted link, so without a
+                // bond it appears to succeed while the watch never sends a single response, which
+                // presents exactly as "nothing happens".
+                requestBondIfNeeded(g.device)
                 try {
                     g.discoverServices()
                 } catch (e: SecurityException) {

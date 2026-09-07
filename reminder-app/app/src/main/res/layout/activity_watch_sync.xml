@@ -209,10 +209,10 @@
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Battery -->
-            <!-- OS-level Bluetooth pairing, on demand only. Not requested automatically on
-                 connect: no Watch Sync feature needs it (this watch does not gate its
-                 characteristics behind encryption), and on some watches the request itself
-                 fails with a "pairing failed" error on the watch's own screen. -->
+            <!-- OS-level Bluetooth pairing. Requested automatically on every connect — reported
+                 on hardware, nothing in the app works until the watch is actually paired. This
+                 card's button is a retry for when the watch's own confirmation prompt was missed
+                 or failed, so a second attempt doesn't need a full disconnect/reconnect. -->
             <com.google.android.material.card.MaterialCardView
                 style="@style/Widget.Material3.CardView.Filled"
                 android:layout_width="match_parent"

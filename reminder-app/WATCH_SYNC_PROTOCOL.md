@@ -19,12 +19,43 @@ exactly how to find out more.
   `reminder-app/app/src/main/java/online/productwithrohan/reminders/WatchSyncActivity.kt`.
   It hand-encodes/decodes the protobuf wire format directly (no protobuf
   runtime dependency) since we only need a handful of fields.
-- **Working today:** time sync, push-notification-to-watch, battery read,
-  app-level device binding, real-time heart rate.
+- **Implemented:** time sync, push-notification-to-watch, battery read,
+  app-level device binding, real-time heart rate. Read "Which build are you
+  running?" below before concluding any of these is broken — for most of
+  early September 2026, *neither* installable APK could work, for two
+  unrelated reasons, and that masked everything else.
 - **Not yet implemented:** steps / distance / calories / sleep / SpO2
   *history* — these go through a different, more complex "big data" chunked
   transfer (CHAR_03) that hasn't been fully reverse-engineered. See "What's
   NOT done yet" below.
+- **Open question, does not block anything:** whether the watch persists its
+  app-level bind across a reconnect (cmd 16 keeps answering `bound=false`).
+  See "The bind-persistence question" below — this gates no feature, and
+  chasing it cost several sessions.
+
+## Which build are you running?
+
+This is the first thing to check when "nothing works", and it burned a lot of
+time before anyone checked it. There are **two** APK releases, and for most of
+early September 2026 neither of them could talk to the watch:
+
+| Release | Built from | Trap |
+|---|---|---|
+| `reminder-app-latest` | `master`, on push | Sounds like the one you want. Was published **2026-07-26** and stayed there, because every watch fix sat in unmerged draft PRs (#94, #95). That build predates the fix for commands never being delivered at all. |
+| `reminder-app-preview` | any branch push/PR | Current, but through 2026-09-07 it carried #95's debugging experiment, which **deliberately disconnected the watch ~2.5s after a successful bind**. |
+
+So the app appeared totally dead on one build and appeared to connect-then-drop
+on the other, for two completely unrelated reasons. Neither was a protocol bug.
+
+**How to tell which build is on the phone:** the Account screen shows
+`versionName`/`versionCode` at the bottom — the only place the app surfaces
+this. `versionCode` is the `GITHUB_RUN_NUMBER` of the CI run that built it, so
+it maps 1:1 onto a workflow run (and therefore a commit) in
+`.github/workflows/reminder-app.yml`'s run history.
+
+**Lesson worth keeping:** before debugging watch behaviour, confirm the phone
+is running the commit you think it is. A protocol theory tested against the
+wrong APK produces confident, worthless conclusions.
 
 ## How this was derived (repeatable if you need more)
 
@@ -263,6 +294,54 @@ incorrectly had cmd 17 echoing the response's `bindRandomKey` field back;
 that was never confirmed against real consumer code and has been replaced
 with the above, which is.
 
+### The bind-persistence question — open, and it blocks nothing
+
+The cmd 16 → 17 → 18 sequence completes with `bindCheckResult == SUCCESS`, but
+a fresh cmd 16 afterwards still answers `bound=false` — even across a clean
+disconnect/reconnect under a stable OS bond, and even using the real Noise
+account user ID in cmd 18's token. The official NoiseFit app binds this same
+watch successfully, so the watch is fine and our reimplementation is missing
+something.
+
+**Ruled out, each by reading decompiled source or by a hardware log:**
+- cmd 16/17/18 payload construction — byte-for-byte matches the SDK's own
+  builders (`a.java`'s `J0`, `a(int)`, `d(int,String)`).
+- The cmd 18 token formula (`UUID` + `Random(10,10000)` + `userId`, then
+  `.substring(30)`) — matches `ZhConnectHandler.T()` exactly.
+- cmd 19 (`verifyUserId`) as the missing step — it is only ever called from
+  `h0()`, cmd 16's `bound=true` branch, to replay an already-stored token on
+  reconnect. It is never called after a fresh cmd 18. The official app's own
+  `h0()` false-branch has *no* recovery path: it calls the situation
+  "bindstatus failed" and disconnects. The real app would hit the same dead
+  end in this exact scenario.
+- OS-level bond instability — was a genuine confound for one round (a
+  reconnect triggered a spurious `createBond()`); fixed by the
+  `connectingDeviceAddress` guard and by handling `BOND_BONDING` separately
+  from `BOND_NONE`. Verified on hardware: the bond survives
+  disconnect/reconnect.
+
+**Critically: `bindConfirmed` gates no feature.** `sendTestNotification`,
+`requestVendorBattery` and `toggleRealTimeHeartRate` never read it. A watch
+answering `bound=false` still accepts notifications, battery reads and
+real-time heart rate. Several sessions were spent building instrumentation to
+measure this flag before anyone checked whether it controlled anything. It
+does not. Treat it as a curiosity, not a blocker.
+
+**The decisive next step, if it ever becomes worth doing:** a BLE HCI snoop
+log. Enable Developer Options → "Bluetooth HCI snoop log", clear NoiseFit's
+app data so the bind is genuinely first-time, bind the watch with the real
+app, then force a reconnect so the same capture contains both a fresh bind and
+a reconnect where cmd 16 answers `bound=true`. Pull it with `adb bugreport`
+(the log lives at `FS/data/misc/bluetooth/logs/btsnoop_hci.log` inside the zip;
+`/data/misc` isn't readable without root, which is why the bugreport route is
+the reliable one) and diff the real app's over-the-air bytes against ours.
+Source-reading is exhausted — everything above was derived that way.
+
+> The decompiled SDK is **not** stored anywhere durable. It lived in a session
+> scratchpad (all 18 `classes*.dex` from the NoiseFit APK, plus a ~491MB jadx
+> decompile) that is wiped between sessions. Reproducing any of the above means
+> re-extracting the APK and re-running `jadx` — see "How this was derived".
+
 ## What's NOT done yet: steps / heart rate / sleep history
 
 This is the big remaining piece and it's genuinely more work — don't
@@ -416,13 +495,33 @@ IDs nobody reads:
 - `reminder-app/app/src/main/AndroidManifest.xml` — BLE permissions incl.
   `neverForLocation` flag on `BLUETOOTH_SCAN`.
 
-PRs so far (all on `rohankhullar24-oss/product-with-rohan`, branch
-`claude/watch-not-found-egf4vs`, reused per this repo's branch-reuse
-convention — see AGENTS.md/session history if that convention needs
-re-deriving): #81–83 (initial feature + QR + the "0 devices" scan bug fix),
-#84 (Location-toggle scan fix), #85 (characteristic property logging), #86
-(vendor time-sync + notifications + battery), #87–91 (write-without-response
-fix, device-binding handshake, GATT op queue, real OS-level pairing, bind
-confirmation fix), and this round (real-time heart rate; fixed
-`createBond()` being called before GATT connects, which could leave the app
-reporting "paired" while the watch never showed its own confirmation).
+PRs so far (all on `rohankhullar24-oss/product-with-rohan`): #81–83 (initial
+feature + QR + the "0 devices" scan bug fix), #84 (Location-toggle scan fix),
+#85 (characteristic property logging), #86 (vendor time-sync + notifications +
+battery), #87–91 (write-without-response fix, device-binding handshake, GATT op
+queue, real OS-level pairing, bind confirmation fix), #92–93 (bind-token
+format, GATT race conditions, real-time heart rate, pairing-prompt timing).
+
+Then the stall, worth recording because it cost the most time:
+
+- **#94** — the actual root cause of "nothing works": commands were never
+  delivered at all. Sending a command is *not* writing its bytes to CHAR_02;
+  it needs the real header/READY_FOR_DATA/chunk handshake (see "Write
+  framing"). Also fixed a silent notification-registration failure that
+  blocked every response, chained commands off real chunk-write completion,
+  and stopped cmd 48 racing cmd 16.
+- **#95** — a debugging-only experiment that deliberately disconnected the
+  watch ~2.5s after binding, to measure bind persistence across a reconnect.
+- Both sat as **stacked drafts and never merged**, so `reminder-app-latest`
+  kept serving a 2026-07-26 build without #94's fixes. See "Which build are
+  you running?".
+- **#96** — landed #94's transport fixes and #95's bond-lifecycle hardening on
+  `master`, and deleted the persistence experiment (the self-inflicted
+  disconnect, its auto-reconnect, the dedicated cmd 16 response routing, and
+  the orphaned log strings). This is the first build where the app simply
+  connects and stays connected.
+
+**Convention note:** the branch-reuse convention referenced by earlier
+revisions of this doc is what produced the stacked-draft stall. Prefer
+branching from `master` and merging promptly, so the release named "latest"
+actually is.

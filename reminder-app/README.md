@@ -57,6 +57,23 @@ A native Android app for reminders that **keep nagging you until you confirm the
   backup and device-to-device transfer, and the ⋮ menu has manual
   **Export backup / Import backup** (a JSON file you can keep in Drive,
   Downloads, etc. and re-import after a reinstall or on a new phone).
+- **Watch Sync** (⋮ → Watch Sync): pairs with a **Noise ColorFit Pulse 2 Max**
+  over BLE and can push a notification to the watch, read its battery, sync
+  its clock, and stream real-time heart rate. The watch exposes no standard
+  Bluetooth services at all, so this speaks its private vendor protobuf
+  protocol, reverse-engineered from the official NoiseFit app. Once synced it
+  remembers the watch and reconnects automatically whenever you open the
+  screen — no scanning, no re-picking it from a list of nearby devices; "Sync
+  a different watch" switches. Steps / sleep / SpO2 *history* is not
+  implemented (different, more complex transfer — see the protocol doc).
+
+  **If you are changing anything here, read
+  [`WATCH_SYNC_PROTOCOL.md`](WATCH_SYNC_PROTOCOL.md) first.** It documents the
+  command catalog, the framing, and — importantly — the bind bug that took an
+  unreasonable number of debugging sessions to find, along with every theory
+  that turned out to be wrong. The single most useful rule in it: never queue
+  a vendor command directly after one the watch has to do real work for; chain
+  it off that command's *reply*, or you will silently interrupt it.
 
 ## Tech
 

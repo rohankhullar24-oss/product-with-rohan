@@ -19,19 +19,103 @@ exactly how to find out more.
   `reminder-app/app/src/main/java/online/productwithrohan/reminders/WatchSyncActivity.kt`.
   It hand-encodes/decodes the protobuf wire format directly (no protobuf
   runtime dependency) since we only need a handful of fields.
-- **Implemented:** time sync, push-notification-to-watch, battery read,
-  app-level device binding, real-time heart rate. Read "Which build are you
-  running?" below before concluding any of these is broken — for most of
-  early September 2026, *neither* installable APK could work, for two
-  unrelated reasons, and that masked everything else.
+- **Pairing and binding WORK.** Verified end to end on hardware 2026-09-07.
+  The full cmd 16 → 17 → 18 → 48 sequence completes, cmd 18 gets its reply,
+  and notifications, battery (91%) and real-time heart rate all respond. It
+  took an unreasonable number of sessions to get here; the section below says
+  exactly why so nobody re-derives it. **Read "The bug that cost the most:
+  cmd 48 vs cmd 18" before touching the bind flow.**
+- **Implemented and confirmed on hardware:** time sync, push-notification-to-
+  watch, battery read, app-level device binding, real-time heart rate, and a
+  remembered watch that auto-reconnects when the screen opens.
 - **Not yet implemented:** steps / distance / calories / sleep / SpO2
   *history* — these go through a different, more complex "big data" chunked
   transfer (CHAR_03) that hasn't been fully reverse-engineered. See "What's
   NOT done yet" below.
-- **Open question, does not block anything:** whether the watch persists its
-  app-level bind across a reconnect (cmd 16 keeps answering `bound=false`).
-  See "The bind-persistence question" below — this gates no feature, and
-  chasing it cost several sessions.
+
+## The bug that cost the most: cmd 48 vs cmd 18
+
+**Read this before changing anything in the bind flow.** Several sessions were
+spent on the wrong suspects — the cmd 18 token format, the Noise account user
+ID, cmd 19, OS bond transport — because the real cause was a race we had
+introduced ourselves, and the app had no instrumentation that could see it.
+
+**The symptom:** the bind sequence completed with `bindCheckResult == SUCCESS`,
+but a fresh cmd 16 always came back `bound=false`, forever.
+
+**The cause:** `handleBindVerifyResponse` sent cmd 18 (the bind confirmation)
+and then immediately queued cmd 48 (time sync), on the reasoning that "the
+vendor command queue already serializes them". That reasoning is wrong. The
+queue serializes **our GATT writes**; it knows nothing about how long the
+**watch** takes to process a command. cmd 18 registered no pending response
+and waited for nothing, so the queue drained the instant its chunk write
+completed and cmd 48's header reached the watch mid-bind:
+
+```
+App-level bind confirmation sent (cmd 18...)
+Sent to watch                            <- cmd 18 header
+Watch accepted the command header — sending 1 packet(s).
+Sent to watch                            <- cmd 18 chunk
+Sent to watch                            <- cmd 48 header, immediately
+Vendor cmd 48 busy — retry 1/5           <- watch still busy with cmd 18
+```
+
+cmd 16 and cmd 17 each completed `header → accepted → chunk → REPLY`. cmd 18
+never did. Commit `624fa93` had **already** established the consequence —
+*"the collision doesn't just cost a retry, it appears to make the watch drop
+the interrupted command's reply outright"* — and applied the fix to cmd 16
+only. So the one command whose entire job is to persist the bind was the one
+being cut off, on every single attempt.
+
+**The fix (#99):** cmd 18 is registered via `pushPendingResponse` and handled
+by `handleBindResultResponse`, which is what triggers time sync. cmd 48 can no
+longer reach the watch mid-bind. A 6s grace-period fallback still sends time
+sync if the watch never answers cmd 18. cmd 48 is registered on the FIFO too.
+
+**Proof it worked**, first time in the whole investigation:
+```
+Watch reply (raw): 08 12 A0 06 00
+Vendor response: commandId=18 source=pending-request poppedPending=18
+Watch answered the bind confirmation (cmd 18) — bind settled, sending time sync now.
+```
+`08 12 A0 06 00` is `SEWear{ id:18, field 100: 0 }` — the same success shape as
+cmd 48's `08 30 A0 06 00`.
+
+**Rules that follow from this, for any new command:**
+1. **Never queue a command directly after one that expects the watch to do
+   real work.** Chain it off the first one's *reply*, not its write completion.
+2. **Always `pushPendingResponse` for anything that gets a reply.** cmd 18 and
+   cmd 48 were both missing from the FIFO, which is why cmd 48's own reply
+   logged as `source=unsolicited poppedPending=-1` — and why nothing could
+   detect that cmd 18 was never answered.
+3. **A "busy" reply is not a retry annoyance, it is data loss.** It means an
+   in-flight command just got dropped. Treat it as a bug in send sequencing,
+   not something the busy-retry mechanism handles for you.
+
+### Other things this investigation got wrong, recorded so they aren't repeated
+
+- **"GATT works fine without bonding."** An earlier revision of this doc said
+  the watch doesn't gate its characteristics behind encryption. False:
+  reported on hardware, nothing works until the watch is paired. The likely
+  mechanism is that the CCCD write enabling CHAR_01 notifications needs an
+  encrypted link. See "Pairing — two separate layers".
+- **`connectGatt()` transport.** The 3-arg overload means `TRANSPORT_AUTO`,
+  which on this dual-mode watch (it also does Bluetooth Calling over classic
+  BR/EDR) can leave Android negotiating the wrong transport. Always pass
+  `BluetoothDevice.TRANSPORT_LE`.
+- **"cmd 17 requires a user tap."** It does not. The reply arrives immediately
+  and carries device metadata (model `30006`, MAC, `10005`, short and full
+  names). Whatever makes this watch show its own confirmation UI, we have
+  never sent it. cmd 17 is a device-info exchange.
+- **The bind flag gates nothing.** `sendTestNotification`,
+  `requestVendorBattery` and `toggleRealTimeHeartRate` never read
+  `bindConfirmed`. Time was spent building instrumentation to measure a flag
+  that controlled no feature — see PR #95, which was reverted wholesale.
+- **Duplicate connects.** `connectingDeviceAddress` is cleared at
+  `STATE_CONNECTED`, so it only ever guarded the in-flight window; a re-fired
+  selection opened a second `connectGatt` and tore down the live one. A
+  hardware log showed three full connect cycles before services were
+  discovered once. `connectedDeviceAddress` now guards the connected case.
 
 ## Which build are you running?
 
@@ -319,14 +403,19 @@ incorrectly had cmd 17 echoing the response's `bindRandomKey` field back;
 that was never confirmed against real consumer code and has been replaced
 with the above, which is.
 
-### The bind-persistence question — open, and it blocks nothing
+### The bind-persistence question — RESOLVED (#99)
 
-The cmd 16 → 17 → 18 sequence completes with `bindCheckResult == SUCCESS`, but
-a fresh cmd 16 afterwards still answers `bound=false` — even across a clean
-disconnect/reconnect under a stable OS bond, and even using the real Noise
-account user ID in cmd 18's token. The official NoiseFit app binds this same
-watch successfully, so the watch is fine and our reimplementation is missing
-something.
+**Historical.** Kept because the elimination work below is still valid and
+saves anyone re-doing it — but the answer is at the top of this document:
+cmd 48 was interrupting cmd 18, so the bind confirmation never completed. See
+"The bug that cost the most: cmd 48 vs cmd 18".
+
+The symptom was: the cmd 16 → 17 → 18 sequence completes with
+`bindCheckResult == SUCCESS`, but a fresh cmd 16 afterwards still answers
+`bound=false` — even across a clean disconnect/reconnect under a stable OS
+bond, and even using the real Noise account user ID in cmd 18's token. The
+official NoiseFit app binds this same watch successfully, so the watch was
+fine and our reimplementation was missing something. It was.
 
 **Ruled out, each by reading decompiled source or by a hardware log:**
 - cmd 16/17/18 payload construction — byte-for-byte matches the SDK's own
@@ -352,15 +441,23 @@ real-time heart rate. Several sessions were spent building instrumentation to
 measure this flag before anyone checked whether it controlled anything. It
 does not. Treat it as a curiosity, not a blocker.
 
-**The decisive next step, if it ever becomes worth doing:** a BLE HCI snoop
-log. Enable Developer Options → "Bluetooth HCI snoop log", clear NoiseFit's
-app data so the bind is genuinely first-time, bind the watch with the real
-app, then force a reconnect so the same capture contains both a fresh bind and
-a reconnect where cmd 16 answers `bound=true`. Pull it with `adb bugreport`
-(the log lives at `FS/data/misc/bluetooth/logs/btsnoop_hci.log` inside the zip;
-`/data/misc` isn't readable without root, which is why the bugreport route is
-the reliable one) and diff the real app's over-the-air bytes against ours.
-Source-reading is exhausted — everything above was derived that way.
+**What actually solved it — and the lesson.** Not more source-reading. The
+answer came from reading the app's **own hardware log line by line** and
+noticing that cmd 18 was the only command in the sequence that never got a
+reply. Every ruled-out item above was found by decompiling; the actual bug was
+visible in a log we had been generating for weeks.
+
+A BLE HCI snoop log was the planned next step and was never needed. Recorded
+in case a future protocol question genuinely warrants it: enable Developer
+Options → "Bluetooth HCI snoop log", clear NoiseFit's app data so the bind is
+genuinely first-time, bind with the real app, then force a reconnect so one
+capture holds both. Pull it with `adb bugreport` — the log is at
+`FS/data/misc/bluetooth/logs/btsnoop_hci.log` inside the zip, and `/data/misc`
+isn't readable without root, which is why the bugreport route is the reliable
+one — then diff the real app's over-the-air bytes against ours.
+
+**Before reaching for that, re-read the app's own log first.** It is cheap, it
+is already there, and it is what cracked this.
 
 > The decompiled SDK is **not** stored anywhere durable. It lived in a session
 > scratchpad (all 18 `classes*.dex` from the NoiseFit APK, plus a ~491MB jadx
@@ -543,10 +640,33 @@ Then the stall, worth recording because it cost the most time:
 - **#96** — landed #94's transport fixes and #95's bond-lifecycle hardening on
   `master`, and deleted the persistence experiment (the self-inflicted
   disconnect, its auto-reconnect, the dedicated cmd 16 response routing, and
-  the orphaned log strings). This is the first build where the app simply
-  connects and stays connected.
+  the orphaned log strings). First build where the app simply connects and
+  stays connected.
+- **#97** — corrected this doc's claim that `reminder-app-latest` had been
+  serving a build from 2026-07-26. It hadn't: `published_at` is pinned to tag
+  creation while the asset is replaced in place. Only `versionCode` identifies
+  what is in an APK.
+- **#98** — `connectGatt` over `TRANSPORT_LE` instead of `TRANSPORT_AUTO`, and
+  bond-failure diagnostics (transition direction + `UNBOND_REASON_*` code).
+  Also reverted an earlier mistake in the same PR that had made OS bonding
+  opt-in on the strength of this doc's wrong "works fine without bonding"
+  claim.
+- **#99 — the fix.** Stopped cmd 48 interrupting cmd 18. See "The bug that
+  cost the most" at the top. Verified on hardware: cmd 18 answered, bind
+  settled, notifications / battery 91% / heart rate all working.
+- **#100** — the screen now remembers the synced watch and reconnects to it on
+  open (`watch_sync` prefs, `getRemoteDevice(mac)`, no scan), with a "Sync a
+  different watch" action. Before this, `WatchSyncActivity` had no persistence
+  of any kind, so every visit meant re-finding the watch among ~50 unnamed
+  advertisers — which reads to a user as "the app forgot my watch".
 
 **Convention note:** the branch-reuse convention referenced by earlier
 revisions of this doc is what produced the stacked-draft stall. Prefer
 branching from `master` and merging promptly, so the release named "latest"
 actually is.
+
+**Debugging note, the most transferable thing here:** the bug that consumed
+this investigation was visible in the app's own on-screen log the whole time.
+It was found by reading that log line by line and asking which command didn't
+get a reply — not by decompiling, and not by any new instrumentation. When
+this feature misbehaves, read the log first.

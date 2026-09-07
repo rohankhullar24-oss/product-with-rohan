@@ -75,6 +75,14 @@ class WatchSyncActivity : AppCompatActivity() {
         // random token (not anything derived from the watch). Cmd 17 ("bindDevice") is only ever
         // called by the real app with a null argument, so it isn't part of this confirmation step.
         private const val ZH_CMD_REQUEST_BIND_STATE = 16
+        // Cmd 17 is what actually makes the watch show its "pair with this phone?" confirmation:
+        // a.a(17) builds SEWear{ id:17, bindAccount{ bindCheck{ deviceVerify: true } } }. Cmd 16
+        // only ASKS whether the watch is already bound (its reply is a plain bool,
+        // SEBindAccount.requestBindingStatus, matching RequestDeviceBindStateCallBack
+        // .onBindState(boolean)) — it never prompts anyone. An earlier version of
+        // WATCH_SYNC_PROTOCOL.md called cmd 17 a red herring; it is the opposite, it's the step
+        // that was missing, and without it the watch stays on its "Download App & Pair" screen.
+        private const val ZH_CMD_BIND_DEVICE = 17
         private const val ZH_CMD_SEND_APP_BIND_RESULT = 18
 
         // Real-time heart rate: cmd 731 (setRealTimeHeartRateConfig), confirmed against the real
@@ -89,14 +97,40 @@ class WatchSyncActivity : AppCompatActivity() {
         private const val ZH_REALTIME_HR_SETTINGS_FIELD = 38
         private const val ZH_REALTIME_HR_DATA_FIELD = 39
 
-        // Fixed 6-byte ACKs the SDK writes back on CHAR_01 while receiving a multi-packet reply
-        // (decompiled from com.zhapp.ble.a: a.d() / outer a()) — [0,0,1,X,0,0] where X=1 means
+        // Fixed 6-byte ACKs the phone writes back on CHAR_01 while RECEIVING a multi-packet reply
+        // (decompiled from com.zhapp.ble.a: a.d() / zero-arg a()) — [0,0,1,X,0,0] where X=1 means
         // "header received, send data" and X=0 means "all packets received".
         private val ZH_ACK_READY_FOR_DATA = byteArrayOf(0, 0, 1, 1, 0, 0)
         private val ZH_ACK_ALL_RECEIVED = byteArrayOf(0, 0, 1, 0, 0, 0)
 
+        // Flow-control frames the WATCH sends back on CHAR_02 while receiving a command from us
+        // (decompiled from BluetoothService.j(byte[]), the CHAR_02 notification handler). These
+        // are the other half of the write protocol: a command is not "sent" by writing its bytes,
+        // it's a handshake — see sendVendorCommand() below.
+        private const val ZH_FLOW_READY_FOR_DATA = 1 // watch: "header accepted, send the packets"
+        private const val ZH_FLOW_DEVICE_BUSY = 2
+        private const val ZH_FLOW_ALL_RECEIVED = 3 // watch: "command fully received"
+        private const val ZH_FLOW_PACKET_LOST = 5 // watch: "resend packet N" (N in bytes 4-5)
+
+        // The SDK assumes a 244-byte usable ATT payload (com.zhapp.ble.BluetoothService.k = 244)
+        // and splits commands into (payload - 2)-byte chunks, the 2 bytes being the packet index
+        // prefix. Android defaults to a 23-byte MTU (20 usable) unless we ask for more.
+        private const val ZH_DEFAULT_PAYLOAD_SIZE = 244
+        private const val ZH_DESIRED_MTU = ZH_DEFAULT_PAYLOAD_SIZE + 3
+
+        // A busy reply means the watch is still finishing the transaction we just collided
+        // with, not a permanent failure — retry the header a bounded number of times rather
+        // than either stalling forever (the previous behavior) or retrying without limit.
+        private const val ZH_BUSY_MAX_RETRIES = 5
+        private const val ZH_BUSY_RETRY_DELAY_MS = 250L
+
         private const val SCAN_TIMEOUT_MS = 12_000L
+        private const val BIND_RESPONSE_TIMEOUT_MS = 8_000L
         private val MAC_ADDRESS_REGEX = Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
+
+        // The watch's own observed cmd 48 (setTime) success reply, SEWear{ id:48 (field 1),
+        // field 100: 0 (varint) } — logged so the sync log shows time-sync actually landing.
+        private val ZH_CMD_48_SUCCESS_BYTES = byteArrayOf(0x08, 0x30, 0xA0.toByte(), 0x06, 0x00)
     }
 
     private lateinit var adapter: SimpleListAdapter<BluetoothDevice>
@@ -119,11 +153,54 @@ class WatchSyncActivity : AppCompatActivity() {
     private var gatt: BluetoothGatt? = null
     private var scanning = false
 
+    // Bond/connection lifecycle audit (see the bonding investigation below): the address a
+    // connectGatt() is currently in flight for (set right before the call, cleared on
+    // STATE_DISCONNECTED). onDeviceSelected uses this to refuse a second connectGatt() for the
+    // SAME device while one is still resolving — starting a fresh connectGatt() mid-negotiation
+    // is a known-flaky Android BLE pattern and a plausible contributor to the OS bond instability
+    // observed on reconnect. A different device selected mid-flight still supersedes it, same as
+    // before — this only blocks re-selecting the device already being connected to.
+    private var connectingDeviceAddress: String? = null
+
     // CHAR_01 multi-packet response reassembly state (mirrors the decompiled SDK's fields).
     private var expectedPacketCount = 0
     private var receivedPackets: Array<ByteArray?>? = null
     private var receivedPacketNum = 0
     private var heartRateStreaming = false
+    private var bindStateReplyReceived = false
+    // Set once cmd 17 has returned bindCheckResult == SUCCESS and cmd 18 has been sent. cmd 17's
+    // dispatch has no waiter of its own — it's routed purely by the id the watch echoes back, so
+    // without this flag a LATER id:17 message (this watch's own binding-state notifications
+    // appear to keep arriving after the bind, e.g. an eventual OVER_TIME) re-enters
+    // handleBindVerifyResponse, logs a false failure, and would resend cmd 18.
+    private var bindConfirmed = false
+
+    // Outgoing vendor commands. A command is NOT delivered by writing its bytes to CHAR_02 —
+    // that's what every earlier version of this screen did, and it's why nothing the app sent
+    // ever took effect. The real protocol (decompiled from BluetoothService's CMD thread +
+    // sendBleData2() + the CHAR_02 notification handler) is a handshake:
+    //   1. phone → CHAR_02: header [0,0,0,0,packetCount_lo,packetCount_hi]
+    //   2. watch → CHAR_02: [0,0,1,1,0,0]  "ready, send the packets"
+    //   3. phone → CHAR_02: [index_lo,index_hi] + chunk, for index 1..packetCount
+    //   4. watch → CHAR_02: [0,0,1,3,0,0]  "command fully received"  (or [0,0,1,5,N,0] resend N)
+    // Only one command can be in flight at a time, so the rest queue up behind it.
+    private val outgoingCommands = ArrayDeque<Pair<Int?, ByteArray>>()
+    private var currentOutgoing: ByteArray? = null
+    private var currentOutgoingCmdId: Int? = null
+    private var currentOutgoingPacketCount = 0
+    // A command occupies the channel from its header until its last chunk is written — NOT until
+    // the watch acknowledges receipt. sendBleData2() in the SDK sets its ready flag as soon as the
+    // chunks are out, and this watch never sends the "fully received" frame at all, so waiting for
+    // one strands every later command in the queue forever.
+    private var outgoingInFlight = false
+    private var vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
+    // Which packet indices of the CURRENT command have actually completed their GATT write
+    // (onCharacteristicWrite fired), as opposed to merely been queued. The next vendor command's
+    // header must not go out until this set covers every index — starting it any earlier (e.g.
+    // right when READY_FOR_DATA arrives, before the chunks it triggers have actually gone over
+    // the air) collides with the watch mid-transaction and gets answered with "busy".
+    private val confirmedChunkIndices = mutableSetOf<Int>()
+    private var currentOutgoingBusyRetries = 0
 
     // Requests that expect an async reply over CHAR_01 (bind-state check, battery) are matched
     // to their response FIFO, in send order — a single shared field here would let a manual
@@ -147,15 +224,21 @@ class WatchSyncActivity : AppCompatActivity() {
     // Each queued op carries the vendor cmd id it corresponds to (or null) so
     // onCharacteristicWrite can tell which write just completed — a single shared "last cmd id"
     // field would get overwritten by a second op queued before the first one's callback fires.
-    private val gattOpQueue = ArrayDeque<Pair<Int?, () -> Unit>>()
+    // onWriteComplete fires from onCharacteristicWrite once THIS op's write has actually
+    // completed (as opposed to op() merely having been invoked, which only means the write was
+    // handed to the local Bluetooth stack) — see writeVendorRaw/onVendorChunkWriteConfirmed.
+    private data class GattOp(val cmdId: Int?, val onWriteComplete: (() -> Unit)?, val run: () -> Unit)
+
+    private val gattOpQueue = ArrayDeque<GattOp>()
     private var gattOpInFlight = false
     private var currentGattOpCmdId: Int? = null
+    private var currentGattOpOnWriteComplete: (() -> Unit)? = null
 
     // GATT callbacks land on their own dispatch thread, not the main thread these functions are
     // otherwise called from (button clicks) — synchronize queue mutation against that race.
     @Synchronized
-    private fun enqueueGattOp(cmdId: Int? = null, op: () -> Unit) {
-        gattOpQueue.addLast(cmdId to op)
+    private fun enqueueGattOp(cmdId: Int? = null, onWriteComplete: (() -> Unit)? = null, op: () -> Unit) {
+        gattOpQueue.addLast(GattOp(cmdId, onWriteComplete, op))
         if (!gattOpInFlight) runNextGattOpLocked()
     }
 
@@ -167,12 +250,14 @@ class WatchSyncActivity : AppCompatActivity() {
         if (next == null) {
             gattOpInFlight = false
             currentGattOpCmdId = null
+            currentGattOpOnWriteComplete = null
             return
         }
         gattOpInFlight = true
-        currentGattOpCmdId = next.first
+        currentGattOpCmdId = next.cmdId
+        currentGattOpOnWriteComplete = next.onWriteComplete
         try {
-            next.second()
+            next.run()
         } catch (e: Exception) {
             // An op that throws (e.g. a GATT call racing a connection that just closed) must
             // still release the queue, or every op behind it stalls for the rest of this
@@ -186,7 +271,17 @@ class WatchSyncActivity : AppCompatActivity() {
         gattOpQueue.clear()
         gattOpInFlight = false
         currentGattOpCmdId = null
+        currentGattOpOnWriteComplete = null
         pendingResponseCmdIds.clear()
+        outgoingCommands.clear()
+        currentOutgoing = null
+        currentOutgoingCmdId = null
+        currentOutgoingPacketCount = 0
+        outgoingInFlight = false
+        confirmedChunkIndices.clear()
+        currentOutgoingBusyRetries = 0
+        bindConfirmed = false
+        vendorPayloadSize = ZH_DEFAULT_PAYLOAD_SIZE
     }
 
     private val bluetoothManager by lazy { getSystemService(BluetoothManager::class.java) }
@@ -440,6 +535,16 @@ class WatchSyncActivity : AppCompatActivity() {
     // --- connect & sync -----------------------------------------------------
 
     private fun onDeviceSelected(device: BluetoothDevice) {
+        // Bond/connection lifecycle audit: refuse a second connectGatt() for the SAME device
+        // while one is already resolving (between this call and STATE_CONNECTED/DISCONNECTED) —
+        // repeatedly interrupting a connect negotiation mid-flight is a known-flaky Android BLE
+        // pattern and matches the duplicate "Connecting…" entries seen when this screen's device
+        // list or QR flow re-fires a selection before the prior attempt finished. A different
+        // device is still allowed to supersede an in-flight one, same as always.
+        if (connectingDeviceAddress == device.address) {
+            appendLog(getString(R.string.watch_sync_log_connect_already_in_flight, device.address))
+            return
+        }
         stopScan()
         val name = deviceName(device) ?: device.address
         appendLog(getString(R.string.watch_sync_log_connecting, name))
@@ -447,10 +552,13 @@ class WatchSyncActivity : AppCompatActivity() {
         sectionControls.visibility = View.GONE
         resetGattOpQueue()
         gatt?.close()
+        connectingDeviceAddress = device.address
+        appendLog(getString(R.string.watch_sync_log_bond_state_before_connect, device.address, bondStateName(readBondState(device))))
         gatt = try {
             device.connectGatt(this, false, gattCallback)
         } catch (e: SecurityException) {
             appendLog(getString(R.string.watch_sync_log_permission_error))
+            connectingDeviceAddress = null
             null
         }
         // requestBondIfNeeded() is called once GATT actually reaches STATE_CONNECTED (see
@@ -460,21 +568,53 @@ class WatchSyncActivity : AppCompatActivity() {
         // own confirmation prompt, so the app reports "paired" while the watch never did.
     }
 
+    /** Bond/connection lifecycle audit: BluetoothDevice.bondState as a readable name, for logging. */
+    private fun bondStateName(state: Int): String = when (state) {
+        BluetoothDevice.BOND_NONE -> "BOND_NONE"
+        BluetoothDevice.BOND_BONDING -> "BOND_BONDING"
+        BluetoothDevice.BOND_BONDED -> "BOND_BONDED"
+        else -> "UNKNOWN($state)"
+    }
+
+    /** Bond/connection lifecycle audit: reads bondState defensively — this is a plain getter, but every other device/gatt call in this file guards SecurityException, so this does too rather than being the one silent exception to that pattern. */
+    private fun readBondState(device: BluetoothDevice): Int = try {
+        device.bondState
+    } catch (e: SecurityException) {
+        BluetoothDevice.BOND_NONE
+    }
+
     /**
      * Real OS-level Bluetooth pairing (distinct from GATT connect, and from the vendor-protocol
      * "device binding" handshake above) — confirmed on real hardware: the watch shows a native
      * "Pair with this device?" confirmation on its own screen only when the phone actually calls
      * createBond(). This is what makes the watch show up as paired at all; our GATT reads/writes
      * work without it, which is why this was easy to miss.
+     *
+     * Bond/connection lifecycle audit: BOND_BONDING is now handled separately from BOND_NONE —
+     * a createBond() call while a bonding negotiation is already in progress is a second,
+     * redundant request rather than a legitimate new one, and bondStateReceiver's
+     * ACTION_BOND_STATE_CHANGED listener is what actually reports how that existing negotiation
+     * resolves.
      */
     @Suppress("DEPRECATION")
     private fun requestBondIfNeeded(device: BluetoothDevice) {
+        val previousBondState = readBondState(device)
+        if (previousBondState == BluetoothDevice.BOND_BONDED) {
+            appendLog(getString(R.string.watch_sync_log_already_bonded))
+            return
+        }
+        if (previousBondState == BluetoothDevice.BOND_BONDING) {
+            appendLog(getString(R.string.watch_sync_log_bonding_already_in_progress))
+            return
+        }
+        appendLog(getString(R.string.watch_sync_log_bonding_requested))
+        appendLog(
+            getString(
+                R.string.watch_sync_log_create_bond_called,
+                bondStateName(previousBondState),
+            )
+        )
         try {
-            if (device.bondState == BluetoothDevice.BOND_BONDED) {
-                appendLog(getString(R.string.watch_sync_log_already_bonded))
-                return
-            }
-            appendLog(getString(R.string.watch_sync_log_bonding_requested))
             device.createBond()
         } catch (e: SecurityException) {
             appendLog(getString(R.string.watch_sync_log_permission_error))
@@ -487,7 +627,12 @@ class WatchSyncActivity : AppCompatActivity() {
             if (intent.action != BluetoothDevice.ACTION_BOND_STATE_CHANGED) return
             val device: BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE) ?: return
             if (device.address != gatt?.device?.address) return
-            when (intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)) {
+            val newBondState = intent.getIntExtra(BluetoothDevice.EXTRA_BOND_STATE, BluetoothDevice.BOND_NONE)
+            // Bond/connection lifecycle audit: raw state-transition line, independent of the
+            // human-readable ones below — this is the ground truth for whether Android itself
+            // changed the bond, regardless of anything this app requested.
+            appendLog(getString(R.string.watch_sync_log_bond_state_changed, bondStateName(newBondState)))
+            when (newBondState) {
                 BluetoothDevice.BOND_BONDING -> appendLog(getString(R.string.watch_sync_log_bonding_in_progress))
                 BluetoothDevice.BOND_BONDED -> appendLog(getString(R.string.watch_sync_log_bonded))
                 BluetoothDevice.BOND_NONE -> appendLog(getString(R.string.watch_sync_log_bond_failed_or_removed))
@@ -502,8 +647,14 @@ class WatchSyncActivity : AppCompatActivity() {
             // connection's queue/UI state (e.g. a stray DISCONNECTED from the old gatt
             // resetting the op queue mid-operation on the new one).
             if (g !== gatt) return
+            // Bond/connection lifecycle audit: this connect attempt is no longer in flight either
+            // way — CONNECTED and DISCONNECTED are the two terminal outcomes of the window
+            // connectingDeviceAddress guards in onDeviceSelected.
+            connectingDeviceAddress = null
             if (newState == BluetoothProfile.STATE_CONNECTED) {
+                val bondStateAtConnect = readBondState(g.device)
                 runOnUiThread {
+                    appendLog(getString(R.string.watch_sync_log_gatt_connected_bond_state, bondStateName(bondStateAtConnect)))
                     appendLog(getString(R.string.watch_sync_log_connected))
                     val name = deviceName(g.device) ?: g.device.address
                     statusHeadline.text = getString(R.string.watch_sync_status_connected_headline, name)
@@ -516,9 +667,11 @@ class WatchSyncActivity : AppCompatActivity() {
                     runOnUiThread { appendLog(getString(R.string.watch_sync_log_permission_error)) }
                 }
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                val bondStateAtDisconnect = readBondState(g.device)
                 resetGattOpQueue()
                 heartRateStreaming = false
                 runOnUiThread {
+                    appendLog(getString(R.string.watch_sync_log_gatt_disconnected_bond_state, bondStateName(bondStateAtDisconnect)))
                     appendLog(getString(R.string.watch_sync_log_disconnected))
                     statusHeadline.setText(R.string.watch_sync_status_not_connected)
                     statusSubtitle.setText(R.string.watch_sync_status_disconnected_subtitle)
@@ -545,6 +698,10 @@ class WatchSyncActivity : AppCompatActivity() {
             val zhTimeChar = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
 
             if (zhTimeChar != null) {
+                // Order matters: negotiate the MTU the SDK's chunking assumes, subscribe to both
+                // vendor channels, and only then send anything — a command written before the
+                // CHAR_02 subscription exists can never complete its handshake.
+                requestVendorMtu(g)
                 enableVendorResponseNotifications(g)
                 requestDeviceBindState(g, zhTimeChar)
             }
@@ -552,8 +709,13 @@ class WatchSyncActivity : AppCompatActivity() {
             if (ctsChar != null) {
                 writeCurrentTime(g, ctsChar)
             } else if (zhTimeChar != null) {
+                // NOT sent here: queuing cmd 48 immediately behind cmd 16 raced them for the
+                // vendor command channel and starved cmd 16 of its own reply (confirmed on
+                // hardware — only cmd 48's reply ever arrived, and the bind request timed out).
+                // Deferred until the bind sequence has somewhere to put it without contention:
+                // handleBindStateResponse (already bound) or handleBindVerifyResponse (fresh
+                // bind, once bindCheckResult == 0).
                 runOnUiThread { appendLog(getString(R.string.watch_sync_log_vendor_protocol)) }
-                writeVendorTimeSync(g, zhTimeChar)
             } else {
                 runOnUiThread {
                     appendLog(getString(R.string.watch_sync_log_no_cts))
@@ -580,6 +742,7 @@ class WatchSyncActivity : AppCompatActivity() {
             if (g !== gatt) return
             // Capture before runNextGattOp() below advances the queue to the next op.
             val cmdId = currentGattOpCmdId
+            val onWriteComplete = currentGattOpOnWriteComplete
             runOnUiThread {
                 if (status != BluetoothGatt.GATT_SUCCESS) {
                     appendLog(getString(R.string.watch_sync_log_write_failed, status))
@@ -601,6 +764,10 @@ class WatchSyncActivity : AppCompatActivity() {
                     }
                 }
             }
+            // This write has actually left the phone's Bluetooth stack now — only at this point,
+            // not when the op was merely enqueued, is it safe for a chunk-completion callback to
+            // treat this packet as delivered (see onVendorChunkWriteConfirmed).
+            if (status == BluetoothGatt.GATT_SUCCESS) onWriteComplete?.invoke()
             runNextGattOp()
         }
 
@@ -623,14 +790,29 @@ class WatchSyncActivity : AppCompatActivity() {
 
         override fun onDescriptorWrite(g: BluetoothGatt, descriptor: android.bluetooth.BluetoothGattDescriptor, status: Int) {
             if (g !== gatt) return
+            if (descriptor.uuid == CCCD_UUID) {
+                runOnUiThread { appendLog(getString(R.string.watch_sync_log_cccd_write_result, status)) }
+            }
             runNextGattOp()
         }
 
         @Suppress("DEPRECATION")
         override fun onCharacteristicChanged(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
             if (g !== gatt) return
-            if (characteristic.uuid != ZH_PROTOBUF_CHAR_01_UUID) return
-            handleVendorResponsePacket(g, characteristic.value ?: return)
+            val value = characteristic.value ?: return
+            when (characteristic.uuid) {
+                // CHAR_01 carries response data; CHAR_02 carries flow control for what we send.
+                ZH_PROTOBUF_CHAR_01_UUID -> handleVendorResponsePacket(g, value)
+                ZH_PROTOBUF_CHAR_02_UUID -> handleVendorFlowControl(value)
+            }
+        }
+
+        override fun onMtuChanged(g: BluetoothGatt, mtu: Int, status: Int) {
+            if (g !== gatt) return
+            // The usable ATT payload is MTU - 3; the SDK's own chunking assumes 244 of those.
+            vendorPayloadSize = (mtu - 3).coerceIn(18, ZH_DEFAULT_PAYLOAD_SIZE)
+            runOnUiThread { appendLog(getString(R.string.watch_sync_log_mtu, mtu, vendorPayloadSize)) }
+            runNextGattOp()
         }
     }
 
@@ -708,8 +890,7 @@ class WatchSyncActivity : AppCompatActivity() {
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SET_TIME.toLong()) // id
         appendProtoTag(wear, 5, 2); appendVarint(wear, systemTime.size.toLong()); wear.addAll(systemTime) // systemTime
 
-        // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
-        writeVendorRaw(g, characteristic, byteArrayOf(1, 0) + wear.toByteArray(), ZH_CMD_SET_TIME)
+        writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_SET_TIME)
     }
 
     private fun appendProtoTag(out: MutableList<Byte>, fieldNumber: Int, wireType: Int) =
@@ -731,15 +912,58 @@ class WatchSyncActivity : AppCompatActivity() {
 
     // --- vendor protocol: notifications + battery read -----------------------------------
 
+    /**
+     * Every request/response exchange (bind-state, battery, real-time HR) depends entirely on
+     * this succeeding — if the watch never actually notifies, every write still reports success
+     * (write-without-response gives no peripheral ack either way) while every response silently
+     * never arrives, which is indistinguishable from "the watch ignored us" without the logging
+     * added here. Previously this bailed out with NO log line at all if the characteristic had no
+     * standard 0x2902 CCCD descriptor — plausible on a cheap BLE SoC that streams notifications
+     * once the phone's local stack has registered for them via setCharacteristicNotification(),
+     * without requiring (or even exposing) the over-the-air descriptor write. That local
+     * registration is now unconditional; the CCCD write only happens if the descriptor exists.
+     */
     @Suppress("DEPRECATION")
     private fun enableVendorResponseNotifications(g: BluetoothGatt) {
-        val char01 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_01_UUID) ?: return
-        val cccd = char01.getDescriptor(CCCD_UUID) ?: return
+        // Both channels matter: CHAR_01 delivers response data, CHAR_02 delivers the flow-control
+        // frames that drive every command we send. Subscribing only to CHAR_01 (what this did
+        // before) means the watch's "ready, send the packets" is never heard, so no command we
+        // write is ever actually delivered.
+        enableNotificationsFor(g, ZH_PROTOBUF_CHAR_01_UUID)
+        enableNotificationsFor(g, ZH_PROTOBUF_CHAR_02_UUID)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun enableNotificationsFor(g: BluetoothGatt, charUuid: UUID) {
+        val characteristic = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(charUuid)
+        if (characteristic == null) {
+            appendLog(getString(R.string.watch_sync_log_no_notify_char))
+            return
+        }
+        val cccd = characteristic.getDescriptor(CCCD_UUID)
         enqueueGattOp {
             try {
-                g.setCharacteristicNotification(char01, true)
-                cccd.value = android.bluetooth.BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                g.writeDescriptor(cccd)
+                val registered = g.setCharacteristicNotification(characteristic, true)
+                appendLog(getString(R.string.watch_sync_log_notify_registered, "$charUuid=$registered"))
+                if (cccd != null) {
+                    cccd.value = android.bluetooth.BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                    g.writeDescriptor(cccd)
+                } else {
+                    appendLog(getString(R.string.watch_sync_log_no_cccd))
+                    runNextGattOp()
+                }
+            } catch (e: SecurityException) {
+                appendLog(getString(R.string.watch_sync_log_permission_error))
+                runNextGattOp()
+            }
+        }
+    }
+
+    /** The SDK chunks to a 244-byte payload; Android gives 20 unless we negotiate up. */
+    private fun requestVendorMtu(g: BluetoothGatt) {
+        enqueueGattOp {
+            try {
+                if (!g.requestMtu(ZH_DESIRED_MTU)) runNextGattOp()
             } catch (e: SecurityException) {
                 appendLog(getString(R.string.watch_sync_log_permission_error))
                 runNextGattOp()
@@ -748,15 +972,40 @@ class WatchSyncActivity : AppCompatActivity() {
     }
 
     /**
-     * SEWear{ id: 16 } — bare request. Reply: SEWear{ bindAccount: SEBindAccount{
-     * bindCheck: SEBindCheck{ bindCheckResult, ... } } } — see handleBindStateResponse.
+     * SEWear{ id: 16 } — bare request, meaning "are you already bound?". Reply:
+     * SEWear{ id:16, bindAccount: SEBindAccount{ requestBindingStatus: <bool> } }. This only
+     * reports state; cmd 17 is what actually asks the watch to prompt the user.
      */
     private fun requestDeviceBindState(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
         val wear = mutableListOf<Byte>()
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_REQUEST_BIND_STATE.toLong())
+        bindStateReplyReceived = false
         pushPendingResponse(ZH_CMD_REQUEST_BIND_STATE)
         writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_REQUEST_BIND_STATE)
         appendLog(getString(R.string.watch_sync_log_bind_request_sent))
+        // Without a reply here the bind sequence never even starts, and the watch stays on its
+        // "Download App & Pair" screen — so say so rather than leaving it looking like a wait.
+        // Tracked by its own flag: the pending-response queue is keyed by send order, and cmd 17's
+        // reply legitimately arrives much later (it waits for a tap on the watch), which would
+        // make a queue-based check here report a timeout that didn't happen.
+        val bindGatt = g
+        handler.postDelayed({
+            if (bindGatt === gatt && !bindStateReplyReceived) {
+                appendLog(getString(R.string.watch_sync_log_no_bind_response, BIND_RESPONSE_TIMEOUT_MS / 1000))
+            }
+        }, BIND_RESPONSE_TIMEOUT_MS)
+    }
+
+    /**
+     * SEWear{ id:16, bindAccount{ requestBindingStatus: <bool, field 1> } } — shared by the
+     * original bind-state request and the temporary post-bind verification re-read below; both
+     * get the identical reply shape back from cmd 16 (raw bytes e.g. 08 10 1A 02 08 00/08 01).
+     */
+    private fun parseAlreadyBound(wearBytes: ByteArray): Boolean? {
+        val bindAccountBytes = parseProtoFields(wearBytes)[3]?.firstOrNull()?.bytes
+        return bindAccountBytes
+            ?.let { parseProtoFields(it)[1]?.firstOrNull()?.varintValue }
+            ?.let { it != 0L }
     }
 
     /**
@@ -768,35 +1017,102 @@ class WatchSyncActivity : AppCompatActivity() {
      * at all) and sends it via cmd 18 (sendAppBindResult) to actually complete the bind.
      */
     private fun handleBindStateResponse(wearBytes: ByteArray) {
+        bindStateReplyReceived = true
+        // Reply shape confirmed on real hardware (raw bytes 08 10 1A 02 08 00):
+        // SEWear{ id:16, bindAccount{ requestBindingStatus: <bool, field 1> } } — a plain
+        // "am I bound?" answer, matching RequestDeviceBindStateCallBack.onBindState(boolean).
+        // There is no bindCheck in this reply; that only comes back from cmd 17.
+        val alreadyBound = parseAlreadyBound(wearBytes)
+        runOnUiThread {
+            appendLog(getString(R.string.watch_sync_log_bind_state_received, alreadyBound?.toString() ?: "?"))
+        }
+        val g = gatt ?: return
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
+        if (alreadyBound == true) {
+            runOnUiThread { appendLog(getString(R.string.watch_sync_log_already_bound)) }
+            // Safe to time-sync now — cmd 16 already got its reply, so this can't race it for
+            // the vendor command channel the way sending it at connect time did.
+            writeVendorTimeSync(g, char02)
+            return
+        }
+        requestDeviceBindConfirmation(g, char02)
+    }
+
+    /**
+     * SEWear{ id: 17, bindAccount: SEBindAccount{ bindCheck: SEBindCheck{ deviceVerify: true } } }
+     * — built by com.zhapp.ble.a.a(17) in the SDK. This is the command that puts the watch into
+     * its "confirm this phone" state, so the reply only arrives once the user taps the watch.
+     */
+    private fun requestDeviceBindConfirmation(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+        val bindCheck = mutableListOf<Byte>()
+        appendProtoTag(bindCheck, 1, 0); appendVarint(bindCheck, 1) // deviceVerify = true
+
+        val bindAccount = mutableListOf<Byte>()
+        appendProtoTag(bindAccount, 2, 2); appendVarint(bindAccount, bindCheck.size.toLong()); bindAccount.addAll(bindCheck)
+
+        val wear = mutableListOf<Byte>()
+        appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_BIND_DEVICE.toLong())
+        appendProtoTag(wear, 3, 2); appendVarint(wear, bindAccount.size.toLong()); wear.addAll(bindAccount)
+
+        pushPendingResponse(ZH_CMD_BIND_DEVICE)
+        writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_BIND_DEVICE)
+        runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_confirm_requested)) }
+    }
+
+    /**
+     * Reply to cmd 17, once the user has answered on the watch: SEWear{ id:17, bindAccount{
+     * bindCheck{ bindCheckResult: <enum, field 3> } } }. SEBindCheckResult: SUCCESS=0, REFUSE=1,
+     * OVER_TIME=2, VERIFICATION_FAILED=3 (BindDeviceStateCallBack.VerifyCode). Only SUCCESS earns
+     * the cmd-18 confirmation that completes the bind.
+     */
+    private fun handleBindVerifyResponse(wearBytes: ByteArray) {
+        if (bindConfirmed) {
+            // cmd 17 has no waiter of its own — it's dispatched purely on the id the watch
+            // echoes back, so a LATER id:17 message (this watch appears to keep sending binding-
+            // state notifications after the bind, observed as a subsequent OVER_TIME) would
+            // otherwise re-run this whole handler: log a false failure over an already-completed
+            // bind, and resend cmd 18. Once bindCheckResult == SUCCESS has been acted on, ignore
+            // every id:17 message after it for this connection.
+            runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_verify_ignored)) }
+            return
+        }
         val bindAccountBytes = parseProtoFields(wearBytes)[3]?.firstOrNull()?.bytes
         val bindCheckBytes = bindAccountBytes?.let { parseProtoFields(it)[2]?.firstOrNull()?.bytes }
-        val bindCheckResult = bindCheckBytes?.let { parseProtoFields(it)[3]?.firstOrNull()?.varintValue }
-        runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_state_received, bindCheckResult?.toString() ?: "?")) }
+        // A bindCheck that carries no bindCheckResult is SUCCESS: protobuf omits a field holding
+        // its default value, and SEBindCheckResult.SUCCESS is 0.
+        val result = bindCheckBytes?.let { parseProtoFields(it)[3]?.firstOrNull()?.varintValue ?: 0L }
+        runOnUiThread {
+            appendLog(getString(R.string.watch_sync_log_bind_verify_result, result?.toString() ?: "?"))
+        }
         val g = gatt
         val char02 = g?.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
-        if (g == null || char02 == null || bindCheckResult != 0L) { // 0 = SEBindCheckResult.SUCCESS
+        if (g == null || char02 == null || result != 0L) {
             runOnUiThread { appendLog(getString(R.string.watch_sync_log_bind_no_key)) }
             return
         }
+        bindConfirmed = true
         sendAppBindResult(g, char02)
+        // Enqueued right after cmd 18 rather than tied to its GATT-write completion — the
+        // vendor command queue already serializes them, and bindCheckResult == 0 is confirmation
+        // enough that time-sync no longer has a bind-critical command to race.
+        writeVendorTimeSync(g, char02)
     }
 
     /**
      * SEWear{ id: 18, bindAccount: SEBindAccount{ bindResult: SEBindResult{
-     * bindResultType: SUCCESS(0), userId: <locally-generated token>, phoneType: ANDROID(0) } } }
-     * — the actual bind-confirmation command (cmd 17/"bindDevice" itself is only ever called
-     * with a null string in the real app, so it's not the confirmation step).
+     * bindResultType: SUCCESS(0), userId: <token>, phoneType: ANDROID(0) } } } — the actual
+     * bind-confirmation command (cmd 17/"bindDevice" itself is only ever called with a null
+     * string in the real app, so it's not the confirmation step).
      *
-     * Token recipe per WATCH_SYNC_PROTOCOL.md, confirmed against the real app's own code:
-     * UUID.randomUUID() + Random(10,10000) + userId, then substring(30). We have no real
-     * account/userId here, so ANDROID_ID stands in for that component.
+     * Token recipe confirmed directly against the decompiled real SDK
+     * (ZhConnectHandler.T()/bindDevice$1.onDeviceInfo): UUID.randomUUID() + Random(10,10000) +
+     * colorFitDevice.getUserId(), then substring(30) — where getUserId() is the app-supplied
+     * Noise account user ID, not anything device-derived. TEMPORARY, for this one persistence
+     * experiment: hardcoded to the real account ID for this personal build (this repo is
+     * public, but the user has confirmed that's acceptable for this one-off test).
      */
-    @Suppress("HardwareIds")
     private fun sendAppBindResult(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
-        val userId = android.provider.Settings.Secure.getString(
-            contentResolver,
-            android.provider.Settings.Secure.ANDROID_ID,
-        ) ?: ""
+        val userId = "23955126"
         val randomComponent = (10 until 10000).random()
         val token = (java.util.UUID.randomUUID().toString() + randomComponent + userId).substring(30)
 
@@ -812,8 +1128,27 @@ class WatchSyncActivity : AppCompatActivity() {
         appendProtoTag(wear, 1, 0); appendVarint(wear, ZH_CMD_SEND_APP_BIND_RESULT.toLong())
         appendProtoTag(wear, 3, 2); appendVarint(wear, bindAccount.size.toLong()); wear.addAll(bindAccount)
 
-        writeVendorPacket(g, characteristic, wear.toByteArray(), ZH_CMD_SEND_APP_BIND_RESULT)
+        val wearBytes = wear.toByteArray()
+        // Exact bytes handed to the vendor command/chunking layer, logged immediately before
+        // transmission — not a reconstruction — so the actual cmd 18 payload can be diffed
+        // against the decompiled SDK/official protocol if the watch turns out not to persist it.
+        appendLog(getString(R.string.watch_sync_log_cmd18_raw_payload, bytesToHex(wearBytes)))
+        writeVendorPacket(g, characteristic, wearBytes, ZH_CMD_SEND_APP_BIND_RESULT)
         appendLog(getString(R.string.watch_sync_log_bind_device_sent))
+    }
+
+    /**
+     * Handles cmd 48's (setTime) response: detects the watch's known success reply
+     * (08 30 A0 06 00) and logs that time sync landed. Once a fresh cmd 18 bind confirmation has
+     * been sent (bindConfirmed == true), this is the point the bind flow is complete and the
+     * connection is fully usable.
+     */
+    private fun handleTimeSyncResponse(wearBytes: ByteArray) {
+        if (!wearBytes.contentEquals(ZH_CMD_48_SUCCESS_BYTES)) return
+        runOnUiThread { appendLog(getString(R.string.watch_sync_log_cmd48_completed, bytesToHex(wearBytes))) }
+        if (bindConfirmed) {
+            runOnUiThread { appendLog(getString(R.string.watch_sync_log_fresh_bind_complete)) }
+        }
     }
 
     /**
@@ -937,14 +1272,153 @@ class WatchSyncActivity : AppCompatActivity() {
         batteryResult.setText(R.string.watch_sync_card_battery_checking)
     }
 
+    /**
+     * Queues a command for the header → ready → packets → done handshake described on
+     * [outgoingCommands]. Writing the payload straight to CHAR_02 (what this used to do) makes the
+     * watch discard it: it only accepts data packets for a transfer it has already acknowledged.
+     */
+    @Synchronized
     private fun writeVendorPacket(
         g: BluetoothGatt,
         characteristic: BluetoothGattCharacteristic,
         wearBytes: ByteArray,
         cmdId: Int? = null,
     ) {
-        // SDK packet framing: 2-byte little-endian packet index, "1" since this fits in one packet.
-        writeVendorRaw(g, characteristic, byteArrayOf(1, 0) + wearBytes, cmdId)
+        outgoingCommands.addLast(cmdId to wearBytes)
+        if (!outgoingInFlight) startNextVendorCommandLocked()
+    }
+
+    /** Writes the header frame that opens the handshake for the next queued command. */
+    private fun startNextVendorCommandLocked() {
+        val next = outgoingCommands.removeFirstOrNull()
+        if (next == null) {
+            outgoingInFlight = false
+            return
+        }
+        val g = gatt
+        val char02 = g?.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
+        if (g == null || char02 == null) {
+            outgoingInFlight = false
+            currentOutgoing = null
+            currentOutgoingCmdId = null
+            return
+        }
+        outgoingInFlight = true
+        val (cmdId, wearBytes) = next
+        currentOutgoing = wearBytes
+        currentOutgoingCmdId = cmdId
+        currentOutgoingBusyRetries = 0
+        confirmedChunkIndices.clear()
+
+        val chunkSize = (vendorPayloadSize - 2).coerceAtLeast(1)
+        val count = (wearBytes.size + chunkSize - 1) / chunkSize
+        currentOutgoingPacketCount = count
+        val header = byteArrayOf(0, 0, 0, 0, (count and 0xFF).toByte(), ((count shr 8) and 0xFF).toByte())
+        writeVendorRaw(g, char02, header, cmdId)
+    }
+
+    /** Step 3: the watch acknowledged the header, so stream the payload out in indexed chunks. */
+    private fun sendCurrentVendorChunks() {
+        val wearBytes = currentOutgoing ?: return
+        val g = gatt ?: return
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
+        val chunkSize = (vendorPayloadSize - 2).coerceAtLeast(1)
+        confirmedChunkIndices.clear()
+        for (index in 1..currentOutgoingPacketCount) {
+            val start = (index - 1) * chunkSize
+            val end = minOf(start + chunkSize, wearBytes.size)
+            val chunk = wearBytes.copyOfRange(start, end)
+            val framed = byteArrayOf((index and 0xFF).toByte(), ((index shr 8) and 0xFF).toByte()) + chunk
+            writeVendorRaw(g, char02, framed, currentOutgoingCmdId, onWriteComplete = { onVendorChunkWriteConfirmed(index) })
+        }
+    }
+
+    /** Resends a single packet the watch reported as lost ([ZH_FLOW_PACKET_LOST]). */
+    private fun resendVendorChunk(index: Int) {
+        val wearBytes = currentOutgoing ?: return
+        val g = gatt ?: return
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
+        val chunkSize = (vendorPayloadSize - 2).coerceAtLeast(1)
+        val start = (index - 1) * chunkSize
+        if (index < 1 || start >= wearBytes.size) return
+        val end = minOf(start + chunkSize, wearBytes.size)
+        val framed = byteArrayOf((index and 0xFF).toByte(), ((index shr 8) and 0xFF).toByte()) +
+            wearBytes.copyOfRange(start, end)
+        writeVendorRaw(g, char02, framed, currentOutgoingCmdId, onWriteComplete = { onVendorChunkWriteConfirmed(index) })
+    }
+
+    /**
+     * Fires once packet [index] of the current command has actually completed its GATT write
+     * (not merely been queued for one). Only when every packet 1..currentOutgoingPacketCount has
+     * been confirmed this way is it safe to release the vendor-command channel and start the
+     * next queued command's header. Using a set of indices (rather than a running count) keeps
+     * this correct across a [ZH_FLOW_PACKET_LOST] resend of a packet that was already confirmed.
+     */
+    @Synchronized
+    private fun onVendorChunkWriteConfirmed(index: Int) {
+        if (currentOutgoingPacketCount <= 0) return
+        confirmedChunkIndices.add(index)
+        if (confirmedChunkIndices.size >= currentOutgoingPacketCount) {
+            confirmedChunkIndices.clear()
+            outgoingInFlight = false
+            currentOutgoingBusyRetries = 0
+            startNextVendorCommandLocked()
+        }
+    }
+
+    /**
+     * CHAR_02 notifications are the watch's flow control for commands we send (decompiled from
+     * BluetoothService.j(byte[])) — distinct from CHAR_01, which carries actual response data.
+     */
+    @Synchronized
+    private fun handleVendorFlowControl(data: ByteArray) {
+        if (data.size < 6) return
+        if (data[0] != 0.toByte() || data[1] != 0.toByte() || data[2] != 1.toByte()) return
+        when (data[3].toInt()) {
+            ZH_FLOW_READY_FOR_DATA -> {
+                appendLog(getString(R.string.watch_sync_log_flow_ready, currentOutgoingPacketCount))
+                sendCurrentVendorChunks()
+                // The channel is freed by onVendorChunkWriteConfirmed once every chunk's GATT
+                // write has actually completed — NOT here. Advancing here (as this used to)
+                // starts the next command's header while these chunks are merely queued, not yet
+                // sent, which races the watch: it's still processing this command when the next
+                // header arrives and answers "busy". This watch also sends no "fully received"
+                // frame, so the GATT-write completion is the only completion signal available.
+                // currentOutgoing stays set either way so a resend request can still be served.
+            }
+            ZH_FLOW_ALL_RECEIVED ->
+                appendLog(getString(R.string.watch_sync_log_flow_received, currentOutgoingCmdId ?: -1))
+            ZH_FLOW_PACKET_LOST -> {
+                val index = (data[4].toInt() and 0xFF) or ((data[5].toInt() and 0xFF) shl 8)
+                appendLog(getString(R.string.watch_sync_log_flow_resend, index))
+                resendVendorChunk(index)
+            }
+            ZH_FLOW_DEVICE_BUSY -> {
+                val cmdId = currentOutgoingCmdId ?: -1
+                if (currentOutgoing != null && currentOutgoingBusyRetries < ZH_BUSY_MAX_RETRIES) {
+                    currentOutgoingBusyRetries++
+                    appendLog(getString(R.string.watch_sync_log_flow_busy, cmdId, currentOutgoingBusyRetries, ZH_BUSY_MAX_RETRIES))
+                    handler.postDelayed({ retryCurrentVendorHeader() }, ZH_BUSY_RETRY_DELAY_MS)
+                } else {
+                    // Retries exhausted (or nothing left to retry) — give up on this command
+                    // rather than leaving every command behind it stuck forever.
+                    appendLog(getString(R.string.watch_sync_log_flow_busy_giving_up, cmdId, currentOutgoingBusyRetries))
+                    currentOutgoingBusyRetries = 0
+                    outgoingInFlight = false
+                    startNextVendorCommandLocked()
+                }
+            }
+        }
+    }
+
+    /** Re-sends just the header of the current command after a busy reply — see [ZH_FLOW_DEVICE_BUSY]. */
+    private fun retryCurrentVendorHeader() {
+        val g = gatt ?: return
+        val char02 = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID) ?: return
+        if (currentOutgoing == null || currentOutgoingPacketCount <= 0) return
+        val count = currentOutgoingPacketCount
+        val header = byteArrayOf(0, 0, 0, 0, (count and 0xFF).toByte(), ((count shr 8) and 0xFF).toByte())
+        writeVendorRaw(g, char02, header, currentOutgoingCmdId)
     }
 
     /**
@@ -977,14 +1451,49 @@ class WatchSyncActivity : AppCompatActivity() {
         expectedPacketCount = 0
         receivedPacketNum = 0
 
+        // The watch's replies are the one thing we can't reconstruct after the fact, and a field
+        // we parse as "absent" looks identical to one we decoded to the wrong number — log the
+        // raw bytes so a reply can always be decoded by hand instead of guessed at.
+        runOnUiThread { appendLog(getString(R.string.watch_sync_log_response_hex, bytesToHex(merged))) }
+
         if (handlePossibleRealTimeHeartRate(merged)) return
 
-        val cmdId = popPendingResponse()
-        if (cmdId == ZH_CMD_GET_BATTERY) {
-            handleBatteryResponse(merged)
-        } else if (cmdId == ZH_CMD_REQUEST_BIND_STATE) {
-            handleBindStateResponse(merged)
+        // The watch echoes the command id in field 1 of its reply (visible as "08 10" = id 16 in
+        // a bind-state reply), so route on that rather than on the order we sent things: a reply
+        // that arrives late — cmd 17's, which waits for someone to physically tap the watch —
+        // would otherwise be matched against whatever request happened to be queued next.
+        val replyId = parseProtoFields(merged)[1]?.firstOrNull()?.varintValue?.toInt()
+        val poppedPending = popPendingResponse()
+        val cmdId = if (replyId != null && replyId != 0) replyId else poppedPending
+        // Diagnostic: which command this got routed to, and whether anything was actually
+        // pending for it — "unsolicited" here (nothing pending, but the watch echoed a real id)
+        // is the signature of a push we never asked for, as opposed to a genuine reply to a
+        // request we're still waiting on.
+        val responseSource = if (poppedPending == null && replyId != null && replyId != 0) "unsolicited" else "pending-request"
+        runOnUiThread {
+            appendLog(
+                getString(
+                    R.string.watch_sync_log_vendor_response_source,
+                    cmdId ?: -1,
+                    responseSource,
+                    poppedPending ?: -1,
+                    bindConfirmed,
+                )
+            )
         }
+        when (cmdId) {
+            ZH_CMD_GET_BATTERY -> handleBatteryResponse(merged)
+            ZH_CMD_REQUEST_BIND_STATE ->
+                handleBindStateResponse(merged)
+            ZH_CMD_BIND_DEVICE -> handleBindVerifyResponse(merged)
+            ZH_CMD_SET_TIME -> handleTimeSyncResponse(merged)
+        }
+    }
+
+    private fun bytesToHex(bytes: ByteArray): String {
+        val shown = if (bytes.size > 120) bytes.copyOfRange(0, 120) else bytes
+        val hex = shown.joinToString(" ") { "%02X".format(it) }
+        return if (bytes.size > 120) "$hex … (${bytes.size} bytes)" else hex
     }
 
     private fun writeAckFrame(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, ack: ByteArray) {
@@ -1003,8 +1512,9 @@ class WatchSyncActivity : AppCompatActivity() {
         characteristic: BluetoothGattCharacteristic,
         bytes: ByteArray,
         cmdId: Int? = null,
+        onWriteComplete: (() -> Unit)? = null,
     ) {
-        enqueueGattOp(cmdId) {
+        enqueueGattOp(cmdId, onWriteComplete) {
             try {
                 @Suppress("DEPRECATION")
                 characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE

@@ -214,13 +214,35 @@ common library:
     that make deletions propagate instead of resurrecting.
   - **`FakeCallActivity`**, **`ClaudeAlertsActivity`** — the Fake Call task
     type's ringing screen, and a small alerts/status surface.
+  - **Watch Sync** (`WatchSyncActivity`) — a third feature area: BLE sync
+    with a Noise ColorFit Pulse 2 Max smartwatch. The watch implements no
+    standard GATT service (no Current Time, no Battery), only a private
+    vendor service speaking a protobuf protocol reverse-engineered from the
+    decompiled NoiseFit app. The activity hand-encodes the protobuf wire
+    format (no runtime dependency) and implements time sync, push
+    notifications to the watch, battery read, real-time heart rate, and a
+    two-layer pairing flow (OS-level `createBond()` plus the vendor's own
+    app-level bind handshake). Commands are *not* delivered by writing bytes
+    to a characteristic — there's a header/ready/chunk handshake, a
+    serialized GATT op queue (Android allows one outstanding GATT operation
+    at a time), and multi-packet response reassembly. **Read
+    `reminder-app/WATCH_SYNC_PROTOCOL.md` before touching this** — it carries
+    the full command catalog, the framing spec, what's confirmed vs.
+    unknown, and a "Which build are you running?" section that explains a
+    class of failure which repeatedly looked like a protocol bug and wasn't.
 
   Two things worth knowing when touching this app: **versioning** —
   `versionCode` derives from `GITHUB_RUN_NUMBER` (always increasing on every
   CI build) rather than being hand-bumped, and `versionName` is bumped
   manually per release batch. And **CI/release** — `reminder-app.yml`
   builds a debug APK on every push/PR and publishes it to the
-  `reminder-app-latest` GitHub Release on pushes to `master`.
+  `reminder-app-latest` GitHub Release on pushes to `master`, and to
+  `reminder-app-preview` for branch builds. Note that `-latest` only moves
+  when work reaches `master`: long-lived stacked draft PRs leave it serving
+  a stale APK while branch previews race ahead, which has already caused one
+  multi-session debugging detour (see `reminder-app/WATCH_SYNC_PROTOCOL.md`).
+  `versionCode` being the CI run number is what makes an installed build
+  traceable back to its commit.
 - **`claude-limits-app/`** — a home-screen widget showing Claude subscription
   usage limits (5-hour session window + weekly cap) that rings an alarm when a
   window resets. No API exists for this data; see `claude-limits-app/README.md`

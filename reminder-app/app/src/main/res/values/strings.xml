@@ -178,6 +178,23 @@
     <string name="alerts_disclaimer">Reads the same usage data as the Claude website. Anthropic publishes no API for subscription limits, so this can break without notice.</string>
     <string name="alerts_disconnect">Disconnect Claude</string>
 
+    <!-- Zip Extractor -->
+    <string name="title_zip_extractor">Zip Extractor</string>
+    <string name="zip_explainer">Pick a zip file and a folder to extract it into. Password-protected zips will ask for the password.</string>
+    <string name="zip_choose_file">Choose zip file</string>
+    <string name="zip_no_file_chosen">No file chosen</string>
+    <string name="zip_choose_destination">Choose destination folder</string>
+    <string name="zip_no_destination_chosen">No destination chosen</string>
+    <string name="zip_extract">Extract</string>
+    <string name="zip_extracting">Extracting…</string>
+    <string name="zip_extracting_file">Extracting %1$s</string>
+    <string name="zip_extract_done">Extracted %1$d file(s)</string>
+    <string name="zip_extract_failed">Extraction failed: %1$s</string>
+    <string name="zip_password_needed">This zip is password-protected.</string>
+    <string name="zip_wrong_password">Wrong password. Try again.</string>
+    <string name="zip_password_title">Enter password</string>
+    <string name="zip_password_hint">Zip password</string>
+
     <!-- Watch Sync -->
     <string name="title_watch_sync">Watch Sync</string>
     <string name="watch_sync_start_scan">Scan for watches</string>

@@ -125,6 +125,35 @@ class WatchSyncActivity : AppCompatActivity() {
         private const val ZH_BUSY_MAX_RETRIES = 5
         private const val ZH_BUSY_RETRY_DELAY_MS = 250L
 
+        // "DaFit" vendor protocol — a DIFFERENT vendor family from the "zhbraceletsdk"/zhapp one
+        // above. Confirmed against real, open-source (AGPLv3) reverse-engineering: Gadgetbridge's
+        // DaFit device support (github.com/krzys-h/Gadgetbridge-MT863, `dafit` branch —
+        // service/devices/dafit/{DaFitPacket,DaFitPacketIn,DaFitPacketOut}.java and
+        // devices/dafit/DaFitConstants.java), an independent decompile of the "DaFit"/"MOYOUNG"
+        // companion-app family. This watch's own GATT dump matches it exactly, including the
+        // otherwise-unexplained extra 0000fee7 service — Gadgetbridge's own comment calls that
+        // "another custom service ... not mentioned anywhere in the official app". We did NOT
+        // decompile anything ourselves for this: the NoiseFit APK bundles an unrelated
+        // com.crrepa.ble.* SDK for other Noise watch models (see WATCH_SYNC_PROTOCOL.md), which is
+        // this same CRRepa/DaFit family, but its dex files were never pulled apart because the
+        // Pulse 2 Max didn't need them.
+        //
+        // UNVERIFIED ON HARDWARE — this sandbox has no phone and no FireBoltt watch to test
+        // against. Everything below is built from Gadgetbridge's real source, not guessed, but
+        // "matches a real open-source implementation" is not the same bar as "confirmed on this
+        // watch" that the zhapp protocol above cleared. Test before trusting it.
+        private val DAFIT_SERVICE_UUID = UUID.fromString("0000feea-0000-1000-8000-00805f9b34fb")
+        // fee1 doubles as the live pedometer characteristic (read/notify:
+        // {distance:uint24, steps:uint24, calories:uint24}) and, per DaFitConstants, the same
+        // shape used for "sync past data" replies.
+        private val DAFIT_CHAR_STEPS_UUID = UUID.fromString("0000fee1-0000-1000-8000-00805f9b34fb")
+        // fee2: write-no-response, phone -> watch. fee3: notify, watch -> phone command replies.
+        private val DAFIT_CHAR_DATA_OUT_UUID = UUID.fromString("0000fee2-0000-1000-8000-00805f9b34fb")
+        private val DAFIT_CHAR_DATA_IN_UUID = UUID.fromString("0000fee3-0000-1000-8000-00805f9b34fb")
+        private val DAFIT_PACKET_HEADER = byteArrayOf(0xFE.toByte(), 0xEA.toByte())
+        // CMD_SYNC_TIME, per DaFitConstants: payload {time_be32, 8}.
+        private const val DAFIT_CMD_SYNC_TIME: Byte = 49
+
         private const val SCAN_TIMEOUT_MS = 12_000L
         private const val BIND_RESPONSE_TIMEOUT_MS = 8_000L
         private val MAC_ADDRESS_REGEX = Regex("([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")
@@ -952,6 +981,7 @@ class WatchSyncActivity : AppCompatActivity() {
 
             val ctsChar = g.getService(CTS_SERVICE_UUID)?.getCharacteristic(CTS_CHAR_UUID)
             val zhTimeChar = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(ZH_PROTOBUF_CHAR_02_UUID)
+            val daFitDataOut = g.getService(DAFIT_SERVICE_UUID)?.getCharacteristic(DAFIT_CHAR_DATA_OUT_UUID)
 
             if (zhTimeChar != null) {
                 // Order matters: negotiate the MTU the SDK's chunking assumes, subscribe to both
@@ -960,6 +990,9 @@ class WatchSyncActivity : AppCompatActivity() {
                 requestVendorMtu(g)
                 enableVendorResponseNotifications(g)
                 requestDeviceBindState(g, zhTimeChar)
+            } else if (daFitDataOut != null) {
+                enableNotificationsFor(g, DAFIT_SERVICE_UUID, DAFIT_CHAR_DATA_IN_UUID)
+                enableNotificationsFor(g, DAFIT_SERVICE_UUID, DAFIT_CHAR_STEPS_UUID)
             }
 
             if (ctsChar != null) {
@@ -972,6 +1005,14 @@ class WatchSyncActivity : AppCompatActivity() {
                 // handleBindStateResponse (already bound) or handleBindVerifyResponse (fresh
                 // bind, once bindCheckResult == 0).
                 runOnUiThread { appendLog(getString(R.string.watch_sync_log_vendor_protocol)) }
+            } else if (daFitDataOut != null) {
+                // No bind handshake in this protocol family (per Gadgetbridge's DaFit support —
+                // it only pairs via OS-level bonding, already handled above) — safe to send
+                // straight away, unlike the zhapp cmd 48/cmd 18 collision this file spent so many
+                // sessions on.
+                runOnUiThread { appendLog(getString(R.string.watch_sync_log_dafit_protocol)) }
+                sendDaFitTimeSync(g, daFitDataOut)
+                requestDaFitSteps(g)
             } else {
                 runOnUiThread {
                     appendLog(getString(R.string.watch_sync_log_no_cts))
@@ -1040,6 +1081,13 @@ class WatchSyncActivity : AppCompatActivity() {
                         appendLog(getString(R.string.watch_sync_log_battery_failed, status))
                     }
                 }
+            } else if (characteristic.uuid == DAFIT_CHAR_STEPS_UUID) {
+                val data = characteristic.value
+                if (status == BluetoothGatt.GATT_SUCCESS && data != null) {
+                    parseDaFitStepsPayload(data)
+                } else {
+                    runOnUiThread { appendLog(getString(R.string.watch_sync_log_dafit_steps_read_failed, status)) }
+                }
             }
             runNextGattOp()
         }
@@ -1060,6 +1108,8 @@ class WatchSyncActivity : AppCompatActivity() {
                 // CHAR_01 carries response data; CHAR_02 carries flow control for what we send.
                 ZH_PROTOBUF_CHAR_01_UUID -> handleVendorResponsePacket(g, value)
                 ZH_PROTOBUF_CHAR_02_UUID -> handleVendorFlowControl(value)
+                DAFIT_CHAR_DATA_IN_UUID -> handleDaFitDataIn(value)
+                DAFIT_CHAR_STEPS_UUID -> parseDaFitStepsPayload(value)
             }
         }
 
@@ -1121,6 +1171,158 @@ class WatchSyncActivity : AppCompatActivity() {
                 appendLog(getString(R.string.watch_sync_log_permission_error))
                 runNextGattOp()
             }
+        }
+    }
+
+    // --- DaFit vendor protocol (e.g. FireBoltt 100 and other CRRepa/DaFit-family watches) ------
+    //
+    // A completely different vendor family from zhbraceletsdk below — see the UUID/cmd-id block
+    // in the companion object for provenance (Gadgetbridge's real, open-source DaFit support,
+    // not decompiled by us). UNVERIFIED ON HARDWARE.
+
+    /**
+     * Builds a DaFit-protocol frame: FE EA, a length byte pair, the command type, then the
+     * payload. Mirrors Gadgetbridge's DaFitPacketOut.buildPacket(), MTU==20 branch — every
+     * command sent from this screen is small enough that the fixed-size framing always applies,
+     * and none of them need the multi-packet fragmentation DaFitPacketOut/DaFitPacketIn also
+     * implement for larger payloads.
+     */
+    private fun buildDaFitPacket(type: Byte, payload: ByteArray): ByteArray {
+        val packet = ByteArray(payload.size + 5)
+        packet[0] = DAFIT_PACKET_HEADER[0]
+        packet[1] = DAFIT_PACKET_HEADER[1]
+        packet[2] = 16
+        packet[3] = (packet.size and 0xFF).toByte()
+        packet[4] = type
+        System.arraycopy(payload, 0, packet, 5, payload.size)
+        return packet
+    }
+
+    @Suppress("DEPRECATION")
+    private fun writeDaFitRaw(g: BluetoothGatt, characteristic: BluetoothGattCharacteristic, packet: ByteArray) {
+        enqueueGattOp {
+            try {
+                characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
+                characteristic.value = packet
+                g.writeCharacteristic(characteristic)
+            } catch (e: SecurityException) {
+                appendLog(getString(R.string.watch_sync_log_permission_error))
+                runNextGattOp()
+            }
+        }
+    }
+
+    /**
+     * DaFit stores every on-watch timestamp in a hardcoded GMT+8 timezone regardless of the
+     * phone's own — per Gadgetbridge's DaFitConstants ("The watch stores all dates in GMT+8 time
+     * zone with seconds resolution") and its LocalTimeToWatchTime() helper, which this mirrors:
+     * read the current wall-clock date/time fields back out AS IF they were already GMT+8,
+     * producing an epoch second that's offset from the real UTC one by the phone's own zone —
+     * exactly what the watch expects on the wire.
+     */
+    private fun dafitWatchTimestamp(): Int {
+        val local = Calendar.getInstance()
+        val asGmt8 = Calendar.getInstance(java.util.TimeZone.getTimeZone("GMT+8"))
+        asGmt8.clear()
+        asGmt8.set(
+            local.get(Calendar.YEAR), local.get(Calendar.MONTH), local.get(Calendar.DAY_OF_MONTH),
+            local.get(Calendar.HOUR_OF_DAY), local.get(Calendar.MINUTE), local.get(Calendar.SECOND),
+        )
+        return (asGmt8.timeInMillis / 1000).toInt()
+    }
+
+    /**
+     * CMD_SYNC_TIME (49): payload {time_be32, 8} — a big-endian epoch second (unlike almost
+     * every other multi-byte field in this protocol family, which is little-endian — confirmed
+     * against DaFitConstants' own byte-shift comment: "time >> 24, time >> 16, time >> 8, time")
+     * plus a trailing constant byte whose meaning Gadgetbridge's own reverse-engineering doesn't
+     * explain either — sent as-is rather than guessed at.
+     */
+    private fun sendDaFitTimeSync(g: BluetoothGatt, dataOut: BluetoothGattCharacteristic) {
+        val ts = dafitWatchTimestamp()
+        val payload = byteArrayOf(
+            ((ts ushr 24) and 0xFF).toByte(),
+            ((ts ushr 16) and 0xFF).toByte(),
+            ((ts ushr 8) and 0xFF).toByte(),
+            (ts and 0xFF).toByte(),
+            8,
+        )
+        writeDaFitRaw(g, dataOut, buildDaFitPacket(DAFIT_CMD_SYNC_TIME, payload))
+        runOnUiThread {
+            appendLog(getString(R.string.watch_sync_log_dafit_time_sync_sent))
+            timeResult.setText(R.string.watch_sync_card_time_sent_unconfirmed)
+        }
+    }
+
+    /**
+     * UUID_CHARACTERISTIC_STEPS (fee1) doubles as the live pedometer characteristic (read/notify)
+     * and the "sync past data" response shape, per DaFitConstants:
+     * {distance:uint24, steps:uint24, calories:uint24}. Byte order within each 24-bit field
+     * isn't specified there; treated as little-endian to match every other multi-byte field in
+     * this protocol family except CMD_SYNC_TIME's timestamp.
+     */
+    private fun requestDaFitSteps(g: BluetoothGatt) {
+        val stepsChar = g.getService(DAFIT_SERVICE_UUID)?.getCharacteristic(DAFIT_CHAR_STEPS_UUID) ?: return
+        enqueueGattOp {
+            try {
+                g.readCharacteristic(stepsChar)
+            } catch (e: SecurityException) {
+                appendLog(getString(R.string.watch_sync_log_permission_error))
+                runNextGattOp()
+            }
+        }
+    }
+
+    private fun parseDaFitStepsPayload(data: ByteArray) {
+        if (data.size < 9) return
+        fun uint24le(offset: Int) =
+            (data[offset].toInt() and 0xFF) or
+                ((data[offset + 1].toInt() and 0xFF) shl 8) or
+                ((data[offset + 2].toInt() and 0xFF) shl 16)
+        val distance = uint24le(0)
+        val steps = uint24le(3)
+        val calories = uint24le(6)
+        runOnUiThread { appendLog(getString(R.string.watch_sync_log_dafit_steps, steps, distance, calories)) }
+    }
+
+    // Reassembly state for DAFIT_CHAR_DATA_IN (fee3) — see handleDaFitDataIn. Only one command
+    // is ever in flight from this screen at a time, so a single buffer (rather than a per-command
+    // one) is enough.
+    private val daFitIncoming = mutableListOf<Byte>()
+    private var daFitIncomingExpectedLength = -1
+
+    /**
+     * DAFIT_CHAR_DATA_IN (fee3): the reply channel for commands written to fee2. Reassembled per
+     * Gadgetbridge's DaFitPacketIn — header FE EA, then a length spread across bytes 2-3 (byte 2
+     * is either the fixed value 16, meaning byte 3 alone is the whole packet length, or
+     * 32 + the length's high byte for the MTU-negotiated framing this screen never triggers).
+     * None of the commands sent from here need to act on the reply; this exists so the log shows
+     * the watch actually answered, and as the seam a future command's response would parse
+     * through.
+     */
+    private fun handleDaFitDataIn(data: ByteArray) {
+        if (daFitIncomingExpectedLength < 0) {
+            if (data.size < 4 || data[0] != DAFIT_PACKET_HEADER[0] || data[1] != DAFIT_PACKET_HEADER[1]) {
+                runOnUiThread { appendLog(getString(R.string.watch_sync_log_dafit_bad_header, bytesToHex(data))) }
+                return
+            }
+            val lenByte2 = data[2].toInt() and 0xFF
+            val lenHigh = if (lenByte2 == 16) 0 else (lenByte2 - 32).coerceAtLeast(0)
+            val lenLow = data[3].toInt() and 0xFF
+            daFitIncomingExpectedLength = (lenHigh shl 8) or lenLow
+            daFitIncoming.clear()
+        }
+        daFitIncoming.addAll(data.toList())
+        if (daFitIncoming.size < daFitIncomingExpectedLength) return
+
+        val packet = daFitIncoming.toByteArray()
+        daFitIncoming.clear()
+        daFitIncomingExpectedLength = -1
+        if (packet.size < 5) return
+        val type = packet[4]
+        val payload = packet.copyOfRange(5, packet.size)
+        runOnUiThread {
+            appendLog(getString(R.string.watch_sync_log_dafit_response, type.toInt() and 0xFF, bytesToHex(payload)))
         }
     }
 
@@ -1188,13 +1390,13 @@ class WatchSyncActivity : AppCompatActivity() {
         // frames that drive every command we send. Subscribing only to CHAR_01 (what this did
         // before) means the watch's "ready, send the packets" is never heard, so no command we
         // write is ever actually delivered.
-        enableNotificationsFor(g, ZH_PROTOBUF_CHAR_01_UUID)
-        enableNotificationsFor(g, ZH_PROTOBUF_CHAR_02_UUID)
+        enableNotificationsFor(g, ZH_PROTOBUF_SERVICE_UUID, ZH_PROTOBUF_CHAR_01_UUID)
+        enableNotificationsFor(g, ZH_PROTOBUF_SERVICE_UUID, ZH_PROTOBUF_CHAR_02_UUID)
     }
 
     @Suppress("DEPRECATION")
-    private fun enableNotificationsFor(g: BluetoothGatt, charUuid: UUID) {
-        val characteristic = g.getService(ZH_PROTOBUF_SERVICE_UUID)?.getCharacteristic(charUuid)
+    private fun enableNotificationsFor(g: BluetoothGatt, serviceUuid: UUID, charUuid: UUID) {
+        val characteristic = g.getService(serviceUuid)?.getCharacteristic(charUuid)
         if (characteristic == null) {
             appendLog(getString(R.string.watch_sync_log_no_notify_char))
             return

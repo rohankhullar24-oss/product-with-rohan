@@ -56,7 +56,11 @@ export const teardowns: Teardown[] = [
 ];
 
 export function getTeardowns(): Teardown[] {
-  return teardowns;
+  return [...teardowns].sort((a, b) => {
+    if (!a.publishedDate) return 1;
+    if (!b.publishedDate) return -1;
+    return b.publishedDate.localeCompare(a.publishedDate);
+  });
 }
 
 export function getTeardown(slug: string): Teardown | null {

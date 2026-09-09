@@ -45,6 +45,13 @@ dependencies {
     // no camera permission or custom camera code needed in this app).
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
 
+    // Zip Extractor: java.util.zip has no password support at all, so a real
+    // library is needed for both plain and password-protected (ZipCrypto and
+    // AES) archives. DocumentFile drives writing the extracted files into a
+    // user-picked SAF destination tree (scoped storage; no storage permission).
+    implementation("net.lingala.zip4j:zip4j:2.11.5")
+    implementation("androidx.documentfile:documentfile:1.0.1")
+
     // The Claude usage layer, plus the AndroidX/Material dependencies it
     // exposes as api() — core-ktx, appcompat, material, work, security-crypto.
     implementation(project(":usage-core"))

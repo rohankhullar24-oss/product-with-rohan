@@ -154,6 +154,11 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
 
+        <activity
+            android:name=".ZipExtractorActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
         <!-- Auto Scheduler: schedules a one-off SMS/call/reminder for a future time. -->
         <activity
             android:name=".AutoSchedulerActivity"

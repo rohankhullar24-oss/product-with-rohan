@@ -43,6 +43,16 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/cred-teardown-pm-lens.png",
     publishedDate: "2026-08-26",
   },
+  {
+    slug: "meesho-teardown-pm-lens",
+    company: "Meesho",
+    eyebrow: "Product Teardown · India Social Commerce · September 2026",
+    headline: "Meesho never sold zero commission. It sold zero commission's marketing.",
+    dek: "961,000 sellers joined in a single year, chasing a 0% commission line that hides 15-22% in fees once shipping, returns, and ads are counted. The reframe worked. The unit economics are what's being tested now.",
+    image:
+      "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/meesho-teardown-pm-lens.png",
+    publishedDate: "2026-09-08",
+  },
 ];
 
 export function getTeardowns(): Teardown[] {

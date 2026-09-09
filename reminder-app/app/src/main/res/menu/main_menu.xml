@@ -16,6 +16,9 @@
         android:id="@+id/action_watch_sync"
         android:title="@string/title_watch_sync" />
     <item
+        android:id="@+id/action_zip_extractor"
+        android:title="@string/title_zip_extractor" />
+    <item
         android:id="@+id/action_sound"
         android:title="@string/notification_sound" />
     <item

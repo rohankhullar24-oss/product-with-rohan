@@ -146,6 +146,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, WatchSyncActivity::class.java))
             true
         }
+        R.id.action_zip_extractor -> {
+            startActivity(Intent(this, ZipExtractorActivity::class.java))
+            true
+        }
         R.id.action_sound -> {
             NotificationHelper.ensureChannel(this)
             startActivity(

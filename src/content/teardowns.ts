@@ -53,6 +53,16 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/meesho-teardown-pm-lens.png",
     publishedDate: "2026-09-08",
   },
+  {
+    slug: "duolingo-teardown-pm-lens",
+    company: "Duolingo",
+    eyebrow: "Product Teardown · Consumer EdTech · September 2026",
+    headline: "Duolingo won the AI-first bet on usage. It's still losing the AI-first bet on trust.",
+    dek: "DAU is up 23% and revenue crossed $1B for the first time, right as the same AI strategy that unlocked that growth handed ChatGPT, Claude, and a $1B-valued rival named Speak the exact thing Duolingo used to own alone.",
+    image:
+      "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/duolingo-teardown-pm-lens.png",
+    publishedDate: "2026-09-19",
+  },
 ];
 
 export function getTeardowns(): Teardown[] {

@@ -126,8 +126,18 @@ common library:
   via `AlarmScheduler`/`AlarmService`/`AlarmReceiver`/`NotificationHelper`,
   local storage in `ReminderStore`, Supabase sync via `SyncManager`) and a
   journal feature (`Journal*` — entries, media, calendar view, location,
-  Supabase sync). It has since grown an **Auto Scheduler**, a second
-  distinct feature area for scheduling one-off/recurring outbound actions:
+  Supabase sync). Each `JournalEntry` carries an editable `entryDate`
+  (independent of `createdAt`), settable via a date picker in
+  `JournalEditActivity`, so a past or future day can be journaled for; the
+  Journal calendar (`JournalCalendarActivity`) filters by `entryDate`.
+  Photo/video/audio attachments sync across the signed-in user's devices via
+  a private Supabase Storage bucket (`journal-media`, RLS-scoped per user
+  folder — see `SupabaseClient.uploadStorageObject`/`downloadStorageObject`
+  and `JournalSyncManager.syncMedia`), since the on-device AES encryption
+  key (`JournalMediaStore`, Android Keystore-backed) is device-bound and
+  can't travel between devices on its own. It has since grown an **Auto
+  Scheduler**, a second distinct feature area for scheduling one-off/
+  recurring outbound actions:
   - **`AutoTask`** (+ `AutoTaskStore`, `AutoTaskAdapter`, `AutoSchedulerActivity`,
     `EditAutoTaskActivity`) — a task list (Pending/Done/Failed tabs) that can
     schedule SMS, WhatsApp, Telegram, Email (modeled only), Reminder, Call, or
@@ -273,6 +283,27 @@ common library:
     write-up of that bind bug, a list of theories that were wrong and why,
     and a "Which build are you running?" section explaining a class of
     failure that repeatedly looked like a protocol bug and wasn't.
+
+  - **Itinerary Planner** (`ItineraryActivity`, `ItineraryCalendarActivity`,
+    `EditItineraryTripActivity`, `EditItineraryStopActivity`) — a fourth
+    feature area, one menu item ("Itinerary Planner") off `MainActivity`.
+    `ItineraryTrip` (name + date range) and `ItineraryStop` (title, optional
+    time, location, notes, `tripId` FK) each get their own JSON-file store
+    (`ItineraryTripStore`/`ItineraryStopStore`, same atomic-write pattern as
+    `ReminderStore`). The trip list (`ItineraryActivity`) shows every trip,
+    upcoming first (soonest start date) then past (most recent first); each
+    trip opens a day-by-day calendar (`ItineraryCalendarActivity`, mirroring
+    `JournalCalendarActivity`'s `CalendarView` pattern, clamped to the
+    trip's own date range and opening on the trip's start date rather than
+    today). Stops are a visual plan only — no alarm/notification
+    integration, unlike `Reminder`. Sync reuses the Auto Scheduler's
+    generic plumbing (`ItinerarySyncManager` → `RowSyncEngine.sync(...)`
+    against the shared `auto_scheduler_rows` table, kinds `itinerary_trip`/
+    `itinerary_stop`) rather than a dedicated table. `ItineraryWidgetProvider`
+    is a home-screen widget showing the single next upcoming stop across
+    every trip, refreshed by an explicit `refreshAll()` call after any
+    local write (there's no background poller — the data is a fast local
+    JSON read, not a network fetch like the Claude-usage widget).
 
   Two things worth knowing when touching this app: **versioning** —
   `versionCode` derives from `GITHUB_RUN_NUMBER` (always increasing on every

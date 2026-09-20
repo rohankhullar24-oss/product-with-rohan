@@ -2,4 +2,9 @@
 <resources>
     <color name="primary">#4F5B92</color>
     <color name="ic_launcher_background">#4F5B92</color>
+
+    <color name="itinerary_widget_bg">#FFFFFF</color>
+    <color name="itinerary_widget_text">#1A1A1A</color>
+    <color name="itinerary_widget_text_dim">#6B6B6B</color>
+    <color name="itinerary_widget_accent">#4F5B92</color>
 </resources>

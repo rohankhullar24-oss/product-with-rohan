@@ -162,6 +162,76 @@ object SupabaseClient {
         if (code !in 200..299) throw IOException("Push failed ($code): $resp")
     }
 
+    /**
+     * Uploads raw bytes to a private Storage bucket at `{userId}/{path}` (RLS on
+     * `storage.objects` scopes each user to their own folder — see the
+     * `journal_media_owner_*` policies). Used by [JournalMediaStore] so a
+     * journal photo/video/audio attachment syncs across the signed-in user's
+     * devices, unlike the AES-encrypted local copy (device-Keystore-bound,
+     * so it can't be decrypted on another device anyway).
+     */
+    fun uploadStorageObject(context: Context, bucket: String, path: String, bytes: ByteArray, contentType: String) {
+        val userId = userId(context) ?: throw IOException("Not signed in")
+        val token = accessToken(context)
+        val encodedPath = path.split("/").joinToString("/") { java.net.URLEncoder.encode(it, "UTF-8") }
+        val conn = URL("$SUPABASE_URL/storage/v1/object/$bucket/$userId/$encodedPath").openConnection() as HttpURLConnection
+        try {
+            conn.requestMethod = "POST"
+            conn.connectTimeout = 20_000
+            conn.readTimeout = 30_000
+            conn.setRequestProperty("apikey", ANON_KEY)
+            conn.setRequestProperty("Authorization", "Bearer $token")
+            conn.setRequestProperty("Content-Type", contentType)
+            conn.setRequestProperty("x-upsert", "true")
+            conn.doOutput = true
+            conn.outputStream.use { it.write(bytes) }
+            val code = conn.responseCode
+            if (code !in 200..299) {
+                val text = conn.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
+                throw IOException("Upload failed ($code): $text")
+            }
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    /** Downloads raw bytes from the signed-in user's own folder in a private Storage bucket, or null if missing. */
+    fun downloadStorageObject(context: Context, bucket: String, path: String): ByteArray? {
+        val userId = userId(context) ?: return null
+        val token = accessToken(context)
+        val encodedPath = path.split("/").joinToString("/") { java.net.URLEncoder.encode(it, "UTF-8") }
+        val conn = URL("$SUPABASE_URL/storage/v1/object/$bucket/$userId/$encodedPath").openConnection() as HttpURLConnection
+        try {
+            conn.requestMethod = "GET"
+            conn.connectTimeout = 20_000
+            conn.readTimeout = 30_000
+            conn.setRequestProperty("apikey", ANON_KEY)
+            conn.setRequestProperty("Authorization", "Bearer $token")
+            val code = conn.responseCode
+            if (code !in 200..299) return null
+            return conn.inputStream.use { it.readBytes() }
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    fun deleteStorageObject(context: Context, bucket: String, path: String) {
+        val userId = userId(context) ?: return
+        val token = accessToken(context)
+        val encodedPath = path.split("/").joinToString("/") { java.net.URLEncoder.encode(it, "UTF-8") }
+        val conn = URL("$SUPABASE_URL/storage/v1/object/$bucket/$userId/$encodedPath").openConnection() as HttpURLConnection
+        try {
+            conn.requestMethod = "DELETE"
+            conn.connectTimeout = 15_000
+            conn.readTimeout = 20_000
+            conn.setRequestProperty("apikey", ANON_KEY)
+            conn.setRequestProperty("Authorization", "Bearer $token")
+            conn.responseCode
+        } finally {
+            conn.disconnect()
+        }
+    }
+
     private fun request(
         method: String,
         url: String,

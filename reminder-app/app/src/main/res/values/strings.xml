@@ -78,12 +78,47 @@
 
     <string name="notification_sound">Notification sound</string>
 
+    <string name="title_itinerary">Itinerary Planner</string>
+    <string name="itinerary_empty">No trips yet.\nTap + to plan one.</string>
+    <string name="itinerary_add_trip">Add trip</string>
+    <string name="itinerary_untitled_trip">Untitled trip</string>
+    <string name="itinerary_no_stops_yet">No stops yet</string>
+    <plurals name="itinerary_stop_count">
+        <item quantity="one">%1$d stop planned</item>
+        <item quantity="other">%1$d stops planned</item>
+    </plurals>
+    <string name="itinerary_trip_title_new">New trip</string>
+    <string name="itinerary_trip_title_edit">Edit trip</string>
+    <string name="itinerary_label_trip_name">Trip name</string>
+    <string name="itinerary_label_dates">Dates</string>
+    <string name="itinerary_label_trip_notes">Notes (optional)</string>
+    <string name="itinerary_error_end_before_start">End date can\'t be before the start date</string>
+    <string name="itinerary_delete_trip">Delete trip</string>
+    <string name="itinerary_delete_trip_title">Delete trip?</string>
+    <string name="itinerary_delete_trip_message">This trip and all of its stops will be removed.</string>
+    <string name="itinerary_calendar_empty">No stops on this day</string>
+    <string name="itinerary_add_stop">Add stop</string>
+    <string name="itinerary_stop_title_new">New stop</string>
+    <string name="itinerary_stop_title_edit">Edit stop</string>
+    <string name="itinerary_label_stop_title">Title</string>
+    <string name="itinerary_label_when">When</string>
+    <string name="itinerary_no_time">No time</string>
+    <string name="itinerary_clear_time">Clear time</string>
+    <string name="itinerary_label_location">Location (optional)</string>
+    <string name="itinerary_label_stop_notes">Notes (optional)</string>
+    <string name="itinerary_delete_stop">Delete stop</string>
+    <string name="itinerary_delete_stop_title">Delete stop?</string>
+    <string name="itinerary_delete_stop_message">This stop will be removed.</string>
+    <string name="itinerary_widget_description">Shows your next planned stop</string>
+    <string name="itinerary_widget_empty">No upcoming stops — tap to plan a trip</string>
+
     <string name="title_journal">Journal</string>
     <string name="empty_journal">No journal entries yet.\nTap + to write your first thought.</string>
     <string name="add_journal_entry">Add journal entry</string>
     <string name="title_new_journal">New entry</string>
     <string name="title_edit_journal">Edit entry</string>
     <string name="hint_journal_text">What\'s on your mind?</string>
+    <string name="journal_label_entry_date">Entry date</string>
     <string name="delete_journal_entry">Delete entry</string>
     <string name="delete_journal_title">Delete entry?</string>
     <string name="delete_journal_message">This journal entry will be removed from this device and, if signed in, from the cloud.</string>

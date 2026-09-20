@@ -13,6 +13,9 @@
         android:id="@+id/action_auto_scheduler"
         android:title="@string/title_auto_scheduler" />
     <item
+        android:id="@+id/action_itinerary"
+        android:title="@string/title_itinerary" />
+    <item
         android:id="@+id/action_watch_sync"
         android:title="@string/title_watch_sync" />
     <item

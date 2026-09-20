@@ -142,6 +142,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, AutoSchedulerActivity::class.java))
             true
         }
+        R.id.action_itinerary -> {
+            startActivity(Intent(this, ItineraryActivity::class.java))
+            true
+        }
         R.id.action_watch_sync -> {
             startActivity(Intent(this, WatchSyncActivity::class.java))
             true

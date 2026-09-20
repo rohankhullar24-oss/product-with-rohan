@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useScrollAnimation } from "@/lib/use-scroll-animation";
 import { projects } from "@/lib/projects";
 import ProjectGrid from "./ProjectGrid";
@@ -30,16 +29,14 @@ export default function Projects() {
           A mix of product case studies from my work and personal side projects.
         </p>
 
-        <ProjectGrid projects={featuredProjects} />
-
-        <div className="mt-12 text-center">
-          <Link
-            href="/projects/all"
-            className="inline-flex items-center rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-accent dark:bg-slate-700 dark:hover:bg-accent"
-          >
-            View all {projects.length} projects →
-          </Link>
-        </div>
+        <ProjectGrid
+          projects={featuredProjects}
+          viewAll={{
+            href: "/projects/all",
+            tagline:
+              "More product case studies, side builds, and experiments — filterable by type.",
+          }}
+        />
       </div>
     </section>
   );

@@ -1,9 +1,21 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import type { Project } from "@/lib/projects";
 
-export default function ProjectGrid({ projects }: { projects: Project[] }) {
+type ViewAllCard = {
+  href: string;
+  tagline: string;
+};
+
+export default function ProjectGrid({
+  projects,
+  viewAll,
+}: {
+  projects: Project[];
+  viewAll?: ViewAllCard;
+}) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
@@ -102,6 +114,26 @@ export default function ProjectGrid({ projects }: { projects: Project[] }) {
             )}
           </div>
         ))}
+
+        {viewAll && (
+          <Link
+            href={viewAll.href}
+            className="group flex flex-col rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 transition-all duration-300 hover:shadow-xl hover:border-accent dark:hover:border-accent hover:-translate-y-2 transform"
+          >
+            <span className="rounded-full bg-accent-light dark:bg-accent/20 px-3 py-1 text-xs font-semibold text-navy dark:text-accent w-fit">
+              More
+            </span>
+            <h4 className="mt-4 text-lg font-bold text-navy dark:text-white">
+              View All Projects
+            </h4>
+            <p className="mt-2 text-sm text-slate dark:text-slate-400">
+              {viewAll.tagline}
+            </p>
+            <span className="mt-4 inline-flex items-center text-sm font-semibold text-accent group-hover:underline">
+              Browse all projects →
+            </span>
+          </Link>
+        )}
       </div>
 
       {filteredProjects.length === 0 && (

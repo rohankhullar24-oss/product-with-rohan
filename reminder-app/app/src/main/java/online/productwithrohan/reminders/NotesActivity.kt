@@ -23,7 +23,7 @@ class NotesActivity : AppCompatActivity() {
     private lateinit var adapter: NoteAdapter
     private lateinit var emptyView: TextView
     private var showArchived = false
-    private var query: String = ""
+    private var searchQuery: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,7 +62,7 @@ class NotesActivity : AppCompatActivity() {
             setOnQueryTextListener(object : SearchView.OnQueryTextListener {
                 override fun onQueryTextSubmit(text: String?): Boolean = false
                 override fun onQueryTextChange(text: String?): Boolean {
-                    query = text.orEmpty()
+                    searchQuery = text.orEmpty()
                     refresh()
                     return true
                 }
@@ -85,8 +85,8 @@ class NotesActivity : AppCompatActivity() {
 
     private fun refresh() {
         var notes = NoteStore.getAll(this).filter { it.archived == showArchived }
-        if (query.isNotBlank()) {
-            val q = query.trim()
+        if (searchQuery.isNotBlank()) {
+            val q = searchQuery.trim()
             notes = notes.filter { note ->
                 note.title.contains(q, ignoreCase = true) ||
                     note.body.contains(q, ignoreCase = true) ||
@@ -98,7 +98,7 @@ class NotesActivity : AppCompatActivity() {
         emptyView.visibility = if (notes.isEmpty()) View.VISIBLE else View.GONE
         emptyView.text = getString(
             when {
-                query.isNotBlank() -> R.string.notes_empty_search
+                searchQuery.isNotBlank() -> R.string.notes_empty_search
                 showArchived -> R.string.notes_empty_archive
                 else -> R.string.notes_empty
             }

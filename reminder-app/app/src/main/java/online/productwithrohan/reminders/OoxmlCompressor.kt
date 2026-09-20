@@ -12,8 +12,9 @@ import java.util.zip.ZipOutputStream
 /**
  * Generic OOXML (docx/pptx/xlsx) compressor for Phase 4: walks every zip
  * entry of a source file and copies it into a fresh zip at maximum DEFLATE
- * compression, recompressing embedded JPEGs (under */media/) at reduced
- * quality first. It works directly on the raw zip container — unlike
+ * compression, recompressing embedded JPEGs (under a "media" folder, e.g.
+ * word/media or ppt/media) at reduced quality first. It works directly on
+ * the raw zip container — unlike
  * XlsxEngine/DocxEngine/PptxEngine it never parses the document XML, so it's
  * lossless for everything those hand-rolled engines don't understand
  * (styles, formulas, charts, layout).

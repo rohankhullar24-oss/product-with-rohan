@@ -53,23 +53,31 @@ except this hasn't even cleared a CI build yet.
 
 ## Not done yet
 
-1. **`eng.traineddata` is missing.** OCR needs Tesseract's English trained-data
-   file at `reminder-app/app/src/main/assets/tessdata/eng.traineddata`. It's a
-   ~15 MB binary and wasn't fetched into the repo — download it from
-   `https://github.com/tesseract-ocr/tessdata_fast/raw/main/eng.traineddata`
-   and drop it in that folder (a README next to where it belongs explains this
-   too). Without it, `OcrScanActivity` fails gracefully with a clear
-   "language data missing" message instead of crashing — this was tested by
-   reading the code path, not by running it.
-2. **No confirmed real build yet.** This was pushed to `master`, so
-   `reminder-app.yml` CI should have already picked it up and built (or
-   failed) a debug APK — check the Actions run for this push before assuming
-   anything else. If CI hasn't run or its result isn't known, that's the
-   first thing to check in a new session, ahead of anything else on this
-   list. Every PdfBox-Android/Tesseract4Android API used was checked against
-   the actual upstream source on GitHub (see the verified-API list below)
-   rather than assumed from memory, but that's still not a substitute for a
-   real compile.
+1. ~~`eng.traineddata` is missing.~~ **Fixed**: `reminder-app/app/build.gradle.kts`
+   now has a `downloadTessdata` task wired into `preBuild` that fetches it
+   from `raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata`
+   automatically (no-op once the file exists) — so a normal
+   `./gradlew :reminder-app:assembleDebug` or CI run needs no manual step,
+   and the repo still doesn't vendor the binary. Verified the URL resolves
+   and returns a real trained-data file (4 MB, starts with the expected
+   Tesseract version-header bytes) by curling it directly, since this
+   sandbox can't resolve the Android Gradle Plugin from Google's Maven (see
+   point 2) and so can't run the Gradle task itself end-to-end. Manual
+   fallback instructions are still in `assets/tessdata/README.md` for
+   offline builds.
+2. **No confirmed real build yet.** This sandbox has no Android SDK and can't
+   resolve `com.android.application` from Google's Maven repo (confirmed
+   again this session — `./gradlew :reminder-app:downloadTessdata` fails at
+   plugin resolution before reaching any app code), so a local build still
+   isn't possible here. This session's changes went up as a PR from
+   `master-iny4en` (not a direct push to `master`), so `reminder-app.yml`
+   CI runs on the PR itself via its `pull_request` trigger — check that PR's
+   Actions run before assuming anything else. If CI hasn't run or its result
+   isn't known, that's the first thing to check in a new session, ahead of
+   anything else on this list. Every PdfBox-Android/Tesseract4Android API
+   used was checked against the actual upstream source on GitHub (see the
+   verified-API list below) rather than assumed from memory, but that's
+   still not a substitute for a real compile.
 3. **No device/emulator test at all.** Once it compiles, install it and walk
    through: open a real PDF from Drive/Downloads, merge two PDFs, rotate/
    delete/reorder pages, compress and confirm the file shrinks, create a new
@@ -186,9 +194,13 @@ still apply:
 
 ## Next-session checklist
 
-1. Download `eng.traineddata` into `assets/tessdata/` (see above).
-2. Run a real Gradle build and fix compile errors.
+1. ~~Download `eng.traineddata` into `assets/tessdata/`.~~ Done — it's now
+   fetched automatically by the `downloadTessdata` Gradle task (see above).
+2. Check the CI run on this session's PR (branch `master-iny4en`) and fix any
+   compile errors it surfaces — still the first real build this feature has
+   cleared, if it passes.
 3. Install on a device/emulator and walk the Phase 1 verification steps.
 4. Re-scope Phase 2 with the user before starting it.
-5. Separately, resolve the pending `origin/master` merge noted above — it's
-   unrelated to this feature but was sitting mid-merge in the same tree.
+5. The `origin/master` merge noted in earlier versions of this doc is already
+   resolved — `git log` shows `e1ac1a8` cleanly in this branch's history and
+   `git status` is clean. Nothing left to do there.

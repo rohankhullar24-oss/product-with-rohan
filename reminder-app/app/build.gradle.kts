@@ -35,6 +35,26 @@ android {
     }
 }
 
+// Works Enabler: fetch Tesseract's English trained-data file at build time
+// instead of committing a ~15 MB binary to the repo. See
+// src/main/assets/tessdata/README.md for why and for the manual fallback.
+val tessdataFile = layout.projectDirectory.file("src/main/assets/tessdata/eng.traineddata").asFile
+val downloadTessdata by tasks.registering {
+    outputs.file(tessdataFile)
+    onlyIf { !tessdataFile.exists() }
+    doLast {
+        tessdataFile.parentFile.mkdirs()
+        val url = java.net.URI("https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata").toURL()
+        url.openStream().use { input ->
+            tessdataFile.outputStream().use { output -> input.copyTo(output) }
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn(downloadTessdata)
+}
+
 dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
 

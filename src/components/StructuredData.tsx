@@ -7,6 +7,7 @@ export default function StructuredData() {
     sameAs: [
       "https://www.linkedin.com/in/rohan-khullar",
       "https://twitter.com/rohankhullar24",
+      "https://github.com/rohankhullar24-oss",
     ],
     jobTitle: "Product Manager",
     worksFor: {

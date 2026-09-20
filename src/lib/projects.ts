@@ -57,7 +57,7 @@ export const projects: Project[] = [
     featured: true,
   },
   {
-    title: "Aadhaar Onboarding Flow Enhancement",
+    title: "Individual & Sole Proprietorship Shopkeeper Onboarding Journey",
     description:
       "Reworked the onboarding flow end-to-end: face-auth, shop-photo fixes, UI cleanup, pre-filled business details, and API-based document verification to cut TAT. Raised conversion from 50% to 73%.",
     fullDescription:

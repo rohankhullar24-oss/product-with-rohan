@@ -342,6 +342,32 @@ common library:
     local write (there's no background poller — the data is a fast local
     JSON read, not a network fetch like the Claude-usage widget).
 
+  - **Notes** (`NotesActivity`, `NoteEditActivity`, `DrawingActivity`) — a
+    fifth feature area, one menu item ("Notes") off `MainActivity`, built as
+    a Google-Keep-style notes section: title + free text *or* a checklist
+    (`Note`/`ChecklistItem`), an optional color, pin/archive state, and
+    image/drawing/audio attachments. `NoteStore` is the same JSON-file
+    atomic-write pattern as `ReminderStore`/`ItineraryStopStore`; sync reuses
+    Auto Scheduler's generic plumbing (`NotesSyncManager` →
+    `RowSyncEngine.sync(...)` against the shared `auto_scheduler_rows` table,
+    kind `note`) rather than a dedicated table, same as Itinerary. There is
+    no explicit Save action — every change commits via `onPause()`
+    (`NoteEditActivity.saveNow()`), and leaving a brand-new note completely
+    empty discards it instead of creating a blank row, matching Keep's own
+    autosave behavior. Image/drawing/audio attachments are AES-encrypted at
+    rest (`NoteMediaStore`, same Keystore-backed pattern as
+    `JournalMediaStore`) and synced across the signed-in user's devices via a
+    private Storage bucket, `notes-media` — mirroring `journal-media`'s
+    bucket + per-user-folder RLS policies (`notes_media_owner_*`), created by
+    migration `notes_media_storage_bucket`. `DrawingActivity` is a small
+    freehand-sketch `Canvas`/`Path` view (`DrawingView`) whose "Done" hands a
+    saved PNG back to the note editor as an image attachment. **CI-compiled
+    but not hardware-verified**: this sandbox has no Android SDK reachable
+    through its network policy (Google's Maven repo is unavailable), so this
+    feature area has only been checked by careful manual review, never by an
+    actual Gradle build or a device — treat it the same as any change here
+    that hasn't cleared `reminder-app.yml`'s CI build yet.
+
   Two things worth knowing when touching this app: **versioning** —
   `versionCode` derives from `GITHUB_RUN_NUMBER` (always increasing on every
   CI build) rather than being hand-bumped, and `versionName` is bumped

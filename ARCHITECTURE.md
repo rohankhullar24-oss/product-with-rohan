@@ -23,15 +23,21 @@ src/
 │   ├── productshot/                 a distinct sub-product with its own login/session flow
 │   │                                 via src/lib/auth + src/lib/supabase (see subroutes below)
 │   ├── projects/                    small interactive demos embedded as pages
-│   │                                 (chladni-plate, decision-dice, stock-analyzer)
+│   │                                 (chladni-plate, decision-dice, stock-analyzer),
+│   │                                 plus all/ — lists every project (src/lib/projects.ts),
+│   │                                 linked from the homepage's 8-item featured subset
 │   ├── will-you-go-on-a-date-with-me/  one-off novelty page (src/lib/date-invite.ts)
 │   ├── privacy, terms, refund-policy, unsubscribe, sitemap.ts
 │   └── globals.css
 ├── components/                      shared/page-level React components (Navbar, Hero,
 │                                     About, Experience, Projects, Skills, Contact, Footer,
 │                                     BottomNav, plus feature-specific ones like
-│                                     HandbookCheckout, ShotReveal, ChladniPlate, DecisionDice)
+│                                     HandbookCheckout, ShotReveal, ChladniPlate, DecisionDice,
+│                                     ProjectGrid — the card grid + tag filter shared by
+│                                     Projects.tsx (homepage) and app/projects/all/page.tsx)
 ├── lib/
+│   ├── projects.ts                  the Project type + full project list, with a `featured`
+│   │                                 flag marking the homepage's 8-item subset
 │   ├── anthropic.ts                 Claude API client wrapper (used by resume-builder, news)
 │   ├── supabase/                    client.ts / server.ts / admin.ts / middleware.ts / public.ts
 │   │                                 — Supabase clients scoped by context (browser, RSC, admin, edge)

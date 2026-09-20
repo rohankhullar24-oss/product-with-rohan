@@ -1,9 +1,12 @@
 # Works Enabler — implementation status (handoff)
 
-Written 2026-09-20, at the end of the session that built Phase 1. If you're
-picking this up in a new chat, read this whole file before touching the code
-— it has everything the previous session verified, so you don't have to
-re-derive it.
+Written 2026-09-20, at the end of the session that built Phase 1, and updated
+same day once everything was actually committed and pushed (commit `16b04a3`,
+on top of the earlier WIP scaffolding commit `0f9d0c1`). If you're picking
+this up in a new chat: **pull first** — everything described below is on
+`origin/master` already, not sitting uncommitted in some other session's
+working copy. Read this whole file before touching the code, so you don't
+re-derive what's already verified.
 
 ## What this feature is
 
@@ -58,13 +61,15 @@ except this hasn't even cleared a CI build yet.
    too). Without it, `OcrScanActivity` fails gracefully with a clear
    "language data missing" message instead of crashing — this was tested by
    reading the code path, not by running it.
-2. **No real build has ever been run against this code.** First thing to do in
-   a new session: run a real Gradle build (locally with an Android SDK, or
-   push and let `reminder-app.yml` CI build it) and fix whatever compile
-   errors show up. Every PdfBox-Android/Tesseract4Android API used was checked
-   against the actual upstream source on GitHub (see the verified-API list
-   below) rather than assumed from memory, but that's still not a substitute
-   for a real compile.
+2. **No confirmed real build yet.** This was pushed to `master`, so
+   `reminder-app.yml` CI should have already picked it up and built (or
+   failed) a debug APK — check the Actions run for this push before assuming
+   anything else. If CI hasn't run or its result isn't known, that's the
+   first thing to check in a new session, ahead of anything else on this
+   list. Every PdfBox-Android/Tesseract4Android API used was checked against
+   the actual upstream source on GitHub (see the verified-API list below)
+   rather than assumed from memory, but that's still not a substitute for a
+   real compile.
 3. **No device/emulator test at all.** Once it compiles, install it and walk
    through: open a real PDF from Drive/Downloads, merge two PDFs, rotate/
    delete/reorder pages, compress and confirm the file shrinks, create a new
@@ -74,22 +79,26 @@ except this hasn't even cleared a CI build yet.
    full plan below. Re-confirm scope before starting Phase 2, once Phase 1's
    actual engineering cost is known from a real build/device pass.
 
-## Git state as of this handoff
+## Git state
 
-- The working tree has an **in-progress merge from `origin/master`** (it adds
-  an unrelated "Notes" feature) — `git status` shows "All conflicts fixed but
-  you are still merging," meaning it was already resolved (in another
-  session, not this one) but not yet committed. This session did not commit
-  or otherwise touch that merge.
-- On top of that, this session's own changes are **uncommitted**: new files
-  (`OcrScanActivity.kt`, `PdfToolsActivity.kt`, `PdfPageAdapter.kt`,
-  `activity_ocr_scan.xml`, `activity_pdf_tools.xml`, `item_pdf_page.xml`,
-  `activity_works_enabler.xml`, `WorksEnablerActivity.kt`,
-  `assets/tessdata/README.md`) and modifications (`build.gradle.kts`,
-  `settings.gradle.kts`, `AndroidManifest.xml`, `strings.xml`,
-  `main_menu.xml`, `MainActivity.kt`, `journal_file_paths.xml`,
-  `ARCHITECTURE.md`). Nothing has been committed — decide how you want to
-  split the merge commit from this feature's commit(s).
+Everything is committed and pushed to `origin/master`:
+
+- `0f9d0c1` — "Add Works Enabler hub screen scaffolding (WIP)": menu entry,
+  hub Activity/layout, manifest entries, Gradle deps, most string resources.
+  Explicitly noted in its own message that it wouldn't compile yet.
+- `e1ac1a8` — merge of an unrelated `origin/master` update (a new "Notes"
+  feature) into this branch. Already resolved before it landed; nothing in
+  Works Enabler conflicted with it.
+- `16b04a3` — "Complete Works Enabler Phase 1: PDF tools + OCR": adds
+  `PdfToolsActivity.kt`, `OcrScanActivity.kt`, `PdfPageAdapter.kt`, their
+  three layouts, the `tessdata/README.md`, this status doc, and the
+  `ARCHITECTURE.md` entry. This is the commit that makes the hub's links
+  actually resolve.
+
+If a new session reports these files "don't exist" or "were never
+committed," that session is almost certainly working from a stale clone or
+one that hasn't fetched `origin/master` yet — check `git log --oneline -5`
+and `git fetch && git status` before concluding anything is missing.
 
 ## Verified PdfBox-Android APIs
 

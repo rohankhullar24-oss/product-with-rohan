@@ -81,7 +81,9 @@
       "Bash(mkdir -p \"/c/Users/DELL/AppData/Local/Temp/claude/C--Users-DELL-OneDrive-Desktop-MySite/eac63ff1-f340-4219-b88f-3c7b402d7d79/scratchpad\")",
       "Read(//c/Users/DELL/.claude/scheduled-tasks/**)",
       "Bash(node check.mjs news --file \"C:\\\\Users\\\\DELL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-DELL-OneDrive-Desktop-MySite\\\\aa063a4f-e69f-4fff-8177-6036ce8168e1\\\\scratchpad\\\\items.json\" --existing \"C:\\\\Users\\\\DELL\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-DELL-OneDrive-Desktop-MySite\\\\aa063a4f-e69f-4fff-8177-6036ce8168e1\\\\scratchpad\\\\existing.json\" --today 2026-09-08)",
-      "Bash(node -e \"console.log\\(1\\)\")"
+      "Bash(node -e \"console.log\\(1\\)\")",
+      "Bash(cd \"C:\\\\Users\\\\DELL\\\\.claude\\\\scheduled-tasks\\\\product-shots-daily-content\" && ls && echo --- && cat next-run-hints.md 2>/dev/null && echo --- && cat proposals.md 2>/dev/null | head -50)",
+      "Bash(git ls-remote *)"
     ]
   }
 }

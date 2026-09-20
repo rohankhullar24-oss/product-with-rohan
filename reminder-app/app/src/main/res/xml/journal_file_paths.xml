@@ -3,4 +3,8 @@
     <!-- Camera photo/video captures land here before being read, encrypted
          into journal_media/, and deleted — see JournalMediaStore. -->
     <cache-path name="journal_camera" path="journal_camera/" />
+
+    <!-- Works Enabler / OCR: a photo taken to scan a document lands here
+         before Tesseract reads it — see OcrScanActivity. -->
+    <cache-path name="works_enabler_camera" path="works_enabler_camera/" />
 </paths>

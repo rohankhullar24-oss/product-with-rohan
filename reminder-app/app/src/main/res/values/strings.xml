@@ -230,6 +230,48 @@
     <string name="zip_password_title">Enter password</string>
     <string name="zip_password_hint">Zip password</string>
 
+    <!-- Works Enabler -->
+    <string name="title_works_enabler">Works Enabler</string>
+    <string name="works_enabler_explainer">Open-source document tools. Everything runs on this phone — nothing is uploaded anywhere.</string>
+    <string name="works_enabler_pdf_title">PDF</string>
+    <string name="works_enabler_pdf_subtitle">View, merge, rotate, reorder, delete pages, compress, create from photos</string>
+    <string name="works_enabler_ocr_title">Scan / OCR</string>
+    <string name="works_enabler_ocr_subtitle">Turn a photo or scanned page into editable, selectable text</string>
+    <string name="works_enabler_coming_soon_title">Word, PowerPoint, Spreadsheet</string>
+    <string name="works_enabler_coming_soon_subtitle">Coming in a later update</string>
+
+    <string name="pdf_open">Open PDF</string>
+    <string name="pdf_new_from_photos">New PDF from photos</string>
+    <string name="pdf_merge">Merge two PDFs</string>
+    <string name="pdf_no_file_chosen">No PDF open</string>
+    <string name="pdf_page_count">%1$d page(s)</string>
+    <string name="pdf_save_as">Save as…</string>
+    <string name="pdf_compress">Compress</string>
+    <string name="pdf_compressing">Compressing…</string>
+    <string name="pdf_compress_done">Compressed: %1$s → %2$s</string>
+    <string name="pdf_rotate_page">Rotate</string>
+    <string name="pdf_delete_page">Delete page</string>
+    <string name="pdf_move_up">Move up</string>
+    <string name="pdf_move_down">Move down</string>
+    <string name="pdf_saved">Saved</string>
+    <string name="pdf_save_failed">Couldn\'t save: %1$s</string>
+    <string name="pdf_open_failed">Couldn\'t open that PDF: %1$s</string>
+    <string name="pdf_merge_pick_first">Pick the first PDF</string>
+    <string name="pdf_merge_pick_second">Pick the second PDF</string>
+    <string name="pdf_no_pages_left">All pages removed — nothing to save.</string>
+    <string name="pdf_loading">Loading…</string>
+
+    <string name="ocr_explainer">Take a photo of a printed page, or pick an existing image, to recognize its text on this device.</string>
+    <string name="ocr_take_photo">Take photo</string>
+    <string name="ocr_pick_image">Pick image</string>
+    <string name="ocr_recognizing">Recognizing text…</string>
+    <string name="ocr_result_hint">Recognized text will appear here — edit it if needed</string>
+    <string name="ocr_save_text">Save as .txt</string>
+    <string name="ocr_saved">Text saved</string>
+    <string name="ocr_save_failed">Couldn\'t save that file</string>
+    <string name="ocr_no_text_found">No text recognized in that image</string>
+    <string name="ocr_language_missing">OCR language data is missing. Place eng.traineddata under this app\'s assets/tessdata and rebuild.</string>
+
     <!-- Watch Sync -->
     <string name="title_watch_sync">Watch Sync</string>
     <string name="watch_sync_start_scan">Scan for watches</string>

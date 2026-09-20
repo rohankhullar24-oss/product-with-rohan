@@ -194,6 +194,23 @@
             android:exported="false"
             android:parentActivityName=".MainActivity" />
 
+        <!-- Works Enabler: open-source PDF/OCR (and, in later phases, Word/
+             PowerPoint/Spreadsheet) tools, hung off one hub screen. -->
+        <activity
+            android:name=".WorksEnablerActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".PdfToolsActivity"
+            android:exported="false"
+            android:parentActivityName=".WorksEnablerActivity" />
+
+        <activity
+            android:name=".OcrScanActivity"
+            android:exported="false"
+            android:parentActivityName=".WorksEnablerActivity" />
+
         <!-- Auto Scheduler: schedules a one-off SMS/call/reminder for a future time. -->
         <activity
             android:name=".AutoSchedulerActivity"

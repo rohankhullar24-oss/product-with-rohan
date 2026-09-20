@@ -49,8 +49,18 @@ dependencies {
     // library is needed for both plain and password-protected (ZipCrypto and
     // AES) archives. DocumentFile drives writing the extracted files into a
     // user-picked SAF destination tree (scoped storage; no storage permission).
+    // Also reused by Works Enabler for docx/pptx/xlsx, which are zip containers.
     implementation("net.lingala.zip4j:zip4j:2.11.5")
     implementation("androidx.documentfile:documentfile:1.0.1")
+
+    // Works Enabler: PDF read/write/merge/compress. Apache-2.0 Android port of
+    // Apache PDFBox — needs PDFBoxResourceLoader.init() before first use.
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+
+    // Works Enabler: on-device OCR. Apache-2.0 wrapper around the open-source
+    // Tesseract engine (kept open source deliberately, instead of ML Kit).
+    // Published on JitPack, not Maven Central — see settings.gradle.kts.
+    implementation("cz.adaptech.tesseract4android:tesseract4android:4.9.0")
 
     // The Claude usage layer, plus the AndroidX/Material dependencies it
     // exposes as api() — core-ktx, appcompat, material, work, security-crypto.

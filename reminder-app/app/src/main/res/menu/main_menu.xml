@@ -22,6 +22,9 @@
         android:id="@+id/action_zip_extractor"
         android:title="@string/title_zip_extractor" />
     <item
+        android:id="@+id/action_works_enabler"
+        android:title="@string/title_works_enabler" />
+    <item
         android:id="@+id/action_sound"
         android:title="@string/notification_sound" />
     <item

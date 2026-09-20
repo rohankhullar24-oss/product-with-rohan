@@ -154,6 +154,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, ZipExtractorActivity::class.java))
             true
         }
+        R.id.action_works_enabler -> {
+            startActivity(Intent(this, WorksEnablerActivity::class.java))
+            true
+        }
         R.id.action_sound -> {
             NotificationHelper.ensureChannel(this)
             startActivity(

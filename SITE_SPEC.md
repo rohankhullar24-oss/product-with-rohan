@@ -70,6 +70,7 @@
 - Email: rohankhullar24@gmail.com
 - Phone: +91-8982305748
 - LinkedIn: https://www.linkedin.com/in/rohankhullar/
+- GitHub: https://github.com/rohankhullar24-oss
 - Location: Gurugram, India
 - Simple contact section (no functional form for now — just contact details + maybe mailto link)
 

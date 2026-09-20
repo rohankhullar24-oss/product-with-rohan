@@ -145,17 +145,22 @@ for the exact narrowing and why:
 
 ## Not done yet
 
-1. **No CI confirmation yet for Phases 2–4.** Phase 1's PR #111 cleared
-   `reminder-app.yml`'s `build` check (see the "Phase 1 CI" section below),
-   but the Phase 2–4 commits on top of it have not yet had their own CI run
-   checked in this session — check the Actions run on the current branch/PR
-   before assuming any of `XlsxEngine`/`DocxEngine`/`PptxEngine`/
-   `DocumentConverter`/`OoxmlCompressor` or their Activities actually
-   compile. If CI is red, the PdfBox text-drawing APIs and the OOXML
-   writers' string-building code are the most likely places for a real
-   error (this sandbox has no Android SDK, so none of this was compiled
-   locally — see Phase 1's own `java.net.URI` shadowing bug for what that
-   kind of gap can miss).
+1. **CI confirmation for Phases 2–4 is still in progress as of this
+   writing.** First push (`0856b13`) failed immediately: `OoxmlCompressor.kt`'s
+   opening KDoc comment contained the literal text `*/media/` (describing
+   "entries under */media/"), and `*/` closes a `/** ... */` block comment
+   wherever it appears in the source, with no regard for intent — so
+   everything in the file after that point (the rest of the doc comment,
+   then all of the actual code) was parsed as top-level declarations
+   instead of comment text, producing hundreds of cascading "Expecting a
+   top level declaration" errors, all in that one file. Fixed by rewording
+   to avoid the `*/` sequence (commit `89ce3f0`) — push it back through CI
+   and check the result before assuming anything else compiles; if it's
+   still red on a different file, the PdfBox text-drawing APIs and the
+   OOXML writers' string-building code are the next most likely places for
+   a real error (this sandbox has no Android SDK, so none of this was
+   compiled locally — see Phase 1's own `java.net.URI` shadowing bug for
+   another example of what that gap can miss).
 2. **No device/emulator test at all**, for any phase. Once everything
    compiles, install it and walk through: Phase 1's PDF/OCR checklist
    (below), then for Phases 2–4 — create/open/edit/save a spreadsheet, a

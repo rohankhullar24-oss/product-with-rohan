@@ -15,7 +15,7 @@ export type Project = {
   linkLabel?: string;
   featured?: boolean;
   slug: string;
-  pm: PMNotesData;
+  pm?: PMNotesData;
 };
 
 export const projects: Project[] = [
@@ -326,12 +326,5 @@ export const projects: Project[] = [
       "This entire portfolio site was built without writing any code myself. I used Claude to design the spec, create the layout, implement styling with Tailwind, and deploy to Vercel. This demonstrates how product managers can leverage AI to ship functional products independently, from concept to production: a hands-on look at how PMs can use AI to ship product themselves.",
     tags: ["Side Project", "AI-Built"],
     slug: "portfolio-site",
-    pm: {
-      approach:
-        "Direct Claude through the entire build and let the site be the proof, not a claim. The risk here is exactly the failure mode a hiring manager would be looking for: does it actually work, or does it just look AI-generated?",
-      metric:
-        "North star: click-through from the project grid into a detail page. A visitor who reads one full case study has been sold; one who only skims the grid hasn't.",
-      status: "Live.",
-    },
   },
 ];

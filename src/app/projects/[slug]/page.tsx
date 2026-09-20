@@ -84,7 +84,7 @@ export default async function ProjectDetailPage({
           {project.fullDescription ?? project.description}
         </p>
 
-        <PMNotes {...project.pm} />
+        {project.pm && <PMNotes {...project.pm} />}
 
         {project.href && (
           <a

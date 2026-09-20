@@ -11,7 +11,6 @@ import android.view.MenuItem
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.Toolbar
 import java.io.File
 import java.io.FileOutputStream
 
@@ -25,10 +24,6 @@ class DrawingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_drawing)
         title = getString(R.string.title_drawing)
-
-        val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         drawingView = findViewById(R.id.drawing_view)
         eraserButton = findViewById(R.id.button_eraser)

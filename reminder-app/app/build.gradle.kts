@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -44,7 +46,7 @@ val downloadTessdata by tasks.registering {
     onlyIf { !tessdataFile.exists() }
     doLast {
         tessdataFile.parentFile.mkdirs()
-        val url = java.net.URI("https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata").toURL()
+        val url = URI("https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata").toURL()
         url.openStream().use { input ->
             tessdataFile.outputStream().use { output -> input.copyTo(output) }
         }

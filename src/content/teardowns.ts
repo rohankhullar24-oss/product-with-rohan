@@ -63,6 +63,16 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/duolingo-teardown-pm-lens.png",
     publishedDate: "2026-09-19",
   },
+  {
+    slug: "groww-teardown-pm-lens",
+    company: "Groww",
+    eyebrow: "Product Teardown · Fintech · September 2026",
+    headline: "Groww has twice Zerodha's users. Zerodha still makes more money.",
+    dek: "Groww overtook Zerodha to become India's largest broker by active clients, but the gap between the two companies' monetization reveals very different bets on who a retail investor actually is.",
+    image:
+      "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/groww-teardown-pm-lens.png",
+    publishedDate: "2026-09-20",
+  },
 ];
 
 export function getTeardowns(): Teardown[] {

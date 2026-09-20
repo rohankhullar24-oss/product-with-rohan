@@ -26,7 +26,10 @@ class ItineraryActivity : AppCompatActivity() {
         title = getString(R.string.title_itinerary)
 
         emptyView = findViewById(R.id.empty_view)
-        adapter = ItineraryTripAdapter { trip ->
+        adapter = ItineraryTripAdapter(
+            getString(R.string.itinerary_section_upcoming),
+            getString(R.string.itinerary_section_past),
+        ) { trip ->
             startActivity(
                 Intent(this, ItineraryCalendarActivity::class.java)
                     .putExtra(ItineraryCalendarActivity.EXTRA_TRIP_ID, trip.id)
@@ -52,13 +55,15 @@ class ItineraryActivity : AppCompatActivity() {
 
     private fun refresh() {
         val today = LocalDate.now()
-        // Upcoming/current trips soonest-first, past trips most-recent-first.
+        // Upcoming/current trips soonest-first, past trips most-recent-first,
+        // shown under separate "Upcoming"/"Past" section headers.
         val (upcoming, past) = ItineraryTripStore.getAll(this).partition { it.isUpcoming(today) }
-        val trips = upcoming.sortedBy { it.start() } + past.sortedByDescending { it.start() }
+        val upcomingSorted = upcoming.sortedBy { it.start() }
+        val pastSorted = past.sortedByDescending { it.start() }
         val stops = ItineraryStopStore.getAll(this)
         val stopCounts = stops.groupingBy { it.tripId }.eachCount()
-        adapter.submit(trips, stopCounts)
-        emptyView.visibility = if (trips.isEmpty()) View.VISIBLE else View.GONE
+        adapter.submit(upcomingSorted, pastSorted, stopCounts)
+        emptyView.visibility = if (upcomingSorted.isEmpty() && pastSorted.isEmpty()) View.VISIBLE else View.GONE
         ItineraryWidgetProvider.refreshAll(this)
     }
 }

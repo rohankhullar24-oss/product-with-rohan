@@ -321,13 +321,19 @@ common library:
     `ItineraryTrip` (name + date range) and `ItineraryStop` (title, optional
     time, location, notes, `tripId` FK) each get their own JSON-file store
     (`ItineraryTripStore`/`ItineraryStopStore`, same atomic-write pattern as
-    `ReminderStore`). The trip list (`ItineraryActivity`) shows every trip,
-    upcoming first (soonest start date) then past (most recent first); each
-    trip opens a day-by-day calendar (`ItineraryCalendarActivity`, mirroring
+    `ReminderStore`). The trip list (`ItineraryActivity`) shows every trip
+    under "Upcoming"/"Past" section headers (`ItineraryTripAdapter`'s rows
+    are a sealed `Header`/`Item`, not a flat trip list), upcoming first
+    (soonest start date) then past (most recent first); each trip opens a
+    day-by-day calendar (`ItineraryCalendarActivity`, mirroring
     `JournalCalendarActivity`'s `CalendarView` pattern, clamped to the
     trip's own date range and opening on the trip's start date rather than
-    today). Stops are a visual plan only — no alarm/notification
-    integration, unlike `Reminder`. Sync reuses the Auto Scheduler's
+    today). Renaming or deleting a trip is an overflow-menu action
+    ("Edit trip") on that calendar screen, not on the list item itself —
+    the list item's tap target is already taken by "open the calendar";
+    editing/deleting a stop is a direct tap on it there instead, same as
+    `Reminder`/`JournalEntry`. Stops are a visual plan only — no alarm/
+    notification integration, unlike `Reminder`. Sync reuses the Auto Scheduler's
     generic plumbing (`ItinerarySyncManager` → `RowSyncEngine.sync(...)`
     against the shared `auto_scheduler_rows` table, kinds `itinerary_trip`/
     `itinerary_stop`) rather than a dedicated table. `ItineraryWidgetProvider`

@@ -14,6 +14,10 @@ const pageLinks = [
   { href: "/productshot", label: "Product Shots" },
 ];
 
+const externalLinks = [
+  { href: "https://github.com/rohankhullar24-oss", label: "GitHub" },
+];
+
 export default function Navbar() {
   const [open, setOpen] = useState(false);
 
@@ -49,6 +53,18 @@ export default function Navbar() {
               </Link>
             </li>
           ))}
+          {externalLinks.map((link) => (
+            <li key={link.href}>
+              <a
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition-colors hover:text-accent"
+              >
+                {link.label}
+              </a>
+            </li>
+          ))}
         </ul>
       </nav>
 
@@ -74,6 +90,19 @@ export default function Navbar() {
               >
                 {link.label}
               </Link>
+            </li>
+          ))}
+          {externalLinks.map((link) => (
+            <li key={link.href}>
+              <a
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block py-2 transition-colors hover:text-accent"
+                onClick={() => setOpen(false)}
+              >
+                {link.label}
+              </a>
             </li>
           ))}
         </ul>

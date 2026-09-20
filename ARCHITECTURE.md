@@ -77,6 +77,31 @@ one of the context-scoped `src/lib/supabase/*` clients unless noted otherwise.
 | `bookmarks/` | user's saved items | `@/lib/supabase/client` |
 | `files/` | file management | `@/lib/supabase/client` |
 
+### `journey/` (`src/app/journey/*`)
+
+A journal + trip-itinerary web app, sharing the main Next.js app and Supabase
+project but with its **own** email-OTP login (`src/app/journey/login`,
+`src/app/journey/auth/callback`) — gated via `PROTECTED_RULES` in
+`src/lib/supabase/middleware.ts` (this fork calls the file that wires
+middleware into routing `src/proxy.ts`, not `middleware.ts` — see AGENTS.md).
+It is deliberately **not a separate data store**: it reads/writes the exact
+same rows `reminder-app`'s Android client already syncs to the same Supabase
+project, via `src/lib/journey/{journal,itinerary}.ts`, which mirror
+`JournalEntry.kt`/`ItineraryTrip.kt`/`ItineraryStop.kt`'s JSON payload shapes
+byte-for-byte:
+
+| Data | Table | Notes |
+|---|---|---|
+| Journal entries | `journal_entries` | `{id, user_id, payload, updated_at, deleted}`; upsert by default PK (`id`) |
+| Trips / itinerary stops | `auto_scheduler_rows` | shared generic table, discriminated by `kind` = `itinerary_trip` / `itinerary_stop`; upsert `onConflict: "user_id,kind,id"` |
+
+Signing in on web with the same email as the Android app pulls the same
+journal/trip history immediately — there's no separate account system to
+keep in sync. Deliberately out of scope for the web client (Android-only for
+now): photo/video/audio attachments (`journal-media` Storage bucket),
+GPS-based location capture and photo-gallery entry suggestions, and the
+calendar/widget views.
+
 ### Data & external services
 
 - **Supabase** — primary datastore, used both for the main site (content,

@@ -15,6 +15,16 @@ type Project = {
 
 const projects: Project[] = [
   {
+    title: "Journey: Journal Your Life, Plan Your Trips",
+    description:
+      "A journal and trip-itinerary planner that shares its account and data with the Reminders Android app — log an entry or plan a trip on your phone and it's there on the web too.",
+    fullDescription:
+      "Journey is the web counterpart to features already built into the Reminders Android app: free-form journal entries (with an optional place name) and trip itineraries (a trip plus a day-by-day list of stops with time, title, location and notes). It signs in with the same email-code login and reads/writes the exact same Supabase data the Android app syncs, so a journal entry or itinerary stop created on either platform shows up on the other. Built with Next.js and Supabase, directed end-to-end via Claude.",
+    tags: ["Side Project", "Journal", "Travel Tool", "AI-Built"],
+    href: "/journey",
+    linkLabel: "Open Journey →",
+  },
+  {
     title: "Product Shots: Finshots for Product Managers",
     description:
       "Daily product management practice inspired by Finshots. Get bite-sized PM questions daily, curated news (AI, corporate, hiring), and weekly articles, all designed to sharpen your product thinking.",

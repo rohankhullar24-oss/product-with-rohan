@@ -1,7 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PROTECTED_PREFIXES = ["/productshot/files"];
+const PROTECTED_RULES: { prefix: string; loginPath: string; publicExceptions?: string[] }[] = [
+  { prefix: "/productshot/files", loginPath: "/productshot/login" },
+  {
+    prefix: "/journey",
+    loginPath: "/journey/login",
+    publicExceptions: ["/journey/login", "/journey/auth"],
+  },
+];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -38,14 +45,17 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse;
   }
 
-  const isProtected = PROTECTED_PREFIXES.some((prefix) =>
-    request.nextUrl.pathname.startsWith(prefix)
+  const pathname = request.nextUrl.pathname;
+  const matchedRule = PROTECTED_RULES.find(
+    (rule) =>
+      pathname.startsWith(rule.prefix) &&
+      !(rule.publicExceptions ?? []).some((exception) => pathname.startsWith(exception))
   );
 
-  if (!user && isProtected) {
+  if (!user && matchedRule) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = "/productshot/login";
-    loginUrl.searchParams.set("next", request.nextUrl.pathname);
+    loginUrl.pathname = matchedRule.loginPath;
+    loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
 

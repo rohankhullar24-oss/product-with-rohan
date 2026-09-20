@@ -244,7 +244,8 @@
 
     <string name="pdf_open">Open PDF</string>
     <string name="pdf_new_from_photos">New PDF from photos</string>
-    <string name="pdf_merge">Merge two PDFs</string>
+    <string name="pdf_merge">Merge PDFs</string>
+    <string name="pdf_merge_need_two">Pick at least two PDFs to merge</string>
     <string name="pdf_no_file_chosen">No PDF open</string>
     <string name="pdf_page_count">%1$d page(s)</string>
     <string name="pdf_save_as">Save as…</string>
@@ -252,14 +253,12 @@
     <string name="pdf_compressing">Compressing…</string>
     <string name="pdf_compress_done">Compressed: %1$s → %2$s</string>
     <string name="pdf_rotate_page">Rotate</string>
-    <string name="pdf_delete_page">Delete page</string>
-    <string name="pdf_move_up">Move up</string>
-    <string name="pdf_move_down">Move down</string>
+    <string name="pdf_delete_page">Delete</string>
+    <string name="pdf_move_up">Up</string>
+    <string name="pdf_move_down">Down</string>
     <string name="pdf_saved">Saved</string>
     <string name="pdf_save_failed">Couldn\'t save: %1$s</string>
     <string name="pdf_open_failed">Couldn\'t open that PDF: %1$s</string>
-    <string name="pdf_merge_pick_first">Pick the first PDF</string>
-    <string name="pdf_merge_pick_second">Pick the second PDF</string>
     <string name="pdf_no_pages_left">All pages removed — nothing to save.</string>
     <string name="pdf_loading">Loading…</string>
 

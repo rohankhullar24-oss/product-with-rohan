@@ -368,6 +368,38 @@ common library:
     actual Gradle build or a device — treat it the same as any change here
     that hasn't cleared `reminder-app.yml`'s CI build yet.
 
+  - **Works Enabler** (`WorksEnablerActivity`, `PdfToolsActivity`,
+    `OcrScanActivity`) — a sixth feature area, one menu item ("Works Enabler")
+    off `MainActivity`: an open-source PDF/OCR toolkit, planned as the first
+    phase of a larger open-source office-document suite (Word/PowerPoint/
+    Spreadsheet read/edit/create and PDF⇄Word conversion are sketched for
+    later phases but not built yet). `PdfToolsActivity` opens/creates/merges
+    a PDF, edits it page-by-page (rotate/delete/reorder), and compresses it,
+    using `PdfBox-Android` (`com.tom-roush:pdfbox-android`, package
+    `com.tom_roush.pdfbox.*` — note the underscore, unlike the Maven
+    coordinate) for everything but page thumbnails, which use Android's
+    built-in `PdfRenderer`. Any structural edit re-saves the in-memory
+    `PDDocument` to a fresh cache file and re-renders thumbnails from that
+    file — the same "operate on a real `File`, not the SAF stream directly"
+    shape `ZipExtractorActivity` already uses, since neither PdfBox nor
+    `PdfRenderer` can work with a `PDDocument` object or a `content://` Uri
+    directly. `OcrScanActivity` runs on-device OCR via Tesseract4Android
+    (`cz.adaptech.tesseract4android`, package `com.googlecode.tesseract.android`
+    — kept deliberately open source instead of Google ML Kit); it needs
+    `eng.traineddata` at `reminder-app/app/src/main/assets/tessdata/`, which
+    is **not vendored in this repo** (a ~15 MB binary — see the README in
+    that directory for where to download it) and fails gracefully with a
+    clear message rather than crashing if it's missing. Tesseract4Android is
+    published on JitPack, not Maven Central, so `settings.gradle.kts` has an
+    extra `maven { url = "https://jitpack.io" }` repository just for it.
+    Neither screen syncs its files through Supabase — like Journal media and
+    Auto Scheduler's WhatsApp attachments, documents stay wherever the user
+    picked them via SAF. **CI-compiled but not hardware-verified**, same
+    caveat as Notes above, for the same reason (no Android SDK / no Google
+    Maven access in this sandbox) — every PdfBox-Android and Tesseract4Android
+    API used here was checked against upstream source on GitHub rather than
+    compiled, but that is not a substitute for an actual build.
+
   Two things worth knowing when touching this app: **versioning** —
   `versionCode` derives from `GITHUB_RUN_NUMBER` (always increasing on every
   CI build) rather than being hand-bumped, and `versionName` is bumped

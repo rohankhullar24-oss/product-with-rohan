@@ -1,10 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { projects } from "@/lib/projects";
-import PMNotes from "./PMNotes";
-
-const project = projects.find((p) => p.slug === "lead-gen-prd")!;
 
 function Wireframes({
   images,
@@ -251,8 +247,6 @@ export default function LeadGenPRD() {
             card for the results.
           </p>
         </Section>
-
-        <PMNotes {...project.pm} />
       </div>
     </section>
   );

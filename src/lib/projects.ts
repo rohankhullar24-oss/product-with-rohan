@@ -33,12 +33,12 @@ export const projects: Project[] = [
     slug: "product-shots",
     pm: {
       users:
-        "PMs and PM-track candidates who want daily deliberate practice instead of one-off interview cram sessions — mostly early-career and transitioning PMs.",
+        "Early-career and transitioning PMs who treat interview prep as a project, not a scramble — the same segment that buys a prep course and churns out of it by week two.",
       approach:
-        "Bite-sized daily questions across 8 PM-sense types, paired with curated industry news and weekly articles, so the habit forms around a few minutes a day rather than long study blocks.",
+        "Bet: habit beats intensity. A 3-minute daily rep across 8 question types compounds faster than binge-reading a guide the weekend before a loop. News and weekly articles exist to keep the habit sticky, not to be the core loop.",
       metric:
-        "Day-7 retention on daily question completion — the app only works if people come back the next day, not if they open it once.",
-      status: "Live, in active use.",
+        "North star: D7 return rate on the daily question. Guardrail: archive/news browsing shouldn't cannibalize it — if people start reading news instead of answering the question, the core loop has already broken.",
+      status: "Live, in active use — not yet instrumented well enough to know if the D7 number is actually good.",
     },
   },
   {
@@ -76,11 +76,11 @@ export const projects: Project[] = [
     slug: "reminders-app",
     pm: {
       users:
-        "People who already ignore normal reminder notifications — anyone who's missed a birthday, a bill, or a habit because one soft nudge wasn't enough.",
+        "People who've already been burned by a normal reminder app once — they don't need convincing that reminders matter, they need convincing this one won't let them off the hook.",
       approach:
-        "Treat a reminder like an alarm, not a notification: it rings on loop, needs an explicit Done, and comes back every 30 minutes if ignored, with optional sync so reminders follow you across devices.",
+        "The whole bet is one behavior change: make ignoring a reminder more annoying than doing the thing. Alarm-style looping notification instead of a dismissible one. Sync, backup, and watch support are retention plumbing around that core bet, not the bet itself.",
       metric:
-        "Percent of reminders actually marked Done vs. snoozed indefinitely or silently ignored — completion, not just notification delivery.",
+        "North star: reminders marked Done vs. left to expire or snoozed indefinitely. Notifications-sent is a vanity metric here — completion is the only number that proves the core bet worked.",
       status: "Live on Android, in active development.",
     },
   },
@@ -116,11 +116,11 @@ export const projects: Project[] = [
     slug: "individual-onboarding-journey",
     pm: {
       users:
-        "Individual and sole-proprietorship shopkeepers going through Aadhaar-based onboarding, and the ops team fielding the failures it caused.",
+        "Individual and sole-proprietorship shopkeepers going through Aadhaar-based onboarding — mostly first-time digital-onboarding users with low tolerance for an ambiguous error state.",
       approach:
-        "Find and fix the flow's actual failure points one at a time instead of a full redesign: weak face verification, unclear category options, and success screens shown after failures.",
+        "Not a redesign — a funnel audit. Instrument every screen, find where people actually drop, fix the highest-leverage failure first (face-auth), then work down the list. Classic conversion triage, not a rebuild.",
       metric:
-        "End-to-end conversion through the onboarding flow — moved from 50% to 73%.",
+        "North star: end-to-end conversion (50% → 73%). Each screen-level fix was a leading indicator; conversion was the only number that mattered at the review.",
       status: "Shipped.",
     },
   },
@@ -157,11 +157,11 @@ export const projects: Project[] = [
     slug: "journey",
     pm: {
       users:
-        "People already using the Reminders Android app who want to journal or plan trips from a browser too, without a second account.",
+        "Reminders-app users who already trust the product with their data and want the journal/itinerary features from a browser too — a retention play on an existing base, not new-user acquisition.",
       approach:
-        "Build the web app to read/write the exact same Supabase rows the Android app already syncs, so it's a second surface, not a second product.",
+        "Don't build a second product. Build a second surface on the same data model. Shared auth, shared Supabase rows — the web app is a thin client, so there's no sync logic to get wrong and no second source of truth to maintain.",
       metric:
-        "Cross-device usage — how often an entry created on one platform gets opened or continued on the other.",
+        "North star: cross-device continuation rate — an entry started on one platform and finished or reopened on the other. Near zero, and this is just a redundant app.",
       status: "Live.",
     },
   },
@@ -176,10 +176,11 @@ export const projects: Project[] = [
     slug: "ims-device-ordering",
     pm: {
       users:
-        "Retailers who previously ordered devices (micro-ATMs, printers, biometric hardware) through a manual, offline process.",
+        "Retailers who previously ordered hardware (micro-ATMs, printers, biometric devices) through a manual, offline process with a real cycle-time cost.",
       approach:
-        "Move ordering to a self-serve digital flow, starting with one device category and expanding coverage once the core flow, employer registration, and compliance sign-off were solid.",
-      metric: "Monthly GMV flowing through the platform — currently ~₹7 Cr/month.",
+        "Land-and-expand: prove the self-serve flow on one device category before generalizing across six. Sequencing mattered more than scope — compliance and security sign-off were the actual bottleneck, not the UI.",
+      metric:
+        "North star: monthly GMV through the platform (~₹7 Cr/month today). Category-by-category attach rate is the leading indicator I'd watch before GMV moves.",
       status: "Shipped, in production.",
     },
   },
@@ -193,11 +194,11 @@ export const projects: Project[] = [
     slug: "retailer-kpi-visibility",
     pm: {
       users:
-        "Distributors managing retailers and sub-distributors underneath them, who had no way to see who was going inactive.",
+        "Distributors managing retailers and sub-distributors beneath them — an internal B2B2B user with no visibility into who under them was going dormant.",
       approach:
-        "Give distributors downloadable KPI and status visibility, including an explicit flag for retailers who'd gone dormant, so they could act before the business was lost for good.",
+        "This was a visibility problem before it was a retention problem — you can't act on churn you can't see. Ship the dashboard and the dormancy flag first; let distributors self-serve the save motion rather than centralizing it.",
       metric:
-        "At-risk business retained — modeled at ~₹80 Cr out of ~₹200 Cr in dormant retailer business by closing the visibility gap.",
+        "North star: at-risk business retained (modeled ~₹80 Cr of ~₹200 Cr). Dormancy-flag click-through is the leading indicator that visibility is converting into action, not just being viewed.",
       status: "Shipped.",
     },
   },
@@ -212,11 +213,11 @@ export const projects: Project[] = [
     slug: "carbecho",
     pm: {
       users:
-        "Field inspectors running used-car inspections who need to log a 200-point checklist quickly, often one-handed or mid-conversation with the seller.",
+        "Field inspectors running used-car inspections against a 200-point checklist, usually one-handed, often mid-conversation with the seller — UI friction here isn't an annoyance, it's the reason the checklist doesn't get finished.",
       approach:
-        "Let an AI co-pilot take voice, text, or photo answers and fuzzy-match them straight onto the right checklist row, instead of forcing manual taps through every field.",
+        "Bet that a multimodal co-pilot (voice/text/photo, fuzzy-matched to checklist rows) beats a faster form. The cheaper alternative — just speed up the form — doesn't fix the real constraint: inspectors can't type mid-inspection.",
       metric:
-        "Time to complete a full 200-point inspection, and the share of answers the co-pilot matches correctly without manual correction.",
+        "North star: time to complete a full inspection. Guardrail: co-pilot match accuracy — if inspectors correct the AI more than they'd have just tapped manually, the bet is wrong.",
       status: "Live prototype.",
     },
   },
@@ -232,11 +233,11 @@ export const projects: Project[] = [
     slug: "prototype-merchant-app",
     pm: {
       users:
-        "Anyone evaluating whether Claude can turn a product spec directly into a working UI — internal stakeholders more than end users.",
+        "Internal stakeholders evaluating whether a detailed spec can substitute for an engineering handoff — this one's a capability demo, not a user-facing product.",
       approach:
-        "Write the merchant-app spec in enough detail that Claude could build the working prototype directly, with no manual coding step in between.",
+        "Write the spec with the same rigor as a real PRD, then see how much survives translation into a working prototype with zero developer in the loop. The interesting output isn't the app — it's where the spec had to be more precise than a normal PRD gets away with.",
       metric:
-        "Fidelity between the spec and the shipped prototype — how much of the intended behavior survived translation without a developer in the loop.",
+        "Spec-to-shipped fidelity — how much of the intended behavior held up without a human translating intent along the way.",
       status: "Prototype, not in production use.",
     },
   },
@@ -309,11 +310,11 @@ export const projects: Project[] = [
     slug: "free-ai-course",
     pm: {
       users:
-        "People who want a practical, hands-on introduction to applied AI/agents without a heavyweight bootcamp commitment.",
+        "People who want a hands-on, practical way into applied AI/agents without committing to a paid bootcamp upfront — evaluating the format before they'd pay for depth.",
       approach:
-        "Ship a 6-week curriculum in public, prototype-first, rather than waiting for every video and starter file to be finished before launching.",
+        "Ship week 1 before weeks 2–6 are finished. Building in public here isn't a marketing choice, it's a validation one — better to find out the curriculum doesn't hold at week 2 than to finish all six weeks first and find out then.",
       metric:
-        "Week-over-week completion — how many people who start week 1 are still there by week 6.",
+        "North star: week-over-week completion curve. A steep drop after week 1 means the format is wrong before the content even gets tested.",
       status: "Work in progress.",
     },
   },
@@ -327,11 +328,11 @@ export const projects: Project[] = [
     slug: "portfolio-site",
     pm: {
       users:
-        "Recruiters, hiring managers, and other PMs sizing up whether I can actually ship, not just talk about product.",
+        "Recruiters and hiring managers deciding, in under two minutes, whether the rest of this site is worth their time — the hero and project grid are doing all the qualifying work.",
       approach:
-        "Direct Claude through the entire build, spec to deploy, and let the site itself be the proof rather than just claiming \"AI-built\" in a bullet point.",
+        "Direct Claude through the entire build and let the site be the proof, not a claim. The risk here is exactly the failure mode a hiring manager would be looking for: does it actually work, or does it just look AI-generated?",
       metric:
-        "Whether a visitor actually opens a project's detail page and reads it, not just bounces off the hero — a proxy for whether the work is landing.",
+        "North star: click-through from the project grid into a detail page. A visitor who reads one full case study has been sold; one who only skims the grid hasn't.",
       status: "Live.",
     },
   },

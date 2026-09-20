@@ -3,4 +3,7 @@
     <!-- Camera photo/video captures land here before being read, encrypted
          into journal_media/, and deleted — see JournalMediaStore. -->
     <cache-path name="journal_camera" path="journal_camera/" />
+
+    <!-- Same pattern for Notes camera captures — see NoteMediaStore. -->
+    <cache-path name="note_camera" path="note_camera/" />
 </paths>

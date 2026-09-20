@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_pin_note"
+        android:title="@string/note_pin"
+        android:icon="@drawable/ic_pin"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_toggle_checklist"
+        android:title="@string/note_show_checkboxes"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_archive_note"
+        android:title="@string/note_archive"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_share_note"
+        android:title="@string/note_share"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_delete_note"
+        android:title="@string/note_delete"
+        app:showAsAction="never" />
+</menu>

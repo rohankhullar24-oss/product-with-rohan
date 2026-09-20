@@ -23,6 +23,16 @@ export function createDraftEntry(overrides: Partial<JournalEntry> = {}): Journal
   };
 }
 
+// Entries written before `entryDate` existed have no such key in their
+// stored payload — JournalEntry.kt's fromJson() falls back to the entry's
+// createdAt day in that case. Mirror that here so legacy rows don't crash
+// the sort below with `undefined.localeCompare`.
+function normalizeEntry(payload: JournalEntry): JournalEntry {
+  if (payload.entryDate) return payload;
+  const source = payload.createdAt > 0 ? payload.createdAt : Date.now();
+  return { ...payload, entryDate: new Date(source).toISOString().slice(0, 10) };
+}
+
 export async function listEntries(): Promise<JournalEntry[]> {
   const supabase = createClient();
   const { data, error } = await supabase
@@ -31,7 +41,7 @@ export async function listEntries(): Promise<JournalEntry[]> {
     .eq("deleted", false);
   if (error) throw error;
   return (data ?? [])
-    .map((row) => row.payload as JournalEntry)
+    .map((row) => normalizeEntry(row.payload as JournalEntry))
     .sort((a, b) => b.entryDate.localeCompare(a.entryDate) || b.createdAt - a.createdAt);
 }
 
@@ -44,7 +54,8 @@ export async function getEntry(id: string): Promise<JournalEntry | null> {
     .eq("deleted", false)
     .maybeSingle();
   if (error) throw error;
-  return (data?.payload as JournalEntry | undefined) ?? null;
+  const payload = data?.payload as JournalEntry | undefined;
+  return payload ? normalizeEntry(payload) : null;
 }
 
 async function currentUserId(supabase: ReturnType<typeof createClient>): Promise<string> {

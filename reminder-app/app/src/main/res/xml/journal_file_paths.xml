@@ -7,4 +7,7 @@
     <!-- Works Enabler / OCR: a photo taken to scan a document lands here
          before Tesseract reads it — see OcrScanActivity. -->
     <cache-path name="works_enabler_camera" path="works_enabler_camera/" />
+
+    <!-- Same pattern for Notes camera captures — see NoteMediaStore. -->
+    <cache-path name="note_camera" path="note_camera/" />
 </paths>

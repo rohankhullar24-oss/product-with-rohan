@@ -2,6 +2,8 @@ package online.productwithrohan.reminders
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.CalendarView
 import android.widget.TextView
@@ -76,8 +78,36 @@ class ItineraryCalendarActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        // Re-pull the trip itself too: editing it (name/dates) or deleting it happens on
+        // EditItineraryTripActivity, which this screen returns to.
+        val refreshedTrip = ItineraryTripStore.get(this, trip.id)
+        if (refreshedTrip == null) {
+            finish()
+            return
+        }
+        trip = refreshedTrip
+        title = trip.name.ifBlank { getString(R.string.itinerary_untitled_trip) }
+        val zone = ZoneId.systemDefault()
+        calendarView.minDate = trip.start().atStartOfDay(zone).toInstant().toEpochMilli()
+        calendarView.maxDate = trip.end().atStartOfDay(zone).toInstant().toEpochMilli()
         // Re-pull in case a stop for this date was added/edited/deleted since this screen opened.
         showStopsFor(currentDate)
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.itinerary_calendar_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.action_edit_trip -> {
+            startActivity(
+                Intent(this, EditItineraryTripActivity::class.java)
+                    .putExtra(EditItineraryTripActivity.EXTRA_TRIP_ID, trip.id)
+            )
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
     }
 
     private fun showStopsFor(date: LocalDate) {

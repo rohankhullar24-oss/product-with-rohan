@@ -22,35 +22,17 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
-                android:text="@string/pdf_open" />
+                android:text="@string/pptx_open" />
 
             <Button
-                android:id="@+id/button_new_from_photos"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginHorizontal="4dp"
-                android:text="@string/pdf_new_from_photos" />
-
-            <Button
-                android:id="@+id/button_merge"
+                android:id="@+id/button_new"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:text="@string/pdf_merge" />
+                android:text="@string/pptx_new" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/page_count"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:alpha="0.7"
-            android:text="@string/pdf_no_file_chosen"
-            android:textAppearance="?attr/textAppearanceBodyMedium" />
 
         <ProgressBar
             android:id="@+id/progress"
@@ -71,7 +53,7 @@
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_pages"
+        android:id="@+id/recycler_slides"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -84,38 +66,26 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <LinearLayout
+        <Button
+            android:id="@+id/button_add_slide"
+            style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <Button
-                android:id="@+id/button_compress"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
-                android:enabled="false"
-                android:text="@string/pdf_compress" />
-
-            <Button
-                android:id="@+id/button_save_as"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:enabled="false"
-                android:text="@string/pdf_save_as" />
-        </LinearLayout>
+            android:text="@string/pptx_add_slide" />
 
         <Button
-            android:id="@+id/button_convert_docx"
+            android:id="@+id/button_save_as"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/pptx_save_as" />
+
+        <Button
+            android:id="@+id/button_compress_file"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:enabled="false"
-            android:text="@string/pdf_convert_to_word" />
+            android:text="@string/ooxml_compress_file" />
     </LinearLayout>
 </LinearLayout>

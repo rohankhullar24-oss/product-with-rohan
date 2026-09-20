@@ -23,5 +23,14 @@ class WorksEnablerActivity : AppCompatActivity() {
         findViewById<View>(R.id.card_ocr).setOnClickListener {
             startActivity(Intent(this, OcrScanActivity::class.java))
         }
+        findViewById<View>(R.id.card_spreadsheet).setOnClickListener {
+            startActivity(Intent(this, SpreadsheetActivity::class.java))
+        }
+        findViewById<View>(R.id.card_word).setOnClickListener {
+            startActivity(Intent(this, DocxEditorActivity::class.java))
+        }
+        findViewById<View>(R.id.card_powerpoint).setOnClickListener {
+            startActivity(Intent(this, PptxEditorActivity::class.java))
+        }
     }
 }

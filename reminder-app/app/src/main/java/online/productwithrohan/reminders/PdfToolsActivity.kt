@@ -50,6 +50,7 @@ class PdfToolsActivity : AppCompatActivity() {
     private lateinit var adapter: PdfPageAdapter
     private lateinit var saveButton: Button
     private lateinit var compressButton: Button
+    private lateinit var convertButton: Button
 
     private var document: PDDocument? = null
     private var renderer: PdfRenderer? = null
@@ -81,6 +82,15 @@ class PdfToolsActivity : AppCompatActivity() {
             if (uri != null) saveTo(uri)
         }
 
+    private val convertDocxLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.CreateDocument(
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            )
+        ) { uri ->
+            if (uri != null) convertToDocx(uri)
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PDFBoxResourceLoader.init(applicationContext)
@@ -93,6 +103,7 @@ class PdfToolsActivity : AppCompatActivity() {
         recycler = findViewById(R.id.recycler_pages)
         saveButton = findViewById(R.id.button_save_as)
         compressButton = findViewById(R.id.button_compress)
+        convertButton = findViewById(R.id.button_convert_docx)
 
         adapter = PdfPageAdapter(
             onRotate = { index -> rotatePage(index) },
@@ -116,6 +127,7 @@ class PdfToolsActivity : AppCompatActivity() {
             if (!busy) saveAsLauncher.launch("document.pdf")
         }
         compressButton.setOnClickListener { if (!busy) compress() }
+        convertButton.setOnClickListener { if (!busy) convertDocxLauncher.launch("document.docx") }
 
         updateButtonsEnabled()
     }
@@ -223,6 +235,34 @@ class PdfToolsActivity : AppCompatActivity() {
             val bitmap = image.image
             val recompressed = JPEGFactory.createFromImage(doc, bitmap, 0.5f)
             resources.put(name, recompressed)
+        }
+    }
+
+    // --- Phase 4: convert to Word (plain-text extraction, no layout/images) ---
+
+    private fun convertToDocx(uri: Uri) {
+        val source = workingFile ?: return
+        if (busy) return
+        setBusy(true, R.string.pdf_converting)
+        executor.execute {
+            try {
+                val docxDoc = DocumentConverter.pdfToDocx(source)
+                val temp = File(cacheDir, "pdf_to_docx_${System.currentTimeMillis()}.docx")
+                DocxEngine.save(docxDoc, temp)
+                contentResolver.openOutputStream(uri)?.use { out ->
+                    temp.inputStream().use { input -> input.copyTo(out) }
+                } ?: throw IllegalStateException("could not open the destination")
+                temp.delete()
+                mainHandler.post {
+                    setBusy(false, null)
+                    statusText.text = getString(R.string.pdf_convert_done)
+                }
+            } catch (e: Exception) {
+                mainHandler.post {
+                    setBusy(false, null)
+                    statusText.text = getString(R.string.pdf_convert_failed, e.message ?: e.toString())
+                }
+            }
         }
     }
 
@@ -358,6 +398,7 @@ class PdfToolsActivity : AppCompatActivity() {
         val hasDoc = (document?.numberOfPages ?: 0) > 0
         saveButton.isEnabled = hasDoc
         compressButton.isEnabled = hasDoc
+        convertButton.isEnabled = hasDoc
     }
 
     private fun setBusy(isBusy: Boolean, statusRes: Int?) {

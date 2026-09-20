@@ -71,7 +71,9 @@ dependencies {
     // library is needed for both plain and password-protected (ZipCrypto and
     // AES) archives. DocumentFile drives writing the extracted files into a
     // user-picked SAF destination tree (scoped storage; no storage permission).
-    // Also reused by Works Enabler for docx/pptx/xlsx, which are zip containers.
+    // Works Enabler's docx/pptx/xlsx engines and OoxmlCompressor deliberately
+    // use java.util.zip instead, not this — those files are never password
+    // protected, so zip4j's extra capability isn't needed there.
     implementation("net.lingala.zip4j:zip4j:2.11.5")
     implementation("androidx.documentfile:documentfile:1.0.1")
 

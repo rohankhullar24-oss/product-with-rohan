@@ -14,6 +14,8 @@ object JournalSyncManager {
 
     private const val TOMBSTONE_PREFS = "journal_sync_tombstones"
     private const val TOMBSTONE_MAX_AGE_MS = 90L * 24 * 60 * 60 * 1000
+    private const val MEDIA_BUCKET = "journal-media"
+    private const val UPLOADED_PREFS = "journal_media_uploaded"
 
     @Volatile
     private var syncing = false
@@ -113,9 +115,44 @@ object JournalSyncManager {
             if (changed) {
                 JournalStore.replaceAll(context, merged)
             }
+            try {
+                syncMedia(context, merged)
+            } catch (e: Exception) {
+                // A media hiccup shouldn't fail the whole sync -- text/location already landed above.
+            }
             return changed
         } finally {
             syncing = false
+        }
+    }
+
+    /**
+     * Uploads any attachment that only exists on this device (tracked in
+     * [UPLOADED_PREFS] so a photo isn't re-uploaded every sync tick), and
+     * downloads any attachment referenced by a merged entry that this device
+     * doesn't have yet -- e.g. one pulled in from a second device. Each file
+     * is handled independently so one failure doesn't block the rest.
+     */
+    private fun syncMedia(context: Context, entries: List<JournalEntry>) {
+        val uploaded = context.getSharedPreferences(UPLOADED_PREFS, Context.MODE_PRIVATE)
+        for (entry in entries) {
+            for (filename in listOfNotNull(entry.photoFile, entry.videoFile, entry.audioFile)) {
+                try {
+                    if (JournalMediaStore.existsLocally(context, filename)) {
+                        if (!uploaded.contains(filename)) {
+                            val bytes = JournalMediaStore.readBytes(context, filename) ?: continue
+                            SupabaseClient.uploadStorageObject(context, MEDIA_BUCKET, filename, bytes, "application/octet-stream")
+                            uploaded.edit().putBoolean(filename, true).apply()
+                        }
+                    } else {
+                        val bytes = SupabaseClient.downloadStorageObject(context, MEDIA_BUCKET, filename) ?: continue
+                        JournalMediaStore.saveBytesAsFilename(context, filename, bytes)
+                        uploaded.edit().putBoolean(filename, true).apply()
+                    }
+                } catch (e: Exception) {
+                    // Offline or a transient failure -- retried on the next sync.
+                }
+            }
         }
     }
 

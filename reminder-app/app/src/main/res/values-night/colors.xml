@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="itinerary_widget_bg">#2A2A2E</color>
+    <color name="itinerary_widget_text">#F1F1F1</color>
+    <color name="itinerary_widget_text_dim">#B0B0B5</color>
+    <color name="itinerary_widget_accent">#9FA8DA</color>
+</resources>

@@ -48,10 +48,19 @@ object JournalMediaStore {
 
     private fun saveBytes(context: Context, bytes: ByteArray): String {
         val filename = UUID.randomUUID().toString()
-        val target = File(mediaDir(context), filename)
-        encryptedFile(context, target).openFileOutput().use { it.write(bytes) }
+        saveBytesAsFilename(context, filename, bytes)
         return filename
     }
+
+    /** Same as [saveBytes] but for a filename already assigned elsewhere -- used when pulling a cloud copy down. */
+    fun saveBytesAsFilename(context: Context, filename: String, bytes: ByteArray) {
+        val target = File(mediaDir(context), filename)
+        if (target.exists()) target.delete()
+        encryptedFile(context, target).openFileOutput().use { it.write(bytes) }
+    }
+
+    fun existsLocally(context: Context, filename: String?): Boolean =
+        filename != null && File(mediaDir(context), filename).exists()
 
     /** Decrypts an attachment fully into memory — fine for photos, avoid for large video/audio. */
     fun readBytes(context: Context, filename: String): ByteArray? {

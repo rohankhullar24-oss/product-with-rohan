@@ -8,9 +8,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 
 /** Jump to journal entries from a specific day via a calendar picker. */
 class JournalCalendarActivity : AppCompatActivity() {
@@ -50,9 +48,8 @@ class JournalCalendarActivity : AppCompatActivity() {
 
     private fun showEntriesFor(date: LocalDate) {
         currentDate = date
-        val zone = ZoneId.systemDefault()
         val entries = JournalStore.getAll(this)
-            .filter { Instant.ofEpochMilli(it.createdAt).atZone(zone).toLocalDate() == date }
+            .filter { it.entryDate == date.toString() }
             .sortedByDescending { it.updatedAt }
         adapter.submit(entries)
         emptyView.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE

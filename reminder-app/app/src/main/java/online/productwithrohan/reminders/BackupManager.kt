@@ -24,6 +24,8 @@ object BackupManager {
         "recipient_lists.json" to "recipientLists",
         "templates.json" to "templates",
         "auto_reply_rules.json" to "autoReplyRules",
+        "itinerary_trips.json" to "itineraryTrips",
+        "itinerary_stops.json" to "itineraryStops",
     )
 
     private val PREF_FILES = listOf(

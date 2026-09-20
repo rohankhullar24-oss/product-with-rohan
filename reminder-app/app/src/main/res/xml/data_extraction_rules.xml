@@ -15,6 +15,8 @@
         <include domain="file" path="recipient_lists.json" />
         <include domain="file" path="templates.json" />
         <include domain="file" path="auto_reply_rules.json" />
+        <include domain="file" path="itinerary_trips.json" />
+        <include domain="file" path="itinerary_stops.json" />
 
         <include domain="sharedpref" path="auto_reply_settings.xml" />
         <include domain="sharedpref" path="auto_forward_settings.xml" />
@@ -30,6 +32,8 @@
         <include domain="file" path="recipient_lists.json" />
         <include domain="file" path="templates.json" />
         <include domain="file" path="auto_reply_rules.json" />
+        <include domain="file" path="itinerary_trips.json" />
+        <include domain="file" path="itinerary_stops.json" />
 
         <include domain="sharedpref" path="auto_reply_settings.xml" />
         <include domain="sharedpref" path="auto_forward_settings.xml" />

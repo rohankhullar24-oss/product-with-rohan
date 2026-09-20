@@ -1,6 +1,7 @@
 package online.productwithrohan.reminders
 
 import android.Manifest
+import android.app.DatePickerDialog
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaPlayer
@@ -28,6 +29,8 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.google.android.material.R as MaterialR
 import java.io.File
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /**
  * Add or edit one journal entry: free-form text plus an optional photo,
@@ -40,6 +43,7 @@ import java.io.File
 class JournalEditActivity : AppCompatActivity() {
 
     private lateinit var textInput: EditText
+    private lateinit var entryDateButton: Button
     private lateinit var rowPhoto: View
     private lateinit var photoPreview: ImageView
     private lateinit var rowVideo: View
@@ -51,6 +55,9 @@ class JournalEditActivity : AppCompatActivity() {
     private lateinit var recordAudioButton: ImageButton
 
     private var entry: JournalEntry? = null
+
+    private var entryDate: LocalDate = LocalDate.now()
+    private val entryDateFmt = DateTimeFormatter.ofPattern("d MMM yyyy")
 
     private var photoFile: String? = null
     private var videoFile: String? = null
@@ -131,6 +138,7 @@ class JournalEditActivity : AppCompatActivity() {
         title = getString(if (entry == null) R.string.title_new_journal else R.string.title_edit_journal)
 
         textInput = findViewById(R.id.input_text)
+        entryDateButton = findViewById(R.id.button_entry_date)
         rowPhoto = findViewById(R.id.row_photo)
         photoPreview = findViewById(R.id.photo_preview)
         rowVideo = findViewById(R.id.row_video)
@@ -143,6 +151,7 @@ class JournalEditActivity : AppCompatActivity() {
 
         entry?.let {
             textInput.setText(it.text)
+            entryDate = runCatching { LocalDate.parse(it.entryDate) }.getOrDefault(LocalDate.now())
             photoFile = it.photoFile
             videoFile = it.videoFile
             audioFile = it.audioFile
@@ -153,6 +162,8 @@ class JournalEditActivity : AppCompatActivity() {
         originalPhotoFile = photoFile
         originalVideoFile = videoFile
         originalAudioFile = audioFile
+        updateEntryDateButton()
+        entryDateButton.setOnClickListener { pickEntryDate() }
 
         findViewById<ImageButton>(R.id.button_gallery).setOnClickListener {
             pickMediaLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageAndVideo))
@@ -205,6 +216,20 @@ class JournalEditActivity : AppCompatActivity() {
         videoPreview.stopPlayback()
         if (isRecording) stopRecording()
         JournalMediaStore.clearPlaybackCache(this)
+    }
+
+    // --- Entry date (which day this entry is about -- past, today, or future) ---
+
+    private fun pickEntryDate() {
+        DatePickerDialog(
+            this,
+            { _, y, m, d -> entryDate = LocalDate.of(y, m + 1, d); updateEntryDateButton() },
+            entryDate.year, entryDate.monthValue - 1, entryDate.dayOfMonth
+        ).show()
+    }
+
+    private fun updateEntryDateButton() {
+        entryDateButton.text = entryDate.format(entryDateFmt)
     }
 
     // --- Camera (photo or video capture; gallery picking is a separate button) ---
@@ -455,6 +480,7 @@ class JournalEditActivity : AppCompatActivity() {
         val now = System.currentTimeMillis()
         val toSave = (entry ?: JournalEntry(createdAt = now)).apply {
             this.text = text
+            this.entryDate = this@JournalEditActivity.entryDate.toString()
             this.photoFile = this@JournalEditActivity.photoFile
             this.videoFile = this@JournalEditActivity.videoFile
             this.audioFile = this@JournalEditActivity.audioFile
@@ -466,11 +492,20 @@ class JournalEditActivity : AppCompatActivity() {
         JournalStore.upsert(this, toSave)
 
         // Only now drop whichever original attachments got replaced/removed.
-        if (originalPhotoFile != photoFile) JournalMediaStore.delete(this, originalPhotoFile)
-        if (originalVideoFile != videoFile) JournalMediaStore.delete(this, originalVideoFile)
-        if (originalAudioFile != audioFile) JournalMediaStore.delete(this, originalAudioFile)
+        val replaced = listOfNotNull(
+            originalPhotoFile.takeIf { it != photoFile },
+            originalVideoFile.takeIf { it != videoFile },
+            originalAudioFile.takeIf { it != audioFile },
+        )
+        replaced.forEach { JournalMediaStore.delete(this, it) }
 
         JournalSyncManager.syncAsync(this)
+        if (replaced.isNotEmpty()) {
+            val appContext = applicationContext
+            Thread {
+                replaced.forEach { runCatching { SupabaseClient.deleteStorageObject(appContext, "journal-media", it) } }
+            }.start()
+        }
         finish()
     }
 
@@ -481,11 +516,18 @@ class JournalEditActivity : AppCompatActivity() {
             .setMessage(R.string.delete_journal_message)
             .setPositiveButton(R.string.delete_confirm) { _, _ ->
                 JournalStore.delete(this, current.id)
-                JournalMediaStore.delete(this, current.photoFile)
-                JournalMediaStore.delete(this, current.videoFile)
-                JournalMediaStore.delete(this, current.audioFile)
+                val mediaFiles = listOfNotNull(current.photoFile, current.videoFile, current.audioFile)
+                mediaFiles.forEach { JournalMediaStore.delete(this, it) }
                 JournalSyncManager.recordDeletion(this, current.id)
                 JournalSyncManager.syncAsync(this)
+                if (mediaFiles.isNotEmpty()) {
+                    val appContext = applicationContext
+                    Thread {
+                        mediaFiles.forEach {
+                            runCatching { SupabaseClient.deleteStorageObject(appContext, "journal-media", it) }
+                        }
+                    }.start()
+                }
                 finish()
             }
             .setNegativeButton(android.R.string.cancel, null)

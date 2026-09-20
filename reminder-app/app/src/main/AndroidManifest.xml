@@ -96,6 +96,41 @@
             android:exported="false"
             android:parentActivityName=".JournalActivity" />
 
+        <!-- Itinerary Planner: trips (ItineraryActivity) each with a day-by-day
+             calendar of stops (ItineraryCalendarActivity), mirroring Journal's
+             list + calendar pattern. -->
+        <activity
+            android:name=".ItineraryActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".EditItineraryTripActivity"
+            android:exported="false"
+            android:parentActivityName=".ItineraryActivity" />
+
+        <activity
+            android:name=".ItineraryCalendarActivity"
+            android:exported="false"
+            android:parentActivityName=".ItineraryActivity" />
+
+        <activity
+            android:name=".EditItineraryStopActivity"
+            android:exported="false"
+            android:parentActivityName=".ItineraryCalendarActivity" />
+
+        <receiver
+            android:name=".ItineraryWidgetProvider"
+            android:exported="true"
+            android:label="@string/title_itinerary">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/itinerary_widget_info" />
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

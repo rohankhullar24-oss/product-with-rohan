@@ -17,7 +17,6 @@ export default function ProjectGrid({
   viewAll?: ViewAllCard;
 }) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const allTags = Array.from(new Set(projects.flatMap((p) => p.tags)));
 
@@ -32,7 +31,6 @@ export default function ProjectGrid({
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
-    setExpandedIndex(null);
   };
 
   return (
@@ -62,58 +60,52 @@ export default function ProjectGrid({
       </div>
 
       <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {filteredProjects.map((project, i) => (
-          <div
-            key={i}
-            className={`group flex flex-col rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 transition-all duration-300 hover:shadow-xl hover:border-accent dark:hover:border-accent hover:-translate-y-2 cursor-pointer transform ${
-              expandedIndex === i ? "ring-2 ring-accent" : ""
-            }`}
-            onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}
-          >
-            <div className="flex flex-wrap gap-2">
-              {project.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-accent-light dark:bg-accent/20 px-3 py-1 text-xs font-semibold text-navy dark:text-accent"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-            <h4 className="mt-4 text-lg font-bold text-navy dark:text-white">
-              {project.title}
-            </h4>
-            <p className="mt-2 text-sm text-slate dark:text-slate-400">
-              {expandedIndex === i && project.fullDescription
-                ? project.fullDescription
-                : project.description}
-            </p>
+        {filteredProjects.map((project) => {
+          const detailHref = `/projects/${project.slug}`;
+          const hasSeparateLink = project.href && project.href !== detailHref;
 
-            {project.fullDescription && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setExpandedIndex(expandedIndex === i ? null : i);
-                }}
+          return (
+            <div
+              key={project.slug}
+              className="group flex flex-col rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 transition-all duration-300 hover:shadow-xl hover:border-accent dark:hover:border-accent hover:-translate-y-2 transform"
+            >
+              <div className="flex flex-wrap gap-2">
+                {project.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-accent-light dark:bg-accent/20 px-3 py-1 text-xs font-semibold text-navy dark:text-accent"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <h4 className="mt-4 text-lg font-bold text-navy dark:text-white">
+                {project.title}
+              </h4>
+              <p className="mt-2 text-sm text-slate dark:text-slate-400">
+                {project.description}
+              </p>
+
+              <Link
+                href={detailHref}
                 className="mt-3 text-sm font-semibold text-accent hover:underline dark:text-accent"
               >
-                {expandedIndex === i ? "Show less" : "Show more"}
-              </button>
-            )}
+                Show more →
+              </Link>
 
-            {project.href && (
-              <a
-                href={project.href}
-                target={project.external ? "_blank" : undefined}
-                rel={project.external ? "noopener noreferrer" : undefined}
-                onClick={(e) => e.stopPropagation()}
-                className="mt-4 inline-flex items-center text-sm font-semibold text-accent hover:underline"
-              >
-                {project.linkLabel ?? "View prototype →"}
-              </a>
-            )}
-          </div>
-        ))}
+              {hasSeparateLink && (
+                <a
+                  href={project.href}
+                  target={project.external ? "_blank" : undefined}
+                  rel={project.external ? "noopener noreferrer" : undefined}
+                  className="mt-2 inline-flex items-center text-sm font-semibold text-accent hover:underline"
+                >
+                  {project.linkLabel ?? "View prototype →"}
+                </a>
+              )}
+            </div>
+          );
+        })}
 
         {viewAll && (
           <Link

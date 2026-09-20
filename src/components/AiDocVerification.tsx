@@ -1,5 +1,10 @@
 "use client";
 
+import { projects } from "@/lib/projects";
+import PMNotes from "./PMNotes";
+
+const project = projects.find((p) => p.slug === "ai-doc-verification")!;
+
 function Section({
   title,
   children,
@@ -145,6 +150,8 @@ export default function AiDocVerification() {
             a result.
           </p>
         </Section>
+
+        <PMNotes {...project.pm} />
       </div>
     </section>
   );

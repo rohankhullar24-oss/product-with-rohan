@@ -24,6 +24,10 @@ class DrawingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_drawing)
         title = getString(R.string.title_drawing)
+        // Safe without setSupportActionBar(): supportActionBar already wraps the
+        // theme's own window decor action bar, which is what crashed before --
+        // this just enables its Up caret so the android.R.id.home branch below is reachable.
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         drawingView = findViewById(R.id.drawing_view)
         eraserButton = findViewById(R.id.button_eraser)

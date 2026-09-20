@@ -2,11 +2,13 @@
 
 Written 2026-09-20, at the end of the session that built Phase 1, and updated
 same day once everything was actually committed and pushed (commit `16b04a3`,
-on top of the earlier WIP scaffolding commit `0f9d0c1`). If you're picking
-this up in a new chat: **pull first** — everything described below is on
-`origin/master` already, not sitting uncommitted in some other session's
-working copy. Read this whole file before touching the code, so you don't
-re-derive what's already verified.
+on top of the earlier WIP scaffolding commit `0f9d0c1`), and again same day
+once Phase 1 cleared a real CI build for the first time (PR #111, see below).
+If you're picking this up in a new chat: **pull first** — everything
+described below is on `origin/master` (Phase 1 itself) or PR #111's branch
+`master-iny4en` (the build-time tessdata fetch), not sitting uncommitted in
+some other session's working copy. Read this whole file before touching the
+code, so you don't re-derive what's already verified.
 
 ## What this feature is
 
@@ -15,11 +17,11 @@ PowerPoint/Spreadsheet toolkit — create new files, open/read/edit existing
 ones, OCR, PDF⇄Word conversion, and compression. It's genuinely one of the
 largest features this app could take on (functionally a small office suite),
 so it's being built in phases. **Phase 1 (PDF tools + OCR) is implemented
-below but has never been compiled** — this sandbox has no Android SDK and no
-reachable Google Maven repo, so nothing past careful manual API verification
-was possible. Treat it the same as this repo's existing "CI-compiled but not
-hardware-verified" caveat for the Notes feature (see `ARCHITECTURE.md`) —
-except this hasn't even cleared a CI build yet.
+below and has now cleared a real CI build** (`reminder-app.yml`'s `build`
+check passed on PR #111, commit `19c4de2`, after fixing one real Kotlin
+compile error — see point 2 below). Still no device/emulator test — treat
+that the same as this repo's existing "CI-compiled but not hardware-verified"
+caveat for the Notes feature (see `ARCHITECTURE.md`).
 
 ## Done (Phase 1)
 
@@ -65,19 +67,22 @@ except this hasn't even cleared a CI build yet.
    point 2) and so can't run the Gradle task itself end-to-end. Manual
    fallback instructions are still in `assets/tessdata/README.md` for
    offline builds.
-2. **No confirmed real build yet.** This sandbox has no Android SDK and can't
-   resolve `com.android.application` from Google's Maven repo (confirmed
-   again this session — `./gradlew :reminder-app:downloadTessdata` fails at
-   plugin resolution before reaching any app code), so a local build still
-   isn't possible here. This session's changes went up as a PR from
-   `master-iny4en` (not a direct push to `master`), so `reminder-app.yml`
-   CI runs on the PR itself via its `pull_request` trigger — check that PR's
-   Actions run before assuming anything else. If CI hasn't run or its result
-   isn't known, that's the first thing to check in a new session, ahead of
-   anything else on this list. Every PdfBox-Android/Tesseract4Android API
-   used was checked against the actual upstream source on GitHub (see the
-   verified-API list below) rather than assumed from memory, but that's
-   still not a substitute for a real compile.
+2. ~~No confirmed real build yet.~~ **Fixed**: PR #111
+   (`master-iny4en` → `master`) got a real CI compile. First push (`51152f1`)
+   failed with a genuine Kotlin error: `java.net.URI(...)` in the new
+   `downloadTessdata` task resolved to `Unresolved reference: net`, because
+   the Android/Kotlin Gradle plugins expose a `java` extension property on
+   `Project` that shadows the `java` package prefix inside build scripts —
+   `java.net.URI` was being parsed as a member access on that extension, not
+   the `java.net` package. Fixed by adding `import java.net.URI` and using
+   the bare `URI(...)` (commit `19c4de2`); the `build` check
+   (`reminder-app.yml`'s `./gradlew :reminder-app:assembleDebug`) passed
+   after that. This sandbox still has no Android SDK and can't resolve
+   `com.android.application` from Google's Maven, so this fix was diagnosed
+   from the CI log and Kotlin's name-resolution rules, not reproduced
+   locally — worth an extra look if anything in that task misbehaves later.
+   Every PdfBox-Android/Tesseract4Android API used was also checked against
+   the actual upstream source on GitHub (see the verified-API list below).
 3. **No device/emulator test at all.** Once it compiles, install it and walk
    through: open a real PDF from Drive/Downloads, merge two PDFs, rotate/
    delete/reorder pages, compress and confirm the file shrinks, create a new
@@ -196,9 +201,10 @@ still apply:
 
 1. ~~Download `eng.traineddata` into `assets/tessdata/`.~~ Done — it's now
    fetched automatically by the `downloadTessdata` Gradle task (see above).
-2. Check the CI run on this session's PR (branch `master-iny4en`) and fix any
-   compile errors it surfaces — still the first real build this feature has
-   cleared, if it passes.
+2. ~~Run a real Gradle build and fix compile errors.~~ Done — PR #111's
+   `build` check is green on commit `19c4de2` (see above). **Merge PR #111**
+   (still open as a draft) to get this fix onto `master` — nothing else is
+   blocking it: CI is green, no merge conflict, no open review threads.
 3. Install on a device/emulator and walk the Phase 1 verification steps.
 4. Re-scope Phase 2 with the user before starting it.
 5. The `origin/master` merge noted in earlier versions of this doc is already

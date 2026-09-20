@@ -1,5 +1,5 @@
 export type PMNotesData = {
-  users: string;
+  users?: string;
   approach: string;
   metric: string;
   status?: string;
@@ -327,8 +327,6 @@ export const projects: Project[] = [
     tags: ["Side Project", "AI-Built"],
     slug: "portfolio-site",
     pm: {
-      users:
-        "Recruiters and hiring managers deciding, in under two minutes, whether the rest of this site is worth their time — the hero and project grid are doing all the qualifying work.",
       approach:
         "Direct Claude through the entire build and let the site be the proof, not a claim. The risk here is exactly the failure mode a hiring manager would be looking for: does it actually work, or does it just look AI-generated?",
       metric:

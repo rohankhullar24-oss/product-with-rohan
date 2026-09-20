@@ -2,7 +2,7 @@ import type { PMNotesData } from "@/lib/projects";
 
 export default function PMNotes({ users, approach, metric, status }: PMNotesData) {
   const items = [
-    { label: "Who it's for", value: users },
+    ...(users ? [{ label: "Who it's for", value: users }] : []),
     { label: "Approach", value: approach },
     { label: "Metric I'd chase", value: metric },
     ...(status ? [{ label: "Status", value: status }] : []),

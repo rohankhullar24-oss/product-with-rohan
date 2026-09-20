@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -35,6 +37,26 @@ android {
     }
 }
 
+// Works Enabler: fetch Tesseract's English trained-data file at build time
+// instead of committing a ~15 MB binary to the repo. See
+// src/main/assets/tessdata/README.md for why and for the manual fallback.
+val tessdataFile = layout.projectDirectory.file("src/main/assets/tessdata/eng.traineddata").asFile
+val downloadTessdata by tasks.registering {
+    outputs.file(tessdataFile)
+    onlyIf { !tessdataFile.exists() }
+    doLast {
+        tessdataFile.parentFile.mkdirs()
+        val url = URI("https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/main/eng.traineddata").toURL()
+        url.openStream().use { input ->
+            tessdataFile.outputStream().use { output -> input.copyTo(output) }
+        }
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn(downloadTessdata)
+}
+
 dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
 
@@ -49,7 +71,9 @@ dependencies {
     // library is needed for both plain and password-protected (ZipCrypto and
     // AES) archives. DocumentFile drives writing the extracted files into a
     // user-picked SAF destination tree (scoped storage; no storage permission).
-    // Also reused by Works Enabler for docx/pptx/xlsx, which are zip containers.
+    // Works Enabler's docx/pptx/xlsx engines and OoxmlCompressor deliberately
+    // use java.util.zip instead, not this — those files are never password
+    // protected, so zip4j's extra capability isn't needed there.
     implementation("net.lingala.zip4j:zip4j:2.11.5")
     implementation("androidx.documentfile:documentfile:1.0.1")
 

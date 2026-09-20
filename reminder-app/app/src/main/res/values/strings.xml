@@ -239,8 +239,12 @@
     <string name="works_enabler_pdf_subtitle">View, merge, rotate, reorder, delete pages, compress, create from photos</string>
     <string name="works_enabler_ocr_title">Scan / OCR</string>
     <string name="works_enabler_ocr_subtitle">Turn a photo or scanned page into editable, selectable text</string>
-    <string name="works_enabler_coming_soon_title">Word, PowerPoint, Spreadsheet</string>
-    <string name="works_enabler_coming_soon_subtitle">Coming in a later update</string>
+    <string name="works_enabler_spreadsheet_title">Spreadsheet</string>
+    <string name="works_enabler_spreadsheet_subtitle">Create, open, and edit a plain data grid (.xlsx) — no formulas or charts</string>
+    <string name="works_enabler_word_title">Word</string>
+    <string name="works_enabler_word_subtitle">Create, open, and edit paragraphs of text (.docx), plus convert to/from PDF</string>
+    <string name="works_enabler_powerpoint_title">PowerPoint</string>
+    <string name="works_enabler_powerpoint_subtitle">Create, open, and edit slide titles and body text (.pptx)</string>
 
     <string name="pdf_open">Open PDF</string>
     <string name="pdf_new_from_photos">New PDF from photos</string>
@@ -261,6 +265,10 @@
     <string name="pdf_open_failed">Couldn\'t open that PDF: %1$s</string>
     <string name="pdf_no_pages_left">All pages removed — nothing to save.</string>
     <string name="pdf_loading">Loading…</string>
+    <string name="pdf_convert_to_word">Convert to Word (.docx)</string>
+    <string name="pdf_converting">Converting…</string>
+    <string name="pdf_convert_done">Converted — text only, no layout or images</string>
+    <string name="pdf_convert_failed">Couldn\'t convert: %1$s</string>
 
     <string name="ocr_explainer">Take a photo of a printed page, or pick an existing image, to recognize its text on this device.</string>
     <string name="ocr_take_photo">Take photo</string>
@@ -272,6 +280,57 @@
     <string name="ocr_save_failed">Couldn\'t save that file</string>
     <string name="ocr_no_text_found">No text recognized in that image</string>
     <string name="ocr_language_missing">OCR language data is missing. Place eng.traineddata under this app\'s assets/tessdata and rebuild.</string>
+
+    <string name="spreadsheet_open">Open</string>
+    <string name="spreadsheet_new">New</string>
+    <string name="spreadsheet_new_done">New blank sheet</string>
+    <string name="spreadsheet_loading">Loading…</string>
+    <string name="spreadsheet_opened">Opened — only the first sheet is shown; other sheets round-trip unchanged</string>
+    <string name="spreadsheet_open_failed">Couldn\'t open that file: %1$s</string>
+    <string name="spreadsheet_save_as">Save as…</string>
+    <string name="spreadsheet_saved">Saved</string>
+    <string name="spreadsheet_save_failed">Couldn\'t save: %1$s</string>
+    <string name="spreadsheet_add_row">Add row</string>
+    <string name="spreadsheet_add_column">Add column</string>
+
+    <string name="docx_open">Open</string>
+    <string name="docx_new">New</string>
+    <string name="docx_new_done">New blank document</string>
+    <string name="docx_loading">Loading…</string>
+    <string name="docx_opened">Opened — plain text only, styling beyond bold/italic is dropped</string>
+    <string name="docx_open_failed">Couldn\'t open that file: %1$s</string>
+    <string name="docx_save_as">Save as…</string>
+    <string name="docx_saved">Saved</string>
+    <string name="docx_save_failed">Couldn\'t save: %1$s</string>
+    <string name="docx_add_paragraph">Add paragraph</string>
+    <string name="docx_paragraph_hint">Paragraph text</string>
+    <string name="docx_bold">B</string>
+    <string name="docx_italic">I</string>
+    <string name="docx_delete_paragraph">Delete</string>
+    <string name="docx_convert_to_pdf">Convert to PDF</string>
+    <string name="docx_converting">Converting…</string>
+    <string name="docx_convert_done">Converted to PDF</string>
+    <string name="docx_convert_failed">Couldn\'t convert: %1$s</string>
+
+    <string name="pptx_open">Open</string>
+    <string name="pptx_new">New</string>
+    <string name="pptx_new_done">New blank presentation</string>
+    <string name="pptx_loading">Loading…</string>
+    <string name="pptx_opened">Opened — titles and body text only, no images or transitions</string>
+    <string name="pptx_open_failed">Couldn\'t open that file: %1$s</string>
+    <string name="pptx_save_as">Save as…</string>
+    <string name="pptx_saved">Saved</string>
+    <string name="pptx_save_failed">Couldn\'t save: %1$s</string>
+    <string name="pptx_add_slide">Add slide</string>
+    <string name="pptx_title_hint">Slide title</string>
+    <string name="pptx_body_hint">Slide body text</string>
+    <string name="pptx_slide_number">Slide %1$d</string>
+
+    <string name="ooxml_compress_file">Compress a file…</string>
+    <string name="ooxml_compressing">Compressing…</string>
+    <string name="ooxml_compress_ready">Compressed: %1$s → %2$s — choose where to save it</string>
+    <string name="ooxml_compress_saved">Compressed file saved</string>
+    <string name="ooxml_compress_failed">Couldn\'t compress that file: %1$s</string>
 
     <!-- Watch Sync -->
     <string name="title_watch_sync">Watch Sync</string>

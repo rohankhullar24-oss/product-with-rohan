@@ -229,6 +229,21 @@
             android:exported="false"
             android:parentActivityName=".WorksEnablerActivity" />
 
+        <activity
+            android:name=".SpreadsheetActivity"
+            android:exported="false"
+            android:parentActivityName=".WorksEnablerActivity" />
+
+        <activity
+            android:name=".DocxEditorActivity"
+            android:exported="false"
+            android:parentActivityName=".WorksEnablerActivity" />
+
+        <activity
+            android:name=".PptxEditorActivity"
+            android:exported="false"
+            android:parentActivityName=".WorksEnablerActivity" />
+
         <!-- Auto Scheduler: schedules a one-off SMS/call/reminder for a future time. -->
         <activity
             android:name=".AutoSchedulerActivity"

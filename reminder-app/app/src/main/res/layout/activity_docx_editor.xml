@@ -22,35 +22,17 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
-                android:text="@string/pdf_open" />
+                android:text="@string/docx_open" />
 
             <Button
-                android:id="@+id/button_new_from_photos"
-                style="@style/Widget.Material3.Button.OutlinedButton"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginHorizontal="4dp"
-                android:text="@string/pdf_new_from_photos" />
-
-            <Button
-                android:id="@+id/button_merge"
+                android:id="@+id/button_new"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:text="@string/pdf_merge" />
+                android:text="@string/docx_new" />
         </LinearLayout>
-
-        <TextView
-            android:id="@+id/page_count"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:alpha="0.7"
-            android:text="@string/pdf_no_file_chosen"
-            android:textAppearance="?attr/textAppearanceBodyMedium" />
 
         <ProgressBar
             android:id="@+id/progress"
@@ -71,7 +53,7 @@
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_pages"
+        android:id="@+id/recycler_paragraphs"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -84,20 +66,27 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+        <Button
+            android:id="@+id/button_add_paragraph"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/docx_add_paragraph" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
             android:orientation="horizontal">
 
             <Button
-                android:id="@+id/button_compress"
+                android:id="@+id/button_convert_pdf"
                 style="@style/Widget.Material3.Button.OutlinedButton"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="4dp"
-                android:enabled="false"
-                android:text="@string/pdf_compress" />
+                android:text="@string/docx_convert_to_pdf" />
 
             <Button
                 android:id="@+id/button_save_as"
@@ -105,17 +94,15 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="4dp"
-                android:enabled="false"
-                android:text="@string/pdf_save_as" />
+                android:text="@string/docx_save_as" />
         </LinearLayout>
 
         <Button
-            android:id="@+id/button_convert_docx"
+            android:id="@+id/button_compress_file"
             style="@style/Widget.Material3.Button.TextButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:enabled="false"
-            android:text="@string/pdf_convert_to_word" />
+            android:text="@string/ooxml_compress_file" />
     </LinearLayout>
 </LinearLayout>

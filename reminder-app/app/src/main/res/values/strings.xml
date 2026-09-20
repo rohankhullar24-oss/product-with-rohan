@@ -82,6 +82,8 @@
     <string name="itinerary_empty">No trips yet.\nTap + to plan one.</string>
     <string name="itinerary_add_trip">Add trip</string>
     <string name="itinerary_untitled_trip">Untitled trip</string>
+    <string name="itinerary_section_upcoming">Upcoming</string>
+    <string name="itinerary_section_past">Past</string>
     <string name="itinerary_no_stops_yet">No stops yet</string>
     <plurals name="itinerary_stop_count">
         <item quantity="one">%1$d stop planned</item>

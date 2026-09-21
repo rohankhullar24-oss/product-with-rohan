@@ -319,7 +319,7 @@ export const projects: Project[] = [
     },
   },
   {
-    title: "Commissions Automation: Quarterly Progress",
+    title: "Commission Payout Automation",
     description:
       "A quarterly progress update on the commissions platform: ₹117L+ in monthly payouts now automated, onboarding TAT for new use cases cut from 30+ to 10 days (67% faster), and ₹5-6L/month unlocked via reconciliation automation — GST invoicing and real-time commission visibility are next on the Q3 roadmap.",
     fullDescription:

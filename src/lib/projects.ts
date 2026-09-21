@@ -323,13 +323,13 @@ export const projects: Project[] = [
     description:
       "Led automation of commission payouts at Airtel Payments Bank: automated ₹117L+ in monthly payouts across six products, cut onboarding TAT for new use cases from 30+ to 10 days (67% faster), and unlocked ₹5-6L/month by automating reconciliation — with GST invoicing and real-time commission visibility scoped next.",
     fullDescription:
-      "Led commission-platform automation at Airtel Payments Bank across four threads. Automated payouts for Junior Suraksha, AEPS Mini Statement, Current A/c, DBT, IDC and UPI CWW, replacing manual processing that carried cross-team payout delays and calculation-error risk — ₹117L+ in monthly payouts now run automatically, and the new KAALIX setup flow cut onboarding TAT for a new use case from 30+ days to 10 (67% faster). Automated reconciliation of FULFILMENT_PENDING transactions, which previously required manual work and delayed payouts, unlocking ₹5-6L in monthly payouts. Scoped the next phase of the platform: extending automation to Soundbox (₹8L/mo), BBPS (₹50K/mo) and a new Debit Card for Minor product (adding ₹8.5L+ more); shipping API-based GST invoice upload on the Turbo Portal plus invoice status and reference-number visibility on Tez for 14K+ users and ₹114.5Cr+ in payout records; and building real-time commission visibility at the moment of transaction, surfacing Prime earnings so RET/DIST users see projected, normal and extra commissions before payout instead of after.",
+      "Led commission-platform automation at Airtel Payments Bank across four threads, each tackled as pain point, fix, and plan. Automation — pain point: manual commission processing across products, cross-team payout delays, calculation-error risk, and a ~30-day setup time for new use cases. Fix: automated payouts for Junior Suraksha, AEPS Mini Statement, Current A/c, DBT, IDC and UPI CWW — ₹117L+ in monthly payouts now run automatically, and the new KAALIX setup flow cut onboarding TAT for a new use case from 30+ days to 10 (67% faster). Plan: extend automation to Soundbox (₹8L/mo), BBPS (₹50K/mo) and a new Debit Card for Minor product, adding ₹8.5L+ more to the automated commission stream. Reconciliation — pain point: FULFILMENT_PENDING transactions required manual reconciliation and delayed payouts. Fix: automated that reconciliation, unlocking ₹5-6L in monthly payouts. GST & Invoicing — pain point: manual GST invoice upload with limited commission-tracking visibility. Plan: ship API-based invoice upload on the Turbo Portal plus invoice status and reference-number visibility on Tez, covering 14K+ users and ₹114.5Cr+ in payout records. Visibility — pain point: limited commission visibility for RET/DIST users. Plan: add real-time commission visibility at the moment of transaction and surface Prime earnings, so users see projected, normal and extra commissions before payout instead of after.",
     tags: ["Product Case Study"],
-    href: "/projects/commissions-quarterly-progress/Commissions_Quarterly_Progress.pptx",
+    href: "/projects/commission-payout-automation/Commission_Payout_Automation.pptx",
     external: true,
-    linkLabel: "Download the Q2 deck →",
+    linkLabel: "Download the deck →",
     featured: true,
-    slug: "commissions-quarterly-progress",
+    slug: "commission-payout-automation",
     pm: {
       users:
         "Airtel Payments Bank retailers and distributors receiving commission payouts, plus the internal ops team that was hand-processing calculations and payouts before automation.",

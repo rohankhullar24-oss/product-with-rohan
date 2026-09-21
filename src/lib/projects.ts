@@ -319,6 +319,29 @@ export const projects: Project[] = [
     },
   },
   {
+    title: "Commissions Automation: Quarterly Progress",
+    description:
+      "A quarterly progress update on the commissions platform: ₹117L+ in monthly payouts now automated, onboarding TAT for new use cases cut from 30+ to 10 days (67% faster), and ₹5-6L/month unlocked via reconciliation automation — GST invoicing and real-time commission visibility are next on the Q3 roadmap.",
+    fullDescription:
+      "A quarterly progress update on the commissions platform at Airtel Payments Bank, tracked across four threads. Automation: manual commission processing across products, cross-team payout delays, calculation-error risk, and a ~30-day setup time for new use cases were replaced with automated payouts for Junior Suraksha, AEPS Mini Statement, Current A/c, DBT, IDC and UPI CWW — ₹117L+ in monthly payouts now run automatically, and the new KAALIX setup flow cuts onboarding TAT for a new use case from 30+ days to 10 (67% faster). Q3 extends automation to Soundbox (₹8L/mo), BBPS (₹50K/mo) and a new Debit Card for Minor product, adding ₹8.5L+ more to the automated commission stream. Reconciliation: FULFILMENT_PENDING transactions used to require manual reconciliation and delayed payouts; automating that reconciliation unlocked ₹5-6L in monthly payouts. GST & Invoicing: GST invoice upload was a manual process with limited commission-tracking visibility; Q3 ships API-based invoice upload on the Turbo Portal plus invoice status and reference-number visibility on Tez, covering 14K+ users and ₹114.5Cr+ in payout records. Visibility: RET/DIST users had limited visibility into their own commissions; Q3 adds real-time commission visibility at the moment of transaction and surfaces Prime earnings, so users see projected, normal and extra commissions before payout instead of after — the aim being fewer transparency-related escalations.",
+    tags: ["Product Case Study"],
+    href: "/projects/commissions-quarterly-progress/Commissions_Quarterly_Progress.pptx",
+    external: true,
+    linkLabel: "Download the Q2 deck →",
+    featured: true,
+    slug: "commissions-quarterly-progress",
+    pm: {
+      users:
+        "Airtel Payments Bank retailers and distributors receiving commission payouts, plus the internal ops team that was hand-processing calculations and payouts before automation.",
+      approach:
+        "Track the work as four parallel threads (Automation, Reconciliation, GST & Invoicing, Visibility), sequenced by dependency — automate the highest-payout products first, since the GST and visibility work downstream was only worth building once the payout numbers under it were trustworthy.",
+      metric:
+        "North star: share of monthly commission payouts processed without manual intervention (₹117L+ automated so far). Guardrail: onboarding TAT for a new product (30+→10 days) — automation that takes a month to extend to the next product isn't actually solving the manual-effort problem.",
+      status:
+        "In progress — Q2 shipped (automation across 6 products, FULFILMENT_PENDING reconciliation); Q3 roadmap covers Soundbox/BBPS/Debit Card for Minor automation, GST invoicing API, and real-time commission visibility.",
+    },
+  },
+  {
     title: "This Portfolio Site: Built with AI, No Code Written",
     description:
       "Designed and shipped this entire site (Next.js + Tailwind) by directing Claude end-to-end, from spec and content to layout, styling, and deployment, without writing a single line of code myself.",

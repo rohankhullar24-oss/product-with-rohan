@@ -14,6 +14,7 @@ const BESPOKE_SLUGS = new Set([
   "chladni-plate",
   "decision-dice",
   "stock-analyzer",
+  "commission-payout-automation",
 ]);
 
 function getProject(slug: string) {

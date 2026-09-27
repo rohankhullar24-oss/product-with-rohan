@@ -195,6 +195,40 @@ these files `application/octet-stream`; the app won't appear for those.
 **Not a bug, still true:** these editors are text-only by design — they do
 not render slides/pages visually the way Microsoft PowerPoint/Word do.
 
+## Done (2026-09-27 — Office-style viewer)
+
+**`OfficePreviewActivity`** — read-only viewer showing a docx/pptx/xlsx close
+to how Office draws it (layout, fonts, colours, tables, images, slide
+shapes, cell fills/borders/merges, multiple sheets). A WebView loads
+`assets/office_viewer/index.html`, which renders fully offline with bundled
+libraries in `assets/office_viewer/lib/`:
+- Word: `docx-preview` 0.4.1 (Apache-2.0), pages zoomed to screen width.
+- PowerPoint: `pptx-preview` 1.0.7 (npm license ISC; its README says free
+  for personal and commercial use but the **source is not published** —
+  only the minified npm build is bundled). Its outer wrapper is fixed to the
+  16:9 box passed to `init()` and clips; `index.html` overrides that with
+  CSS so 4:3 decks and every slide show.
+- Excel: `ExcelJS` 4.4.0 (MIT) + our own table renderer (values, fonts,
+  fills, borders, alignment, merges, column widths, sheet tabs; capped at
+  2000 rows × 60 cols). SheetJS was not used: its npm build (0.18.5) has
+  known CVEs and the fixed builds are only on cdn.sheetjs.com, which this
+  sandbox's network policy blocks.
+The WebView blocks network loads and file/content access; the only bridge is
+`AndroidViewer` (getKind/getData/onDone/onError) handing over the one file
+as base64 (25 MB cap). **It is now the "Open with" target for
+docx/pptx/xlsx** (the three editors went back to `exported=false`); its
+"Edit text" button forwards the same URI to the matching editor. Also a
+new first card on the Works Enabler hub.
+
+Verified off-device: `index.html` rendered python-pptx/python-docx/openpyxl
+test files in headless Chromium (same engine as Android WebView) at a
+412px phone viewport — two slides with shapes/image/coloured text, a
+two-page Word doc with a table/image/coloured run, and a styled sheet with
+merges and two tabs. Not yet run inside the app on a device. Known gaps:
+formulas show cached results (files never opened in Excel show `=formula`),
+no charts in Excel, animations/transitions ignored, fidelity is "close",
+not pixel-identical to Office.
+
 ## Not done yet
 
 1. **CI confirmation for Phases 2–4 is still in progress as of this

@@ -370,7 +370,9 @@ common library:
 
   - **Works Enabler** (`WorksEnablerActivity` hub, `PdfToolsActivity`,
     `OcrScanActivity`, `SpreadsheetActivity`, `DocxEditorActivity`,
-    `PptxEditorActivity`) — a sixth feature area, one menu item
+    `PptxEditorActivity`, `OfficePreviewActivity` — a read-only WebView
+    viewer rendering docx/pptx/xlsx with bundled JS libs in
+    `assets/office_viewer/`) — a sixth feature area, one menu item
     ("Works Enabler") off `MainActivity`: an open-source office-document
     toolkit, now covering all four planned phases. `PdfToolsActivity`
     opens/creates/merges a PDF, edits it page-by-page (rotate/delete/reorder),

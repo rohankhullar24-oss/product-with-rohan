@@ -261,8 +261,8 @@ HOW_TO_USE_BLOCKS = [
 ]
 
 ABOUT_AUTHOR_BLOCKS = [
-    N("Rohan Khullar is a Product Manager in B2B fintech, currently at Airtel Payments Bank, "
-      "where he owns the product strategy and roadmap for a merchant and retailer lifecycle "
+    N("Rohan Khullar is a Product Manager in B2B fintech. At a fintech organization, "
+      "he owned the product strategy and roadmap for a merchant and retailer lifecycle "
       "platform serving more than 600,000 partners and processing roughly ₹7 crore in "
       "monthly GMV. He led the funnel redesign that lifted partner onboarding conversion from "
       "50% to 73%, and the automation effort that cut onboarding turnaround from three days to "

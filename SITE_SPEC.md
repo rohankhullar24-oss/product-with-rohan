@@ -30,7 +30,7 @@
 - Certifications: Certified Registered Product Owner (Scrum Inc.), Advanced Excel (CFI), Digital Marketing (Udemy)
 
 ### 3. Experience
-**Product Manager — B2B, Airtel Payments Bank** (Jan 2024 – Present)
+**Product Manager — B2B, Fintech Organization** (Jan 2024 – Present)
 - Owns product strategy & roadmap for B2B merchant & retailer lifecycle platform (600K+ partners, ₹7 Cr monthly GMV); aligns engineering, business, ops, design across merchants, distributors, banking partners, enterprise clients
 - Led funnel optimization & journey redesign — onboarding conversion 50% → 73%
 - Cut onboarding turnaround 3 days → 15 minutes via digitized, automated verification journeys
@@ -39,7 +39,7 @@
 - Ran A/B testing, UAT, controlled rollouts — cut onboarding issues 20%, lifted partner satisfaction
 - **Awards:** Highflyer Award (led RBI audit for B2B platform); Certificate of Appreciation (launched lead-gen flow driving higher conversion)
 
-**Assistant Product Manager — Airtel Payments Bank** (Jul 2022 – Dec 2023)
+**Assistant Product Manager — Fintech Organization** (Jul 2022 – Dec 2023)
 - Conducted market/user research to identify product opportunities; shaped onboarding & new financial-service launches
 - Built lead-generation & assignment tool routing 25K leads/month into onboarding
 - Expanded retailer services catalog (micro-ATM, biometric auth) via third-party providers; analyzed activation trends for roadmap prioritization

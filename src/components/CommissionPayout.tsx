@@ -205,7 +205,7 @@ export default function CommissionPayout() {
         </Link>
 
         <p className="mt-6 text-sm font-semibold uppercase tracking-widest text-accent">
-          Product Case Study · Airtel Payments Bank
+          Product Case Study · Fintech Organization
         </p>
         <h1 className="mt-2 text-3xl font-bold text-navy dark:text-white sm:text-4xl">
           Commission Payout Automation

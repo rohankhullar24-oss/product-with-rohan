@@ -1,6 +1,5 @@
 package online.productwithrohan.reminders
 
-import android.util.Xml
 import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.FileOutputStream
@@ -76,7 +75,7 @@ object PptxEngine {
         val entry = zip.getEntry("ppt/_rels/presentation.xml.rels") ?: return emptyMap()
         val map = HashMap<String, String>()
         zip.getInputStream(entry).use { input ->
-            val parser = Xml.newPullParser()
+            val parser = XlsxEngine.newOoxmlParser()
             parser.setInput(input, "UTF-8")
             var event = parser.eventType
             while (event != XmlPullParser.END_DOCUMENT) {
@@ -95,7 +94,7 @@ object PptxEngine {
         val entry = zip.getEntry("ppt/presentation.xml") ?: return emptyList()
         val targets = ArrayList<String>()
         zip.getInputStream(entry).use { input ->
-            val parser = Xml.newPullParser()
+            val parser = XlsxEngine.newOoxmlParser()
             parser.setInput(input, "UTF-8")
             var event = parser.eventType
             while (event != XmlPullParser.END_DOCUMENT) {
@@ -111,7 +110,7 @@ object PptxEngine {
     }
 
     private fun readSlide(input: java.io.InputStream): Slide {
-        val parser = Xml.newPullParser()
+        val parser = XlsxEngine.newOoxmlParser()
         parser.setInput(input, "UTF-8")
         var event = parser.eventType
 

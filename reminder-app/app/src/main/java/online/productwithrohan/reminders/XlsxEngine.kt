@@ -1,7 +1,7 @@
 package online.productwithrohan.reminders
 
-import android.util.Xml
 import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserFactory
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -20,11 +20,24 @@ import java.util.zip.ZipOutputStream
  * stdlib API needs no upstream-source verification the way a new dependency
  * would.
  *
- * The parser is deliberately namespace-unaware (Android's default for
- * `Xml.newPullParser()`), so tag/attribute names are matched as the raw
- * strings real spreadsheet tools emit, prefix included (e.g. "r:id").
+ * The parser is deliberately namespace-unaware (see [newOoxmlParser]), so
+ * tag/attribute names are matched as the raw strings real spreadsheet tools
+ * emit, prefix included (e.g. "r:id").
  */
 object XlsxEngine {
+
+    /**
+     * A namespace-*unaware* pull parser, shared by all three OOXML engines,
+     * which match raw prefixed names like "p:sldId", "w:p" and "r:id".
+     *
+     * Do not swap this for `android.util.Xml.newPullParser()`: despite what
+     * this code originally assumed, that one turns
+     * FEATURE_PROCESS_NAMESPACES *on*, so `parser.name` becomes the local
+     * name ("sldId") and `getAttributeValue(null, "r:id")` returns null —
+     * every prefixed match silently fails and real docx/pptx files open
+     * empty. XmlPullParserFactory's parsers default to namespace-unaware.
+     */
+    fun newOoxmlParser(): XmlPullParser = XmlPullParserFactory.newInstance().newPullParser()
 
     const val MAX_ROWS = 100
     const val MAX_COLS = 20
@@ -96,7 +109,7 @@ object XlsxEngine {
         val entry = zip.getEntry("xl/sharedStrings.xml") ?: return emptyList()
         val strings = ArrayList<String>()
         zip.getInputStream(entry).use { input ->
-            val parser = Xml.newPullParser()
+            val parser = newOoxmlParser()
             parser.setInput(input, "UTF-8")
             var event = parser.eventType
             var inSi = false
@@ -123,7 +136,7 @@ object XlsxEngine {
         val entry = zip.getEntry("xl/_rels/workbook.xml.rels") ?: return emptyMap()
         val map = HashMap<String, String>()
         zip.getInputStream(entry).use { input ->
-            val parser = Xml.newPullParser()
+            val parser = newOoxmlParser()
             parser.setInput(input, "UTF-8")
             var event = parser.eventType
             while (event != XmlPullParser.END_DOCUMENT) {
@@ -143,7 +156,7 @@ object XlsxEngine {
         val entry = zip.getEntry("xl/workbook.xml") ?: return emptyList()
         val sheets = ArrayList<Pair<String, String>>()
         zip.getInputStream(entry).use { input ->
-            val parser = Xml.newPullParser()
+            val parser = newOoxmlParser()
             parser.setInput(input, "UTF-8")
             var event = parser.eventType
             while (event != XmlPullParser.END_DOCUMENT) {
@@ -163,7 +176,7 @@ object XlsxEngine {
         val cells = HashMap<Pair<Int, Int>, String>()
         var maxRow = -1
         var maxCol = -1
-        val parser = Xml.newPullParser()
+        val parser = newOoxmlParser()
         parser.setInput(input, "UTF-8")
         var event = parser.eventType
         var currentRef: String? = null

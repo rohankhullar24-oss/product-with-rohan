@@ -1,5 +1,6 @@
 package online.productwithrohan.reminders
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
@@ -100,6 +101,8 @@ class PdfToolsActivity : AppCompatActivity() {
     /** Cached copy of the PDF being unlocked, kept across password retries. */
     private var unlockSourceFile: File? = null
     private var unlockedFileName = "unlocked.pdf"
+    /** Set for "Open with": an unencrypted PDF then just opens, with no "isn't locked" note. */
+    private var unlockQuietlyIfNotLocked = false
 
     private val saveAsLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
@@ -157,6 +160,12 @@ class PdfToolsActivity : AppCompatActivity() {
         convertButton.setOnClickListener { if (!busy) convertDocxLauncher.launch("document.docx") }
 
         updateButtonsEnabled()
+        // Opened from another app's "Open with" (see the manifest's VIEW filter).
+        // Goes through the unlock path so a password-protected PDF prompts for
+        // its password instead of failing; an unlocked one just opens.
+        if (savedInstanceState == null && intent?.action == Intent.ACTION_VIEW) {
+            intent.data?.let { startUnlock(it, fromViewIntent = true) }
+        }
     }
 
     override fun onDestroy() {
@@ -215,7 +224,7 @@ class PdfToolsActivity : AppCompatActivity() {
 
     // --- Unlocking (remove password protection / permission restrictions) ---
 
-    private fun startUnlock(uri: Uri) {
+    private fun startUnlock(uri: Uri, fromViewIntent: Boolean = false) {
         setBusy(true, R.string.pdf_loading)
         val baseName = DocumentFile.fromSingleUri(this, uri)?.name
             ?.removeSuffix(".pdf")?.removeSuffix(".PDF")
@@ -227,6 +236,7 @@ class PdfToolsActivity : AppCompatActivity() {
                     unlockSourceFile?.delete()
                     unlockSourceFile = file
                     unlockedFileName = "$baseName-unlocked.pdf"
+                    unlockQuietlyIfNotLocked = fromViewIntent
                     tryUnlock(file, password = "")
                 }
             } catch (e: Exception) {
@@ -268,9 +278,11 @@ class PdfToolsActivity : AppCompatActivity() {
             mainHandler.post {
                 setBusy(false, null)
                 discardUnlockSource()
-                statusText.text = getString(
-                    if (wasEncrypted) R.string.pdf_unlock_done else R.string.pdf_unlock_not_locked
-                )
+                statusText.text = when {
+                    wasEncrypted -> getString(R.string.pdf_unlock_done)
+                    unlockQuietlyIfNotLocked -> ""
+                    else -> getString(R.string.pdf_unlock_not_locked)
+                }
                 runDocumentTask(onApplied = {
                     if (wasEncrypted) saveAsLauncher.launch(unlockedFileName)
                 }) { doc }

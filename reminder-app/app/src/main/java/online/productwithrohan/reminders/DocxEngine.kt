@@ -1,6 +1,5 @@
 package online.productwithrohan.reminders
 
-import android.util.Xml
 import org.xmlpull.v1.XmlPullParser
 import java.io.File
 import java.io.FileOutputStream
@@ -65,7 +64,7 @@ object DocxEngine {
 
     private fun readParagraphs(input: java.io.InputStream): MutableList<Paragraph> {
         val paragraphs = ArrayList<Paragraph>()
-        val parser = Xml.newPullParser()
+        val parser = XlsxEngine.newOoxmlParser()
         parser.setInput(input, "UTF-8")
         var event = parser.eventType
 

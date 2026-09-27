@@ -168,6 +168,33 @@ for the exact narrowing and why:
   a device.** Worth testing with (a) a PDF with only permission
   restrictions, (b) one with an open password, (c) an AES-256 one.
 
+## Fixed (2026-09-27 — real Word/PowerPoint/Excel files opened empty)
+
+**Symptom (seen on a real device):** opening a real `.pptx` showed a single
+empty "Slide 1". **Root cause:** the "Namespace-unaware XML parsing" decision
+above was implemented with `android.util.Xml.newPullParser()`, which in fact
+turns `FEATURE_PROCESS_NAMESPACES` **on** (confirmed in AOSP's `Xml.java`).
+So `parser.name` returned `"sldId"` rather than `"p:sldId"` and
+`getAttributeValue(null, "r:id")` returned null — every prefixed match failed,
+`PptxEngine` found zero slides and fell back to one blank slide, and
+`DocxEngine` found zero `w:p` paragraphs. `XlsxEngine`'s sheet lookup (via
+`r:id`) was hit the same way. **Fix:** all three engines now get their parser
+from `XlsxEngine.newOoxmlParser()` (`XmlPullParserFactory`, namespace-unaware
+by default). Verified off-device with kxml2 (Android's parser) against a
+python-pptx/python-docx generated file: namespaces-on reproduces 0 slides /
+0 paragraphs; the fix reads both slides' title/body text and all paragraphs.
+
+**"Open with" support:** `PdfToolsActivity`, `SpreadsheetActivity`,
+`DocxEditorActivity`, `PptxEditorActivity` are now exported with an
+`ACTION_VIEW` intent filter for their MIME type, and load `intent.data` on
+launch, so Android offers the app under "Open with" for pdf/xlsx/docx/pptx.
+PDFs opened this way go through the unlock path (password prompt if needed).
+Old binary `.ppt`/`.doc`/`.xls` are not supported. Some file managers label
+these files `application/octet-stream`; the app won't appear for those.
+
+**Not a bug, still true:** these editors are text-only by design — they do
+not render slides/pages visually the way Microsoft PowerPoint/Word do.
+
 ## Not done yet
 
 1. **CI confirmation for Phases 2–4 is still in progress as of this

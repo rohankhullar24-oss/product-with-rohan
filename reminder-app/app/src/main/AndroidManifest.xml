@@ -221,8 +221,16 @@
 
         <activity
             android:name=".PdfToolsActivity"
-            android:exported="false"
-            android:parentActivityName=".WorksEnablerActivity" />
+            android:exported="true"
+            android:parentActivityName=".WorksEnablerActivity">
+            <!-- Lets Android offer this screen under "Open with" for these files. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/pdf" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".OcrScanActivity"
@@ -231,18 +239,42 @@
 
         <activity
             android:name=".SpreadsheetActivity"
-            android:exported="false"
-            android:parentActivityName=".WorksEnablerActivity" />
+            android:exported="true"
+            android:parentActivityName=".WorksEnablerActivity">
+            <!-- Lets Android offer this screen under "Open with" for these files. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".DocxEditorActivity"
-            android:exported="false"
-            android:parentActivityName=".WorksEnablerActivity" />
+            android:exported="true"
+            android:parentActivityName=".WorksEnablerActivity">
+            <!-- Lets Android offer this screen under "Open with" for these files. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
+            </intent-filter>
+        </activity>
 
         <activity
             android:name=".PptxEditorActivity"
-            android:exported="false"
-            android:parentActivityName=".WorksEnablerActivity" />
+            android:exported="true"
+            android:parentActivityName=".WorksEnablerActivity">
+            <!-- Lets Android offer this screen under "Open with" for these files. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/vnd.openxmlformats-officedocument.presentationml.presentation" />
+            </intent-filter>
+        </activity>
 
         <!-- Auto Scheduler: schedules a one-off SMS/call/reminder for a future time. -->
         <activity

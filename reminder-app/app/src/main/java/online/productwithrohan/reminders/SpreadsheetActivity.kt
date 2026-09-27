@@ -1,5 +1,6 @@
 package online.productwithrohan.reminders
 
+import android.content.Intent
 import android.graphics.Typeface
 import android.net.Uri
 import android.os.Bundle
@@ -96,6 +97,10 @@ class SpreadsheetActivity : AppCompatActivity() {
         }
 
         newBlank()
+        // Opened from another app's "Open with" (see the manifest's VIEW filter).
+        if (savedInstanceState == null && intent?.action == Intent.ACTION_VIEW) {
+            intent.data?.let { loadFrom(it) }
+        }
     }
 
     override fun onDestroy() {

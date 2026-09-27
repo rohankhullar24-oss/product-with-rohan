@@ -17,6 +17,9 @@ class WorksEnablerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_works_enabler)
         title = getString(R.string.title_works_enabler)
 
+        findViewById<View>(R.id.card_viewer).setOnClickListener {
+            startActivity(Intent(this, OfficePreviewActivity::class.java))
+        }
         findViewById<View>(R.id.card_pdf).setOnClickListener {
             startActivity(Intent(this, PdfToolsActivity::class.java))
         }

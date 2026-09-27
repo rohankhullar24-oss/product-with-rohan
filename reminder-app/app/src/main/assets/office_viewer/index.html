@@ -1,0 +1,253 @@
+<!doctype html>
+<!--
+  Read-only "looks like Office" viewer for Works Enabler, loaded by
+  OfficePreviewActivity from file:///android_asset/office_viewer/index.html.
+  Everything runs offline from the bundled lib/ scripts (network loads are
+  blocked by the WebView). The file arrives through the AndroidViewer
+  JavaScript interface: getKind() -> "docx" | "pptx" | "xlsx",
+  getData() -> base64 bytes; onDone()/onError(msg) report back.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=0.25, maximum-scale=5, user-scalable=yes">
+<style>
+  html, body { margin: 0; padding: 0; background: #e8e8ec; font-family: sans-serif; }
+  #status { padding: 24px 16px; color: #444; font-size: 15px; }
+  #status.error { color: #b00020; white-space: pre-wrap; }
+  #root { width: 100%; }
+  /* docx-preview: pages are laid out at their real width, then zoomed to fit. */
+  .docx-wrapper { background: #e8e8ec !important; padding: 8px 0 !important; }
+  .docx-wrapper > section.docx { box-shadow: 0 1px 4px rgba(0,0,0,.25); margin-bottom: 12px !important; }
+  /* pptx-preview (list mode) */
+  #pptx-host { padding: 8px 0; }
+  /* The library sizes its outer wrapper to the 16:9 box passed to init() and
+     clips overflow; each slide sizes itself from the width at its real
+     aspect ratio (4:3 decks included), so let the wrapper grow instead. */
+  .pptx-preview-wrapper { height: auto !important; overflow: visible !important; background: transparent !important; margin: 0 auto; }
+  .pptx-preview-wrapper > .pptx-preview-slide-wrapper { margin: 0 auto 12px !important; box-shadow: 0 1px 4px rgba(0,0,0,.25); }
+  /* xlsx */
+  .tabs { position: sticky; top: 0; z-index: 2; display: flex; overflow-x: auto; background: #f3f3f3; border-bottom: 1px solid #ccc; }
+  .tabs button { border: 0; background: none; padding: 10px 14px; font-size: 14px; color: #333; white-space: nowrap; }
+  .tabs button.active { background: #fff; color: #1d6f42; font-weight: bold; border-bottom: 3px solid #1d6f42; }
+  .sheet-wrap { overflow: auto; background: #fff; }
+  table.sheet { border-collapse: collapse; font-size: 13px; background: #fff; }
+  table.sheet td, table.sheet th { border: 1px solid #d4d4d4; padding: 2px 4px; white-space: pre; overflow: hidden; max-width: 480px; }
+  table.sheet th { background: #f3f3f3; color: #555; font-weight: normal; position: sticky; top: 0; }
+  table.sheet th.rowhead { position: sticky; left: 0; top: auto; z-index: 1; text-align: center; }
+  table.sheet th.corner { left: 0; z-index: 2; }
+  .note { padding: 8px 12px; font-size: 12px; color: #666; }
+</style>
+</head>
+<body>
+<div id="status">Loading…</div>
+<div id="root"></div>
+<script src="lib/jszip.min.js"></script>
+<script src="lib/docx-preview.min.js"></script>
+<script src="lib/pptx-preview.umd.js"></script>
+<script src="lib/exceljs.min.js"></script>
+<script>
+(function () {
+  var bridge = window.AndroidViewer;
+  var statusEl = document.getElementById('status');
+  var root = document.getElementById('root');
+
+  function done() {
+    statusEl.style.display = 'none';
+    if (bridge && bridge.onDone) bridge.onDone();
+  }
+  function fail(err) {
+    var msg = (err && (err.message || String(err))) || 'unknown error';
+    statusEl.className = 'error';
+    statusEl.style.display = 'block';
+    statusEl.textContent = 'Couldn\'t display this file.\n' + msg;
+    if (bridge && bridge.onError) bridge.onError(msg);
+  }
+  function base64ToArrayBuffer(b64) {
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes.buffer;
+  }
+  function fitWidth() { return Math.max(200, document.documentElement.clientWidth); }
+
+  // ---- Word ----
+  function renderDocx(buf) {
+    var host = document.createElement('div');
+    root.appendChild(host);
+    return docx.renderAsync(buf, host, null, {
+      inWrapper: true, breakPages: true, ignoreLastRenderedPageBreak: true,
+      renderHeaders: true, renderFooters: true, renderFootnotes: true, renderEndnotes: true,
+      useBase64URL: true, experimental: true
+    }).then(function () {
+      // Zoom the real-size pages down to the screen width.
+      var widest = 0;
+      host.querySelectorAll('section.docx').forEach(function (s) { widest = Math.max(widest, s.offsetWidth); });
+      if (widest > 0) {
+        var z = Math.min(1, (fitWidth() - 16) / widest);
+        host.style.zoom = String(z);
+      }
+    });
+  }
+
+  // ---- PowerPoint ----
+  function renderPptx(buf) {
+    var host = document.createElement('div');
+    host.id = 'pptx-host';
+    root.appendChild(host);
+    var w = fitWidth() - 16;
+    var previewer = pptxPreview.init(host, { width: w, height: Math.round(w * 9 / 16), mode: 'list' });
+    return previewer.preview(buf);
+  }
+
+  // ---- Excel ----
+  var MAX_ROWS = 2000, MAX_COLS = 60;
+
+  function argb(c) {
+    if (!c || !c.argb || c.argb.length !== 8) return null;
+    return '#' + c.argb.substring(2);
+  }
+  function colName(n) {
+    var s = '';
+    while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); }
+    return s;
+  }
+  function cellText(cell) {
+    var v = cell.value;
+    if (v && typeof v === 'object' && v.formula !== undefined && v.result === undefined) return '=' + v.formula;
+    try { return cell.text == null ? '' : String(cell.text); } catch (e) { return ''; }
+  }
+  function borderCss(b) {
+    if (!b || !b.style) return null;
+    var width = (b.style === 'thick' || b.style === 'double') ? '2px' : '1px';
+    return width + ' solid ' + (argb(b.color) || '#000');
+  }
+  function styleCell(td, cell) {
+    var st = cell.style || {};
+    var f = st.font || {};
+    if (f.bold) td.style.fontWeight = 'bold';
+    if (f.italic) td.style.fontStyle = 'italic';
+    if (f.underline) td.style.textDecoration = 'underline';
+    if (f.size) td.style.fontSize = (f.size * 1.333).toFixed(1) + 'px';
+    if (argb(f.color)) td.style.color = argb(f.color);
+    var fill = st.fill;
+    if (fill && fill.type === 'pattern' && fill.pattern === 'solid' && argb(fill.fgColor)) td.style.background = argb(fill.fgColor);
+    var al = st.alignment || {};
+    if (al.horizontal) td.style.textAlign = al.horizontal === 'centerContinuous' ? 'center' : al.horizontal;
+    else if (typeof cell.value === 'number' || cell.value instanceof Date) td.style.textAlign = 'right';
+    if (al.vertical) td.style.verticalAlign = al.vertical === 'middle' ? 'middle' : al.vertical;
+    if (al.wrapText) td.style.whiteSpace = 'pre-wrap';
+    var b = st.border || {};
+    ['top', 'right', 'bottom', 'left'].forEach(function (side) {
+      var css = borderCss(b[side]);
+      if (css) td.style['border' + side.charAt(0).toUpperCase() + side.slice(1)] = css;
+    });
+  }
+  function renderSheet(ws, container) {
+    container.innerHTML = '';
+    var rowCount = Math.min(ws.rowCount || 0, MAX_ROWS);
+    var colCount = Math.min(ws.columnCount || 0, MAX_COLS);
+    if (rowCount === 0 || colCount === 0) {
+      container.innerHTML = '<div class="note">This sheet is empty.</div>';
+      return;
+    }
+    // Merges: "A1:D1" ranges -> top-left gets spans, the rest are skipped.
+    var skip = {}, spans = {};
+    var merges = (ws.model && ws.model.merges) || [];
+    merges.forEach(function (range) {
+      var parts = range.split(':');
+      if (parts.length !== 2) return;
+      var a = ws.getCell(parts[0]), b = ws.getCell(parts[1]);
+      var r1 = Math.min(a.row, b.row), r2 = Math.max(a.row, b.row);
+      var c1 = Math.min(a.col, b.col), c2 = Math.max(a.col, b.col);
+      spans[r1 + ',' + c1] = { rows: r2 - r1 + 1, cols: c2 - c1 + 1 };
+      for (var r = r1; r <= r2; r++) for (var c = c1; c <= c2; c++) if (r !== r1 || c !== c1) skip[r + ',' + c] = true;
+    });
+
+    var table = document.createElement('table');
+    table.className = 'sheet';
+    var colgroup = document.createElement('colgroup');
+    var headCol = document.createElement('col'); headCol.style.width = '36px'; colgroup.appendChild(headCol);
+    for (var c = 1; c <= colCount; c++) {
+      var col = document.createElement('col');
+      var w = ws.getColumn(c).width;
+      col.style.width = Math.round((w || 8.43) * 7 + 5) + 'px';
+      colgroup.appendChild(col);
+    }
+    table.appendChild(colgroup);
+
+    var thead = document.createElement('tr');
+    var corner = document.createElement('th'); corner.className = 'rowhead corner'; thead.appendChild(corner);
+    for (var hc = 1; hc <= colCount; hc++) { var th = document.createElement('th'); th.textContent = colName(hc); thead.appendChild(th); }
+    table.appendChild(thead);
+
+    for (var r = 1; r <= rowCount; r++) {
+      var row = ws.getRow(r);
+      if (row.hidden) continue;
+      var tr = document.createElement('tr');
+      if (row.height) tr.style.height = Math.round(row.height * 1.333) + 'px';
+      var rh = document.createElement('th'); rh.className = 'rowhead'; rh.textContent = r; tr.appendChild(rh);
+      for (var cc = 1; cc <= colCount; cc++) {
+        var key = r + ',' + cc;
+        if (skip[key]) continue;
+        var cell = row.getCell(cc);
+        var td = document.createElement('td');
+        var sp = spans[key];
+        if (sp) { if (sp.rows > 1) td.rowSpan = sp.rows; if (sp.cols > 1) td.colSpan = sp.cols; }
+        td.textContent = cellText(cell);
+        styleCell(td, cell);
+        tr.appendChild(td);
+      }
+      table.appendChild(tr);
+    }
+    container.appendChild(table);
+    if ((ws.rowCount || 0) > MAX_ROWS || (ws.columnCount || 0) > MAX_COLS) {
+      var note = document.createElement('div');
+      note.className = 'note';
+      note.textContent = 'Showing the first ' + MAX_ROWS + ' rows and ' + MAX_COLS + ' columns.';
+      container.appendChild(note);
+    }
+  }
+  function renderXlsx(buf) {
+    var wb = new ExcelJS.Workbook();
+    return wb.xlsx.load(buf).then(function () {
+      var sheets = wb.worksheets.filter(function (ws) { return ws.state !== 'hidden' && ws.state !== 'veryHidden'; });
+      if (sheets.length === 0) throw new Error('No visible sheets');
+      var tabs = document.createElement('div'); tabs.className = 'tabs';
+      var wrap = document.createElement('div'); wrap.className = 'sheet-wrap';
+      sheets.forEach(function (ws, i) {
+        var btn = document.createElement('button');
+        btn.textContent = ws.name;
+        btn.onclick = function () {
+          tabs.querySelectorAll('button').forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          renderSheet(ws, wrap);
+        };
+        tabs.appendChild(btn);
+        if (i === 0) btn.classList.add('active');
+      });
+      root.appendChild(tabs);
+      root.appendChild(wrap);
+      renderSheet(sheets[0], wrap);
+    });
+  }
+
+  function start() {
+    if (!bridge) { fail(new Error('No file was provided.')); return; }
+    var kind = bridge.getKind();
+    var buf;
+    try { buf = base64ToArrayBuffer(bridge.getData()); } catch (e) { fail(e); return; }
+    var job;
+    try {
+      if (kind === 'docx') job = renderDocx(buf);
+      else if (kind === 'pptx') job = renderPptx(buf);
+      else if (kind === 'xlsx') job = renderXlsx(buf);
+      else throw new Error('Unsupported file type: ' + kind);
+    } catch (e) { fail(e); return; }
+    Promise.resolve(job).then(done, fail);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
+})();
+</script>
+</body>
+</html>

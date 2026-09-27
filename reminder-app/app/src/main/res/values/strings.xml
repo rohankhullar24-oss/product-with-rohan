@@ -235,6 +235,8 @@
     <!-- Works Enabler -->
     <string name="title_works_enabler">Works Enabler</string>
     <string name="works_enabler_explainer">Open-source document tools. Everything runs on this phone — nothing is uploaded anywhere.</string>
+    <string name="works_enabler_viewer_title">View Word / PowerPoint / Excel</string>
+    <string name="works_enabler_viewer_subtitle">See a .docx, .pptx or .xlsx the way Office shows it — layout, images, colours (read-only)</string>
     <string name="works_enabler_pdf_title">PDF</string>
     <string name="works_enabler_pdf_subtitle">View, merge, rotate, reorder, delete pages, compress, unlock, create from photos</string>
     <string name="works_enabler_ocr_title">Scan / OCR</string>
@@ -269,6 +271,15 @@
     <string name="pdf_converting">Converting…</string>
     <string name="pdf_convert_done">Converted — text only, no layout or images</string>
     <string name="pdf_convert_failed">Couldn\'t convert: %1$s</string>
+    <string name="office_viewer_title">Viewer</string>
+    <string name="office_viewer_open">Open another…</string>
+    <string name="office_viewer_edit_text">Edit text</string>
+    <string name="office_viewer_loading">Loading…</string>
+    <string name="office_viewer_pick_prompt">Pick a Word, PowerPoint or Excel file to view.</string>
+    <string name="office_viewer_hint">Read-only preview — pinch to zoom. \"Edit text\" opens the text editor (keeps text only).</string>
+    <string name="office_viewer_unsupported">Only .docx, .pptx and .xlsx files can be viewed (not old .doc/.ppt/.xls).</string>
+    <string name="office_viewer_too_large">File is larger than %1$d MB — too big to preview on the phone.</string>
+    <string name="office_viewer_failed">Couldn\'t display this file: %1$s</string>
     <string name="pdf_unlock_pdf">Unlock PDF (remove password)</string>
     <string name="pdf_unlock">Unlock</string>
     <string name="pdf_unlocking">Unlocking…</string>

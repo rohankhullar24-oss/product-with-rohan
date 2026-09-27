@@ -13,7 +13,7 @@ type Role = {
 const roles: Role[] = [
   {
     title: "Product Manager",
-    company: "Airtel Payments Bank",
+    company: "Fintech Organization",
     dates: "Jul 2022 – Present",
     bullets: [
       "Led product strategy, roadmap prioritization and execution for a high-scale B2B platform serving 600K+ users and ₹7 Cr monthly GMV, driving growth, platform scalability, automation and user experience improvements.",
@@ -30,7 +30,7 @@ const roles: Role[] = [
   },
   {
     title: "Assistant Product Manager",
-    company: "Airtel Payments Bank",
+    company: "Fintech Organization",
     dates: "Part of tenure",
     bullets: [
       "Built and launched an end-to-end inventory and ordering platform supporting catalog management, order tracking, fulfillment workflows and third-party integrations, improving operational efficiency and user experience.",

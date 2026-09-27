@@ -9,12 +9,17 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.ParcelFileDescriptor
+import android.text.InputType
 import android.widget.Button
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.documentfile.provider.DocumentFile
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
@@ -23,6 +28,7 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.pdmodel.PDPage
 import com.tom_roush.pdfbox.pdmodel.PDPageContentStream
 import com.tom_roush.pdfbox.pdmodel.common.PDRectangle
+import com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException
 import com.tom_roush.pdfbox.pdmodel.graphics.image.JPEGFactory
 import com.tom_roush.pdfbox.pdmodel.graphics.image.PDImageXObject
 import java.io.File
@@ -37,6 +43,15 @@ import java.util.concurrent.Executors
  * change re-saves it to a fresh cache file and re-renders thumbnails from
  * that file, mirroring ZipExtractorActivity's "operate on a real File, not
  * directly on the SAF stream" shape.
+ *
+ * "Unlock PDF" removes a PDF's encryption given its password (or, for a PDF
+ * that only has an owner password restricting printing/copying/editing, with
+ * no password at all — PdfBox opens those with the empty user password). It
+ * loads the file with that password, sets [PDDocument.setAllSecurityToBeRemoved],
+ * and opens the result as the working document, so every later save — the
+ * working cache file and "Save as…" alike — is written unencrypted. It does
+ * not guess or crack passwords: a PDF that needs one to open can only be
+ * unlocked by someone who knows it.
  */
 class PdfToolsActivity : AppCompatActivity() {
 
@@ -76,6 +91,15 @@ class PdfToolsActivity : AppCompatActivity() {
                 mergeAll(uris)
             }
         }
+
+    private val unlockLauncher =
+        registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) startUnlock(uri)
+        }
+
+    /** Cached copy of the PDF being unlocked, kept across password retries. */
+    private var unlockSourceFile: File? = null
+    private var unlockedFileName = "unlocked.pdf"
 
     private val saveAsLauncher =
         registerForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->
@@ -123,6 +147,9 @@ class PdfToolsActivity : AppCompatActivity() {
         findViewById<Button>(R.id.button_merge).setOnClickListener {
             if (!busy) mergeLauncher.launch(arrayOf("application/pdf"))
         }
+        findViewById<Button>(R.id.button_unlock).setOnClickListener {
+            if (!busy) unlockLauncher.launch(arrayOf("application/pdf"))
+        }
         saveButton.setOnClickListener {
             if (!busy) saveAsLauncher.launch("document.pdf")
         }
@@ -138,6 +165,7 @@ class PdfToolsActivity : AppCompatActivity() {
         closeRenderer()
         document?.close()
         workingFile?.delete()
+        unlockSourceFile?.delete()
     }
 
     // --- Loading / creating / merging (each produces a brand-new PDDocument) ---
@@ -183,6 +211,99 @@ class PdfToolsActivity : AppCompatActivity() {
         val y = (box.height - drawHeight) / 2f
         val image = JPEGFactory.createFromImage(doc, bitmap, 0.85f)
         PDPageContentStream(doc, page).use { cs -> cs.drawImage(image, x, y, drawWidth, drawHeight) }
+    }
+
+    // --- Unlocking (remove password protection / permission restrictions) ---
+
+    private fun startUnlock(uri: Uri) {
+        setBusy(true, R.string.pdf_loading)
+        val baseName = DocumentFile.fromSingleUri(this, uri)?.name
+            ?.removeSuffix(".pdf")?.removeSuffix(".PDF")
+            ?.takeIf { it.isNotBlank() } ?: "document"
+        executor.execute {
+            try {
+                val file = copyToCache(uri, "pdf_unlock")
+                mainHandler.post {
+                    unlockSourceFile?.delete()
+                    unlockSourceFile = file
+                    unlockedFileName = "$baseName-unlocked.pdf"
+                    tryUnlock(file, password = "")
+                }
+            } catch (e: Exception) {
+                mainHandler.post {
+                    setBusy(false, null)
+                    statusText.text = getString(R.string.pdf_open_failed, e.message ?: e.toString())
+                }
+            }
+        }
+    }
+
+    /**
+     * Tries [password] (empty on the first attempt, which is all an
+     * owner-password-only PDF needs). A wrong or missing password prompts
+     * for one; anything else hands the decrypted document to
+     * [runDocumentTask] and then offers "Save as…" for the unlocked copy.
+     */
+    private fun tryUnlock(file: File, password: String) {
+        setBusy(true, R.string.pdf_unlocking)
+        executor.execute {
+            val doc = try {
+                PDDocument.load(file, password)
+            } catch (e: InvalidPasswordException) {
+                mainHandler.post {
+                    setBusy(false, null)
+                    promptPdfPassword(file, wrongPassword = password.isNotEmpty())
+                }
+                return@execute
+            } catch (e: Exception) {
+                mainHandler.post {
+                    setBusy(false, null)
+                    discardUnlockSource()
+                    statusText.text = getString(R.string.pdf_unlock_failed, e.message ?: e.toString())
+                }
+                return@execute
+            }
+            val wasEncrypted = doc.isEncrypted
+            if (wasEncrypted) doc.isAllSecurityToBeRemoved = true
+            mainHandler.post {
+                setBusy(false, null)
+                discardUnlockSource()
+                statusText.text = getString(
+                    if (wasEncrypted) R.string.pdf_unlock_done else R.string.pdf_unlock_not_locked
+                )
+                runDocumentTask(onApplied = {
+                    if (wasEncrypted) saveAsLauncher.launch(unlockedFileName)
+                }) { doc }
+            }
+        }
+    }
+
+    private fun promptPdfPassword(file: File, wrongPassword: Boolean) {
+        val input = EditText(this).apply {
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            hint = getString(R.string.pdf_password_hint)
+        }
+        val padding = (20 * resources.displayMetrics.density).toInt()
+        val container = FrameLayout(this).apply {
+            setPadding(padding, padding / 2, padding, 0)
+            addView(input)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle(if (wrongPassword) R.string.pdf_password_wrong else R.string.pdf_password_title)
+            .setView(container)
+            .setPositiveButton(R.string.pdf_unlock) { _, _ ->
+                tryUnlock(file, password = input.text.toString())
+            }
+            .setNegativeButton(android.R.string.cancel) { _, _ -> discardUnlockSource() }
+            .setOnCancelListener { discardUnlockSource() }
+            .show()
+    }
+
+    /** Main thread only. */
+    private fun discardUnlockSource() {
+        unlockSourceFile?.delete()
+        unlockSourceFile = null
     }
 
     // --- Page-level edits (mutate the existing PDDocument in place) ---
@@ -307,7 +428,11 @@ class PdfToolsActivity : AppCompatActivity() {
      * [applyDocument] only closes the old document if [produceDoc] returned a
      * different instance.
      */
-    private fun runDocumentTask(showBusy: Boolean = true, produceDoc: () -> PDDocument) {
+    private fun runDocumentTask(
+        showBusy: Boolean = true,
+        onApplied: () -> Unit = {},
+        produceDoc: () -> PDDocument,
+    ) {
         if (showBusy) setBusy(true, R.string.pdf_loading)
         val previousStatus = statusText.text
         executor.execute {
@@ -327,12 +452,17 @@ class PdfToolsActivity : AppCompatActivity() {
                         state == null -> statusText.text = getString(R.string.pdf_no_pages_left)
                         else -> statusText.text = previousStatus
                     }
+                    if (state != null) onApplied()
                 }
             } catch (e: Exception) {
                 mainHandler.post {
                     pendingCompressBeforeSize = null
                     setBusy(false, null)
-                    statusText.text = getString(R.string.pdf_open_failed, e.message ?: e.toString())
+                    statusText.text = if (e is InvalidPasswordException) {
+                        getString(R.string.pdf_open_locked)
+                    } else {
+                        getString(R.string.pdf_open_failed, e.message ?: e.toString())
+                    }
                 }
             }
         }

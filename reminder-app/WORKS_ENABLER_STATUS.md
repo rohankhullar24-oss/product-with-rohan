@@ -143,6 +143,31 @@ for the exact narrowing and why:
   PowerPoint-produced pptx's `ppt/slideMasters/slideMaster1.xml` and
   `ppt/presentation.xml`.
 
+## Done (follow-up, 2026-09-27 — PDF unlock)
+
+- **"Unlock PDF (remove password)"** on `PdfToolsActivity`: pick a PDF, it
+  is loaded with the empty password first (enough for PDFs that only carry
+  an *owner* password restricting print/copy/edit); if that throws
+  PdfBox's `InvalidPasswordException` a password dialog appears (re-shown
+  as "Wrong password — try again" on a miss). Once loaded,
+  `PDDocument.setAllSecurityToBeRemoved(true)` is set and the document
+  becomes the normal working document, so the cache copy PdfRenderer draws
+  and every "Save as…" are written unencrypted; "Save as…" opens
+  automatically, prefilled `<name>-unlocked.pdf`. It does **not** guess or
+  brute-force a password — a PDF that needs one to open needs the user to
+  know it. Certificate (public-key) encrypted PDFs aren't supported and
+  surface PdfBox's error.
+- Plain "Open PDF" on a password-protected file now says to use "Unlock
+  PDF" instead of showing PdfBox's raw decrypt error.
+- APIs checked against upstream `TomRoush/PdfBox-Android` before use:
+  `PDDocument.load(File, String)`, `isEncrypted`,
+  `setAllSecurityToBeRemoved`, and
+  `com.tom_roush.pdfbox.pdmodel.encryption.InvalidPasswordException`
+  (extends `IOException`, so it must be caught before the generic handler).
+- **Same caveat as everything else here: CI-compiled at best, never run on
+  a device.** Worth testing with (a) a PDF with only permission
+  restrictions, (b) one with an open password, (c) an AES-256 one.
+
 ## Not done yet
 
 1. **CI confirmation for Phases 2–4 is still in progress as of this

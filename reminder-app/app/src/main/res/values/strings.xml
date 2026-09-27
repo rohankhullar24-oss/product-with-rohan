@@ -236,7 +236,7 @@
     <string name="title_works_enabler">Works Enabler</string>
     <string name="works_enabler_explainer">Open-source document tools. Everything runs on this phone — nothing is uploaded anywhere.</string>
     <string name="works_enabler_pdf_title">PDF</string>
-    <string name="works_enabler_pdf_subtitle">View, merge, rotate, reorder, delete pages, compress, create from photos</string>
+    <string name="works_enabler_pdf_subtitle">View, merge, rotate, reorder, delete pages, compress, unlock, create from photos</string>
     <string name="works_enabler_ocr_title">Scan / OCR</string>
     <string name="works_enabler_ocr_subtitle">Turn a photo or scanned page into editable, selectable text</string>
     <string name="works_enabler_spreadsheet_title">Spreadsheet</string>
@@ -269,6 +269,16 @@
     <string name="pdf_converting">Converting…</string>
     <string name="pdf_convert_done">Converted — text only, no layout or images</string>
     <string name="pdf_convert_failed">Couldn\'t convert: %1$s</string>
+    <string name="pdf_unlock_pdf">Unlock PDF (remove password)</string>
+    <string name="pdf_unlock">Unlock</string>
+    <string name="pdf_unlocking">Unlocking…</string>
+    <string name="pdf_password_title">This PDF is password-protected</string>
+    <string name="pdf_password_wrong">Wrong password — try again</string>
+    <string name="pdf_password_hint">PDF password</string>
+    <string name="pdf_unlock_done">Unlocked — save the copy to keep it without a password</string>
+    <string name="pdf_unlock_not_locked">This PDF isn\'t locked — opened as-is</string>
+    <string name="pdf_unlock_failed">Couldn\'t unlock that PDF: %1$s</string>
+    <string name="pdf_open_locked">This PDF is password-protected — use \"Unlock PDF\" instead</string>
 
     <string name="ocr_explainer">Take a photo of a printed page, or pick an existing image, to recognize its text on this device.</string>
     <string name="ocr_take_photo">Take photo</string>

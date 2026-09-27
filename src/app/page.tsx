@@ -7,7 +7,7 @@ import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Rohan Khullar | Product Manager | AI & Fintech Growth Strategy",
+  title: "Rohan Khullar | Product Manager | AI & Growth Strategy",
   description:
     "Product Manager with 4+ years driving product strategy for B2B fintech. Expertise in platform growth, payments, and AI automation. 600K+ users, ₹7Cr GMV, 73% conversion.",
   openGraph: {

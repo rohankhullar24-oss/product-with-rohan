@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Rohan Khullar | Product Manager | AI & Fintech Growth Strategy",
+  title: "Rohan Khullar | Product Manager | AI & Growth Strategy",
   description:
     "Product Manager with 4+ years driving product strategy for B2B fintech. Expertise in platform growth, payments, and AI automation. 600K+ users, ₹7Cr GMV, 73% conversion.",
   keywords: [
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://productwithrohan.online",
     siteName: "Product with Rohan",
-    title: "Rohan Khullar | Product Manager | AI & Fintech Growth Strategy",
+    title: "Rohan Khullar | Product Manager | AI & Growth Strategy",
     description:
       "Product Manager with 4+ years driving product strategy for B2B fintech. Expertise in platform growth, payments, and AI automation.",
   },

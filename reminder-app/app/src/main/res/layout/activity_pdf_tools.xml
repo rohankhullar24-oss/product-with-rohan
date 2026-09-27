@@ -43,6 +43,14 @@
                 android:text="@string/pdf_merge" />
         </LinearLayout>
 
+        <Button
+            android:id="@+id/button_unlock"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="@string/pdf_unlock_pdf" />
+
         <TextView
             android:id="@+id/page_count"
             android:layout_width="match_parent"

@@ -374,7 +374,8 @@ common library:
     ("Works Enabler") off `MainActivity`: an open-source office-document
     toolkit, now covering all four planned phases. `PdfToolsActivity`
     opens/creates/merges a PDF, edits it page-by-page (rotate/delete/reorder),
-    compresses it, and converts it to a `.docx` (Phase 4, plain text only),
+    compresses it, removes its password/permission protection given the
+    password ("Unlock PDF"), and converts it to a `.docx` (Phase 4, plain text only),
     using `PdfBox-Android` (`com.tom-roush:pdfbox-android`, package
     `com.tom_roush.pdfbox.*` — note the underscore, unlike the Maven
     coordinate) for everything but page thumbnails, which use Android's

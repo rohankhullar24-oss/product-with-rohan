@@ -146,6 +146,35 @@ sitemap/nav). Two entry points share one backend:
   `findings/route.ts` persists to the `inspection_findings` Supabase table
   (thumbnail only, not the full-size photo).
 
+## Issue Check (`/issue-check`)
+
+An unlisted (noindex) phone page for field inspectors: send a photo or a
+short video of a car part, get back which part it is and which issue to mark,
+chosen only from the company's part/issue list. Ported from a Google Apps
+Script prototype.
+
+- **`src/app/issue-check/`** — the page. Photos are downscaled to 1280 px JPEG
+  in the browser; videos (≤ 2 min) become 6–20 JPEG frames (one per ~4 s), so
+  every request stays far below Vercel's 4.5 MB body cap and works with either
+  model. Findings draw boxes on the frame they point at; each finding has
+  Right/Wrong buttons (Wrong → pick the correct issue) that build the accuracy
+  log.
+- **`src/app/api/issue-check/`** — `route.ts` runs a check (Gemini
+  `gemini-2.5-flash` → `gemini-3.5-flash-lite`, then Claude as fallback if
+  `ANTHROPIC_API_KEY` is set; `ISSUE_CHECK_PROVIDER=claude` flips the order,
+  `ISSUE_CHECK_CLAUDE_MODEL` overrides the model). `rate/route.ts` saves a
+  rating (POST) and returns overall accuracy (GET).
+- **`src/lib/issue-check/`** — `taxonomy.ts` loads the list, `analyze.ts`
+  holds the prompt, provider calls and the mapping of the model's P-numbers /
+  issue ids back onto the real list (anything invented is dropped),
+  `access.ts` the optional shared code (`ISSUE_CHECK_CODE`; unset = open,
+  still rate-limited).
+- **Data** — the part/issue list (379 parts, 1,479 issues) is company data,
+  so it is **not in this public repo**: it lives in the Supabase table
+  `issue_check_parts` (`idx`, `path`, `issues` jsonb). Checks and ratings go
+  to `issue_check_log` (`kind` = check | rating, ratings link via
+  `check_id`). Both tables have RLS on with no policies — service role only.
+
 ## Android apps
 
 Three Gradle modules under one root build (`settings.gradle.kts`), sharing a

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 import { isRateLimited } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { hasAccess } from "@/lib/issue-check/access";
@@ -11,6 +11,7 @@ import {
   parseJson,
   ProviderError,
   resolve,
+  type CheckResult,
   type Frame,
   type MediaKind,
 } from "@/lib/issue-check/analyze";
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
     }
   }
   if (!answer) {
+    await saveCheck({ kind, media, thumb: body?.thumb, error: failure?.message ?? "AI unreachable" });
     return NextResponse.json(
       { error: failure?.message ?? "The AI could not be reached." },
       { status: failure?.status ?? 502 }
@@ -91,6 +93,7 @@ export async function POST(request: NextRequest) {
 
   const parsed = parseJson(answer.raw);
   if (!parsed) {
+    await saveCheck({ model: answer.model, kind, media, thumb: body?.thumb, error: "Unreadable AI answer" });
     return NextResponse.json({ error: "The AI answer could not be read. Try again." }, { status: 502 });
   }
 
@@ -100,30 +103,86 @@ export async function POST(request: NextRequest) {
   }
   const secs = Math.round((Date.now() - t0) / 100) / 10;
 
-  let checkId: string | null = null;
-  if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    const { data, error } = await createAdminClient()
-      .from("issue_check_log")
-      .insert({
-        kind: "check",
-        provider: answer.model.startsWith("claude") ? "claude" : "gemini",
-        model: answer.model,
-        secs,
-        media_kind: kind,
-        view: result.view.slice(0, 500),
-        findings: result.findings.map((f) => ({
-          part: f.part,
-          issueId: f.issueId,
-          issue: f.issue,
-          confidence: f.confidence,
-        })),
-        thumb: typeof body?.thumb === "string" && body.thumb.length <= MAX_THUMB ? body.thumb : null,
-      })
-      .select("id")
-      .single();
-    if (error) console.error("[issue-check] log failed", error.message);
-    checkId = data?.id ?? null;
-  }
+  const checkId = await saveCheck({
+    model: answer.model,
+    secs,
+    kind,
+    media,
+    thumb: body?.thumb,
+    result,
+  });
 
   return NextResponse.json({ ...result, secs, model: answer.model, checkId });
+}
+
+/**
+ * Records one check for the history page, successful or not. The row is
+ * written before the response (ratings need its id); the photo/frames are
+ * uploaded to the private issue-check-media bucket after it, so the
+ * inspector never waits on storage. Never throws: logging must not cost the
+ * inspector their answer.
+ */
+async function saveCheck(c: {
+  model?: string;
+  secs?: number;
+  kind: MediaKind;
+  media: Frame[];
+  thumb?: unknown;
+  result?: CheckResult;
+  error?: string;
+}): Promise<string | null> {
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) return null;
+  const db = createAdminClient();
+  const r = c.result;
+  const { data, error } = await db
+    .from("issue_check_log")
+    .insert({
+      kind: "check",
+      provider: c.model ? (c.model.startsWith("claude") ? "claude" : "gemini") : null,
+      model: c.model ?? null,
+      secs: c.secs ?? null,
+      media_kind: c.kind,
+      view: r ? r.view.slice(0, 500) : null,
+      // Everything the inspector saw except the per-part option lists.
+      findings: r
+        ? r.findings.map((f) => {
+            const { options, ...rest } = f;
+            void options;
+            return rest;
+          })
+        : null,
+      also_check: r?.alsoCheck.slice(0, 500) ?? null,
+      photo_ok: r ? r.photoOk : null,
+      retake_reason: r?.retakeReason.slice(0, 500) ?? null,
+      error: c.error ?? null,
+      thumb: typeof c.thumb === "string" && c.thumb.length <= MAX_THUMB ? c.thumb : null,
+    })
+    .select("id")
+    .single();
+  if (error || !data) {
+    console.error("[issue-check] log failed", error?.message);
+    return null;
+  }
+
+  const id = data.id as string;
+  after(async () => {
+    const bucket = db.storage.from("issue-check-media");
+    const saved = await Promise.all(
+      c.media.map(async (m, i) => {
+        const path = `${id}/${i}.jpg`;
+        const { error: upErr } = await bucket.upload(path, Buffer.from(m.data, "base64"), {
+          contentType: "image/jpeg",
+          upsert: true,
+        });
+        if (upErr) console.error("[issue-check] media upload failed", path, upErr.message);
+        return upErr ? null : { path, t: Number(m.t) || 0 };
+      })
+    );
+    const { error: updErr } = await db
+      .from("issue_check_log")
+      .update({ media: saved.filter(Boolean) })
+      .eq("id", id);
+    if (updErr) console.error("[issue-check] media update failed", updErr.message);
+  });
+  return id;
 }

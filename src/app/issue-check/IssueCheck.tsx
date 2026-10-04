@@ -1,24 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Boxed, readCode, SEV, writeCode, type Finding } from "./shared";
 
 type Frame = { mime: string; data: string; t: number; url: string };
 
-type Finding = {
-  part: string;
-  issueId: number;
-  issue: string;
-  action: string;
-  severity: "" | "Micro" | "Minor" | "Major";
-  structural: boolean;
-  inList: boolean;
-  confidence: number;
-  reason: string;
-  box: [number, number, number, number] | null;
-  frame: number;
-  time: string;
-  options: [number, string][];
-};
+const MAX_VIDEO_SECS = 120;
 
 type Result = {
   view: string;
@@ -32,22 +20,6 @@ type Result = {
 };
 
 type Rating = { state: "open" | "fixing" | "saved"; label?: string };
-
-const CODE_KEY = "issue-check-code";
-const MAX_VIDEO_SECS = 120;
-
-function readCode(): string {
-  try {
-    return localStorage.getItem(CODE_KEY) ?? "";
-  } catch {
-    return "";
-  }
-}
-function writeCode(v: string) {
-  try {
-    localStorage.setItem(CODE_KEY, v);
-  } catch {}
-}
 
 /** Draws a source onto a canvas no larger than `max` px and returns base64 JPEG. */
 function toJpeg(src: CanvasImageSource, w: number, h: number, max: number, q: number) {
@@ -107,39 +79,6 @@ function thumbOf(f: Frame): Promise<string> {
     img.onerror = () => ok("");
     img.src = f.url;
   });
-}
-
-const SEV: Record<string, string> = {
-  Micro: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
-  Minor: "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-300",
-  Major: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300",
-};
-
-function Boxed({ frame, findings, index }: { frame: Frame; findings: Finding[]; index: number[] }) {
-  return (
-    <div className="relative overflow-hidden rounded-xl bg-black">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={frame.url} alt="Inspected part" className="block h-auto w-full" />
-      {findings.map((f, i) =>
-        f.box ? (
-          <div
-            key={i}
-            className="absolute rounded-md border-[2.5px] border-[#FF4D57] shadow-[0_0_0_1px_rgba(0,0,0,.4)]"
-            style={{
-              top: `${f.box[0] / 10}%`,
-              left: `${f.box[1] / 10}%`,
-              height: `${(f.box[2] - f.box[0]) / 10}%`,
-              width: `${(f.box[3] - f.box[1]) / 10}%`,
-            }}
-          >
-            <span className="absolute -left-3 -top-3 grid h-6 w-6 place-items-center rounded-full bg-[#FF4D57] text-xs font-bold text-white">
-              {index[i] + 1}
-            </span>
-          </div>
-        ) : null
-      )}
-    </div>
-  );
 }
 
 export default function IssueCheck() {
@@ -292,7 +231,12 @@ export default function IssueCheck() {
         <p className="text-[11px] font-bold uppercase tracking-[.12em] text-violet-600 dark:text-violet-400">
           Inspect Agent
         </p>
-        <h1 className="mt-0.5 text-[23px] font-extrabold">Issue Check</h1>
+        <div className="mt-0.5 flex items-center justify-between gap-3">
+          <h1 className="text-[23px] font-extrabold">Issue Check</h1>
+          <Link href="/issue-check/history" className="text-sm font-bold text-violet-600 underline dark:text-violet-400">
+            History
+          </Link>
+        </div>
         <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">
           Take a photo or a short video of a part. The AI says which part it is and which issue to mark.
         </p>
@@ -388,7 +332,7 @@ export default function IssueCheck() {
           ))}
         </div>
       )}
-      {frames.length > 0 && !result && kind === "image" && <Boxed frame={frames[0]} findings={[]} index={[]} />}
+      {frames.length > 0 && !result && kind === "image" && <Boxed src={frames[0].url} findings={[]} index={[]} />}
 
       {result && (
         <div className="flex flex-col gap-2.5 rounded-2xl border border-neutral-200 bg-white p-3.5 dark:border-neutral-800 dark:bg-neutral-900">
@@ -401,7 +345,7 @@ export default function IssueCheck() {
           {(shown.length ? shown : [{ fi: 0, list: [] }]).map(({ fi, list }) => (
             <div key={fi} className="flex flex-col gap-1">
               <Boxed
-                frame={frames[fi] ?? frames[0]}
+                src={(frames[fi] ?? frames[0]).url}
                 findings={list.map((x) => x.f)}
                 index={list.map((x) => x.i)}
               />

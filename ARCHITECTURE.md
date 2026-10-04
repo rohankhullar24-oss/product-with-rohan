@@ -169,11 +169,20 @@ Script prototype.
   issue ids back onto the real list (anything invented is dropped),
   `access.ts` the optional shared code (`ISSUE_CHECK_CODE`; unset = open,
   still rate-limited).
+- **`src/app/issue-check/history/`** — the shareable history log: every
+  check (failed ones too) newest first, with the saved photo or video frames,
+  boxes, the full answer and each finding's Right/Wrong verdict; search plus
+  Photos / Videos / Marked wrong / Not rated / Failed filters, paged 20 at a
+  time via `GET /api/issue-check/history`. Same `ISSUE_CHECK_CODE` gate.
 - **Data** — the part/issue list (379 parts, 1,479 issues) is company data,
   so it is **not in this public repo**: it lives in the Supabase table
   `issue_check_parts` (`idx`, `path`, `issues` jsonb). Checks and ratings go
   to `issue_check_log` (`kind` = check | rating, ratings link via
-  `check_id`). Both tables have RLS on with no policies — service role only.
+  `check_id`; a check row also keeps the full findings, `error` if it failed,
+  and `media` = `[{path, t}]`). The photo / video frames themselves are
+  uploaded after the response (`after()`) to the private Storage bucket
+  `issue-check-media` (`<check id>/<n>.jpg`); history serves them as 1-hour
+  signed URLs. Both tables have RLS on with no policies — service role only.
 
 ## Android apps
 

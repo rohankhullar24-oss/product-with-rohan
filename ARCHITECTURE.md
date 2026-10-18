@@ -25,9 +25,11 @@ src/
 │   │                                 via src/lib/auth + src/lib/supabase (see subroutes below)
 │   ├── projects/                    small interactive demos embedded as pages
 │   │                                 (chladni-plate, decision-dice, stock-analyzer,
-│   │                                 studio/ — Open Studio, seven client-only creative apps
-│   │                                 under src/components/studio/: photo, vector, video,
-│   │                                 develop, motion, design, pdf),
+│   │                                 studio/ — Open Studio, 13 client-only apps under
+│   │                                 src/components/studio/: creative (photo, vector, video,
+│   │                                 develop, motion, design) and work (pdf, docs, sheets,
+│   │                                 slides, viewer, ocr, zip — a web port of reminder-app's
+│   │                                 Works Enabler; shared readers/writers in src/lib/office/)),
 │   │                                 plus all/ — lists every project (src/lib/projects.ts),
 │   │                                 linked from the homepage's 8-item featured subset
 │   ├── will-you-go-on-a-date-with-me/  one-off novelty page (src/lib/date-invite.ts)
@@ -90,7 +92,7 @@ one of the context-scoped `src/lib/supabase/*` clients unless noted otherwise.
 
 ### `journey/` (`src/app/journey/*`)
 
-A journal + trip-itinerary web app, sharing the main Next.js app and Supabase
+A journal, trips, reminders and notes web app, sharing the main Next.js app and Supabase
 project but with its **own** email-OTP login (`src/app/journey/login`,
 `src/app/journey/auth/callback`) — gated via `PROTECTED_RULES` in
 `src/lib/supabase/middleware.ts` (this fork calls the file that wires
@@ -105,13 +107,26 @@ byte-for-byte:
 |---|---|---|
 | Journal entries | `journal_entries` | `{id, user_id, payload, updated_at, deleted}`; upsert by default PK (`id`) |
 | Trips / itinerary stops | `auto_scheduler_rows` | shared generic table, discriminated by `kind` = `itinerary_trip` / `itinerary_stop`; upsert `onConflict: "user_id,kind,id"` |
+| Reminders | `reminders` | its own table (`id` uuid PK); `src/lib/journey/reminders.ts` mirrors `Reminder.kt`'s `occursOn`/`nextTrigger` and Done semantics |
+| Notes | `auto_scheduler_rows` | `kind` = `note`; attachment names are kept untouched on save |
+| Message templates / recipient lists | `auto_scheduler_rows` | `kind` = `template` / `recipient_list` (Auto Scheduler); CSV/vCard import |
+
+The generic `auto_scheduler_rows` calls for the newer kinds live in
+`src/lib/journey/rows.ts` (`itinerary.ts` predates it). Routes:
+`entries/`, `trips/`, `calendar/` (month view across journal entries by
+`entryDate`, trips and reminder occurrences), `reminders/`, `notes/`
+(Keep-style board, autosave on close), `messages/`. `ReminderAlerts`
+(`src/components/journey/`) optionally raises browser notifications for the
+next 24h of reminders while a Journey tab is open; the phone's alarms stay
+the real delivery path, picking up web edits on its next sync.
 
 Signing in on web with the same email as the Android app pulls the same
-journal/trip history immediately — there's no separate account system to
-keep in sync. Deliberately out of scope for the web client (Android-only for
-now): photo/video/audio attachments (`journal-media` Storage bucket),
-GPS-based location capture and photo-gallery entry suggestions, and the
-calendar/widget views.
+data immediately — there's no separate account system to keep in sync.
+Deliberately out of scope for the web client (Android-only for now):
+photo/video/audio attachments (`journal-media` / `notes-media` buckets),
+GPS-based location capture and photo-gallery entry suggestions, widgets,
+and anything that sends or listens on the phone itself (scheduled
+SMS/WhatsApp tasks, auto reply/forward, call features, Watch Sync).
 
 ### Data & external services
 

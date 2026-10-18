@@ -1,12 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createDraftEntry, saveEntry } from "@/lib/journey/journal";
 
 export default function NewEntryPage() {
+  // useSearchParams needs a Suspense boundary on a prerendered route.
+  return (
+    <Suspense>
+      <NewEntryForm />
+    </Suspense>
+  );
+}
+
+function NewEntryForm() {
   const router = useRouter();
-  const [entryDate, setEntryDate] = useState(new Date().toISOString().slice(0, 10));
+  // The calendar links here with ?date=YYYY-MM-DD to journal a specific day.
+  const dateParam = useSearchParams().get("date");
+  const [entryDate, setEntryDate] = useState(
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam) ? dateParam : new Date().toISOString().slice(0, 10)
+  );
   const [text, setText] = useState("");
   const [placeName, setPlaceName] = useState("");
   const [saving, setSaving] = useState(false);
@@ -57,7 +70,7 @@ export default function NewEntryPage() {
         </label>
 
         <label className="flex flex-col gap-1 text-sm text-slate">
-          What's on your mind?
+          What&apos;s on your mind?
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}

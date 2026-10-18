@@ -23,7 +23,10 @@ src/
 │   ├── productshot/                 a distinct sub-product with its own login/session flow
 │   │                                 via src/lib/auth + src/lib/supabase (see subroutes below)
 │   ├── projects/                    small interactive demos embedded as pages
-│   │                                 (chladni-plate, decision-dice, stock-analyzer),
+│   │                                 (chladni-plate, decision-dice, stock-analyzer,
+│   │                                 studio/ — Open Studio, seven client-only creative apps
+│   │                                 under src/components/studio/: photo, vector, video,
+│   │                                 develop, motion, design, pdf),
 │   │                                 plus all/ — lists every project (src/lib/projects.ts),
 │   │                                 linked from the homepage's 8-item featured subset
 │   ├── will-you-go-on-a-date-with-me/  one-off novelty page (src/lib/date-invite.ts)

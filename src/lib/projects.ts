@@ -261,6 +261,26 @@ export const projects: Project[] = [
     },
   },
   {
+    title: "Open Studio: Seven Free Adobe Alternatives in the Browser",
+    description:
+      "A suite of seven creative apps standing in for Photoshop, Illustrator, Premiere Pro, Lightroom, After Effects, InDesign and Acrobat. Everything runs in your tab, so files are never uploaded.",
+    fullDescription:
+      "Inspired by ArtCraft's open-source push to replace Adobe's subscriptions, Open Studio covers the everyday workflow of each app in Adobe's core suite. Photo: layers with blend modes, brush, eraser, text, crop and editable adjustments. Vector: pen and pencil, shapes, gradients, alignment and pathfinder booleans, exported as clean SVG. Video: a multi-track timeline with overlays, titles and music, trims, splits, ripple delete, fades and WebM rendering. Develop: a photo library with ratings and picks, plus white balance, tone, a tone curve, an HSL mixer, a histogram and batch export. Motion: keyframed text, shape and image layers with easing and one-click presets. Design: multi-page layouts with margins, columns and snapping, exported as a real text PDF. PDF: merge, reorder, rotate, split, annotate and sign, with page numbers and watermarks. No backend, no account, no AI credits.",
+    tags: ["Side Project", "Tool", "AI-Built"],
+    href: "/projects/studio",
+    linkLabel: "Open the studio →",
+    slug: "open-studio",
+    pm: {
+      users:
+        "Students, freelancers and small-business owners who need a creative tool a few times a month: too occasional to justify a Creative Cloud subscription, too private to upload to a random web app.",
+      approach:
+        "Seven apps that share one shell and one set of controls, each scoped to the 80% workflow of its Adobe counterpart and built only on what a browser does well (canvas, SVG, Web Audio, MediaRecorder). No RAW, CMYK or plugins rather than half-built versions of them.",
+      metric:
+        "Export rate per app: the share of sessions that open a file and download a result. An app people open but don't export from is failing the job it was opened for.",
+      status: "Live. Prototype quality: work isn't saved between visits, and each app is a subset of the original.",
+    },
+  },
+  {
     title: "Decision Dice",
     description:
       "A lightweight tool for beating analysis paralysis: enter the options you're torn between, answer a couple of quick questions about your priorities, and get a ranked recommendation with a one-line rationale.",

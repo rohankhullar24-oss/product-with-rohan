@@ -4,6 +4,15 @@ const nextConfig: NextConfig = {
   compress: true,
   poweredByHeader: false,
   reactStrictMode: true,
+  turbopack: {
+    // paper.js (Open Studio's Vector app) pulls these in for Node; the
+    // browser build maps them to nothing, so do the same for the server.
+    resolveAlias: {
+      jsdom: "./src/lib/stubs/empty-module.js",
+      "jsdom/lib/jsdom/living/generated/utils": "./src/lib/stubs/empty-module.js",
+      canvas: "./src/lib/stubs/empty-module.js",
+    },
+  },
   images: {
     formats: ["image/avif", "image/webp"],
   },

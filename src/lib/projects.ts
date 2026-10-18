@@ -261,6 +261,26 @@ export const projects: Project[] = [
     },
   },
   {
+    title: "AI Passport Photo Maker",
+    description:
+      "Upload a selfie and get an Indian passport photo: AI white background, an optional suit or blazer, an exact 35 × 45 mm crop under 50 KB, and a 6 × 4 in print sheet. Free preview, ₹79 to download via Razorpay.",
+    fullDescription:
+      "A paid micro-tool built from one Instagram reel's pitch. A Gemini image model replaces the selfie's background with plain white and, optionally, dresses the person in formal wear while keeping their face unchanged. The user lines their head up inside an oval guide drawn to the passport's chin-to-crown rule, sees a watermarked preview for free, and pays ₹79 through Razorpay to unlock the upload-ready JPEG (exact pixel size, 300 DPI, compressed under 50 KB) and a print sheet any cyber cafe can print. Also does 2 × 2 in for US visa / OCI. Nothing is stored: the clean photo is sealed with AES-GCM and handed back to the browser, and the payment is bound to that one photo through the Razorpay order's notes.",
+    tags: ["Side Project", "Tool", "AI/ML"],
+    href: "/passport-photo",
+    linkLabel: "Make a passport photo →",
+    slug: "passport-photo",
+    pm: {
+      users:
+        "People filling passport, visa, exam and job forms on a phone who would otherwise visit a photo studio or a cyber cafe, plus the cyber cafe operators who do it for them.",
+      approach:
+        "Charge at the moment of value: the preview is free and the paywall sits on the download, so the user has already seen the result before being asked for ₹79. Stateless by design, so there's no account, no storage and no selfie to leak.",
+      metric:
+        "Preview-to-payment conversion. Guardrail: AI cost per paid download, since every preview costs an image generation whether or not anyone pays.",
+      status: "Live, untested with real payments. Not a substitute for checking the passport office's current photo rules.",
+    },
+  },
+  {
     title: "Open Studio: A Free Creative and Work Suite in the Browser",
     description:
       "Thirteen apps in one browser suite: stand-ins for Photoshop, Illustrator, Premiere Pro, Lightroom, After Effects, InDesign and Acrobat, plus Word, Excel and PowerPoint editors, an Office viewer, OCR and zip tools. Files are never uploaded.",

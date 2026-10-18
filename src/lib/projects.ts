@@ -261,23 +261,23 @@ export const projects: Project[] = [
     },
   },
   {
-    title: "Photo Editor: A Photoshop-lite That Runs in Your Browser",
+    title: "Open Studio: Seven Free Adobe Alternatives in the Browser",
     description:
-      "A free image editor with layers, blend modes, brush and eraser, text, crop, rotate and non-destructive adjustments. Everything happens on a canvas in your tab, so your photos are never uploaded.",
+      "A suite of seven creative apps standing in for Photoshop, Illustrator, Premiere Pro, Lightroom, After Effects, InDesign and Acrobat. Everything runs in your tab, so files are never uploaded.",
     fullDescription:
-      "Inspired by ArtCraft's open-source push to replace Adobe's subscriptions, this is a scoped-down take on the most-used Photoshop workflow. Open, drop or paste an image; stack image, paint and text layers with opacity and 16 blend modes; paint and erase with adjustable size and opacity; sample colors with an eyedropper; crop, rotate and flip; and tune brightness, contrast, saturation, hue, blur, grayscale, sepia and invert per layer, or pick a preset. Adjustments stay editable instead of being baked in, and full undo/redo is cheap because layer canvases are copy-on-write, so history snapshots share every canvas an edit didn't touch. Exports PNG or JPG. No backend, no account, no AI credits.",
+      "Inspired by ArtCraft's open-source push to replace Adobe's subscriptions, Open Studio covers the everyday workflow of each app in Adobe's core suite. Photo: layers with blend modes, brush, eraser, text, crop and editable adjustments. Vector: pen and pencil, shapes, gradients, alignment and pathfinder booleans, exported as clean SVG. Video: a multi-track timeline with overlays, titles and music, trims, splits, ripple delete, fades and WebM rendering. Develop: a photo library with ratings and picks, plus white balance, tone, a tone curve, an HSL mixer, a histogram and batch export. Motion: keyframed text, shape and image layers with easing and one-click presets. Design: multi-page layouts with margins, columns and snapping, exported as a real text PDF. PDF: merge, reorder, rotate, split, annotate and sign, with page numbers and watermarks. No backend, no account, no AI credits.",
     tags: ["Side Project", "Tool", "AI-Built"],
-    href: "/projects/photo-editor",
-    linkLabel: "Open the editor →",
-    slug: "photo-editor",
+    href: "/projects/studio",
+    linkLabel: "Open the studio →",
+    slug: "open-studio",
     pm: {
       users:
-        "People who need a quick crop, text overlay or color fix and don't want to install software, pay for a subscription, or upload a personal photo to someone's server.",
+        "Students, freelancers and small-business owners who need a creative tool a few times a month: too occasional to justify a Creative Cloud subscription, too private to upload to a random web app.",
       approach:
-        "Cover the 80% Photoshop workflow (layers, paint, text, crop, adjustments) client-side only, and skip what a browser canvas can't do well (RAW, CMYK, smart selections) rather than half-building it.",
+        "Seven apps that share one shell and one set of controls, each scoped to the 80% workflow of its Adobe counterpart and built only on what a browser does well (canvas, SVG, Web Audio, MediaRecorder). No RAW, CMYK or plugins rather than half-built versions of them.",
       metric:
-        "Export rate: share of sessions that open an image and download a result. Opening without exporting means the editor failed the job it was opened for.",
-      status: "Live. Prototype quality; no selections or masks yet.",
+        "Export rate per app: the share of sessions that open a file and download a result. An app people open but don't export from is failing the job it was opened for.",
+      status: "Live. Prototype quality: work isn't saved between visits, and each app is a subset of the original.",
     },
   },
   {

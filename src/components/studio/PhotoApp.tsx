@@ -33,6 +33,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
+import { AppHeader } from "./shared";
 
 // Everything runs on <canvas> in the browser: no uploads, no backend.
 //
@@ -273,7 +274,7 @@ function isTypingTarget(t: EventTarget | null) {
   );
 }
 
-export default function PhotoEditor() {
+export default function PhotoApp() {
   const [doc, setDoc] = useState<Doc | null>(null);
   const [tool, setTool] = useState<Tool>("brush");
   const [zoom, setZoom] = useState(1);
@@ -815,20 +816,16 @@ export default function PhotoEditor() {
   const label = "flex justify-between font-mono text-[10px] uppercase tracking-[0.18em] text-slate-500";
 
   return (
-    <div className="min-h-screen bg-slate-950 px-3 py-6 text-slate-200 sm:px-6">
+    <div className="px-3 py-4 sm:px-6">
       <input ref={openInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFileInput(e, false)} />
       <input ref={layerInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => onFileInput(e, true)} />
 
       <div className="mx-auto max-w-[1500px]">
-        <header className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Side project · runs in your browser</p>
-            <h1 className="mt-1 text-2xl font-bold text-white sm:text-3xl">Photo Editor</h1>
-            <p className="mt-1 max-w-2xl text-sm text-slate-400">
-              Layers, brushes, text, crop and non-destructive adjustments. Your images never leave this tab.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
+        <AppHeader
+          name="Photo"
+          replaces="Photoshop"
+          blurb="Layers, brushes, text, crop and non-destructive adjustments. Your images never leave this tab."
+        >
             <button className={btn} onClick={() => openInputRef.current?.click()}>
               <FolderOpen size={14} /> Open
             </button>
@@ -850,8 +847,7 @@ export default function PhotoEditor() {
             <button className={btn} disabled={!doc} onClick={() => exportImage("jpeg")}>
               <Download size={14} /> JPG
             </button>
-          </div>
-        </header>
+        </AppHeader>
 
         {error && (
           <div className="mb-3 flex items-center justify-between rounded-md border border-red-900 bg-red-950/60 px-3 py-2 text-sm text-red-200">
@@ -924,7 +920,7 @@ export default function PhotoEditor() {
               }}
               onDragLeave={() => setDragOver(false)}
               onDrop={onDrop}
-              className={`relative flex h-[60vh] overflow-auto bg-[#0A0D12] lg:h-[calc(100vh-220px)] ${
+              className={`relative flex h-[60vh] overflow-auto bg-[#0A0D12] lg:h-[calc(100vh-260px)] ${
                 dragOver ? "outline outline-2 -outline-offset-4 outline-accent" : ""
               }`}
             >

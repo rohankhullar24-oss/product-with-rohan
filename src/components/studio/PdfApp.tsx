@@ -3,6 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import type { PDFDocumentProxy } from "pdfjs-dist";
+import { getPdfjs } from "@/lib/office/pdfjs";
+import { compressPdf, isEncryptedPdf, pdfToParagraphs, protectPdf, unlockPdf } from "@/lib/office/pdf";
+import { writeDocx } from "@/lib/office/docx";
+import { formatBytes } from "@/lib/office/compress";
 import {
   ArrowLeft,
   CheckSquare,
@@ -23,6 +27,9 @@ import {
   Type,
   Undo2,
   Eraser,
+  FileText,
+  KeyRound,
+  Minimize2,
 } from "lucide-react";
 import {
   AppHeader,
@@ -96,12 +103,6 @@ const TOOLS: { id: Tool; label: string; icon: ReactNode }[] = [
 ];
 
 const A4 = { w: 595, h: 842 };
-
-async function getPdfjs() {
-  const pdfjs = await import("pdfjs-dist");
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
-  return pdfjs;
-}
 
 function hexRgb(hex: string) {
   const n = parseInt(hex.replace("#", ""), 16);
@@ -184,6 +185,36 @@ function SignaturePad({ onUse, onClose }: { onUse: (src: string) => void; onClos
   );
 }
 
+type PasswordAsk = { title: string; hint: string; error?: string; action: string; resolve: (pw: string | null) => void };
+
+function PasswordPrompt({ ask }: { ask: PasswordAsk }) {
+  const [pw, setPw] = useState("");
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => ask.resolve(null)}>
+      <form
+        className="w-full max-w-sm rounded-xl border border-slate-700 bg-slate-900 p-4"
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={(e) => {
+          e.preventDefault();
+          ask.resolve(pw);
+        }}
+      >
+        <h2 className="text-sm font-semibold text-white">{ask.title}</h2>
+        <input autoFocus type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder={ask.hint} className={`${inputCls} mt-3 w-full`} />
+        {ask.error && <p className="mt-2 text-xs text-red-400">{ask.error}</p>}
+        <div className="mt-3 flex justify-end gap-2">
+          <button type="button" className={btn} onClick={() => ask.resolve(null)}>
+            Cancel
+          </button>
+          <button type="submit" className={btnPrimary} disabled={!pw}>
+            {ask.action}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export default function PdfApp() {
   const [sources, setSources] = useState<Record<string, Source>>({});
   const hist = useHistory<DocState>(() => ({
@@ -201,6 +232,8 @@ export default function PdfApp() {
   const [signature, setSignature] = useState<string | null>(null);
   const [padOpen, setPadOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [ask, setAsk] = useState<PasswordAsk | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const dragRef = useRef<{ kind: "move" | "resize" | "create"; id: string; start: { x: number; y: number }; orig: Annot } | null>(null);
@@ -283,17 +316,39 @@ export default function PdfApp() {
       const newSources: Record<string, Source> = {};
       for (const f of files) {
         try {
-          const bytes = await f.arrayBuffer();
+          let bytes: Uint8Array = new Uint8Array(await f.arrayBuffer());
+          // Locked PDFs are decrypted on open (PdfToolsActivity's "Unlock PDF"),
+          // so every later edit and save works on a plain copy.
+          if (await isEncryptedPdf(bytes).catch(() => false)) {
+            const unlocked = await unlockPdf(bytes, "").catch(() => null);
+            if (unlocked) bytes = unlocked;
+            else {
+              let error: string | undefined;
+              let done = false;
+              while (!done) {
+                const pw = await askPassword(`${f.name} is password-protected`, "PDF password", "Unlock", error);
+                if (pw === null) break;
+                try {
+                  bytes = await unlockPdf(bytes, pw);
+                  done = true;
+                  setNotice(`Unlocked ${f.name}. Save the PDF to keep a copy without a password.`);
+                } catch {
+                  error = "Wrong password. Try again.";
+                }
+              }
+              if (!done) continue;
+            }
+          }
           const doc = await pdfjs.getDocument({ data: bytes.slice(0) }).promise;
           const id = uid("src");
-          newSources[id] = { id, name: f.name, bytes, doc };
+          newSources[id] = { id, name: f.name, bytes: bytes.slice().buffer, doc };
           for (let i = 0; i < doc.numPages; i++) {
             const page = await doc.getPage(i + 1);
             const vp = page.getViewport({ scale: 1 });
             added.push({ id: uid("pg"), kind: "pdf", srcId: id, index: i, w: vp.width, h: vp.height, baseRotation: page.rotate, rotation: 0, annots: [] });
           }
         } catch {
-          setError(`Couldn't open ${f.name}. It may be damaged or password-protected.`);
+          setError(`Couldn't open ${f.name}. It may be damaged.`);
         }
       }
       setSources((s) => ({ ...s, ...newSources }));
@@ -453,6 +508,70 @@ export default function PdfApp() {
     if (st.meta.author) out.setAuthor(st.meta.author);
     out.setProducer("Open Studio · PDF");
     return out.save();
+  }
+
+  function askPassword(title: string, hint: string, action: string, error?: string): Promise<string | null> {
+    return new Promise((resolve) =>
+      setAsk({
+        title,
+        hint,
+        action,
+        error,
+        resolve: (pw) => {
+          setAsk(null);
+          resolve(pw);
+        },
+      })
+    );
+  }
+
+  const docName = () => st.meta.title || "document";
+
+  async function saveCompressed() {
+    setBusy("Compressing…");
+    setNotice(null);
+    try {
+      const built = await buildPdf(st.pages);
+      const { bytes, images } = await compressPdf(built);
+      const smaller = bytes.length < built.length ? bytes : built;
+      downloadBlob(new Blob([smaller as BlobPart], { type: "application/pdf" }), `${docName()}-compressed.pdf`);
+      setNotice(`Compressed: ${formatBytes(built.length)} → ${formatBytes(smaller.length)}${images ? `, ${images} image(s) re-encoded` : ""}.`);
+    } catch (err) {
+      console.error(err);
+      setError("Couldn't compress this PDF.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function saveProtected() {
+    const pw = await askPassword("Protect with a password", "New password", "Protect & save");
+    if (!pw) return;
+    setBusy("Encrypting…");
+    try {
+      const bytes = await protectPdf(await buildPdf(st.pages), pw);
+      downloadBlob(new Blob([bytes as BlobPart], { type: "application/pdf" }), `${docName()}-protected.pdf`);
+      setNotice("Saved a copy that needs the password to open (AES-256).");
+    } catch (err) {
+      console.error(err);
+      setError("Couldn't protect this PDF.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function convertToWord() {
+    setBusy("Converting…");
+    try {
+      const paragraphs = await pdfToParagraphs(await buildPdf(st.pages, false));
+      downloadBlob(await writeDocx({ paragraphs }), `${docName()}.docx`);
+      setNotice("Converted to Word: text only, no layout or images.");
+    } catch (err) {
+      console.error(err);
+      setError("Couldn't convert this PDF.");
+    } finally {
+      setBusy(null);
+    }
   }
 
   async function exportPages(pages: PageRef[], name: string) {
@@ -617,6 +736,7 @@ export default function PdfApp() {
       <input ref={openRef} type="file" accept="application/pdf" multiple className="hidden" onChange={openPdfs} />
       <input ref={imgPagesRef} type="file" accept="image/*" multiple className="hidden" onChange={addImagePages} />
       <input ref={annotImgRef} type="file" accept="image/*" className="hidden" onChange={placeAnnotImage} />
+      {ask && <PasswordPrompt ask={ask} />}
       {padOpen && (
         <SignaturePad
           onClose={() => setPadOpen(false)}
@@ -628,7 +748,7 @@ export default function PdfApp() {
         />
       )}
       <div className="mx-auto max-w-[1500px]">
-        <AppHeader name="PDF" replaces="Acrobat" blurb="Merge, reorder, rotate and split PDFs; add text, highlights and signatures. Files stay on your device.">
+        <AppHeader name="PDF" replaces="Acrobat" blurb="Merge, reorder, rotate, split, compress, unlock and protect PDFs; add text, highlights and signatures; convert to Word. Files stay on your device.">
           <button className={btn} onClick={() => openRef.current?.click()}>
             <FolderOpen size={14} /> {st.pages.length ? "Add PDFs" : "Open PDF"}
           </button>
@@ -646,7 +766,7 @@ export default function PdfApp() {
           </button>
         </AppHeader>
         <ErrorBanner message={error} onClose={() => setError(null)} />
-        {busy && <p className="mb-3 text-sm text-accent">{busy}</p>}
+        {(busy || notice) && <p className="mb-3 text-sm text-accent">{busy ?? notice}</p>}
 
         {!st.pages.length ? (
           <button
@@ -801,6 +921,15 @@ export default function PdfApp() {
                 </button>
                 <button className={btn} disabled={st.pages.length < 2 || !!busy} onClick={splitAll}>
                   <Scissors size={14} /> Split all
+                </button>
+                <button className={btn} disabled={!!busy} onClick={saveCompressed} title="Re-encode images to shrink the file">
+                  <Minimize2 size={14} /> Compress
+                </button>
+                <button className={btn} disabled={!!busy} onClick={saveProtected}>
+                  <KeyRound size={14} /> Protect
+                </button>
+                <button className={btn} disabled={!!busy} onClick={convertToWord}>
+                  <FileText size={14} /> To Word
                 </button>
                 <button className={btn} onClick={addBlank}>
                   <FilePlus size={14} /> Blank page

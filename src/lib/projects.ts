@@ -261,6 +261,26 @@ export const projects: Project[] = [
     },
   },
   {
+    title: "Photo Editor: A Photoshop-lite That Runs in Your Browser",
+    description:
+      "A free image editor with layers, blend modes, brush and eraser, text, crop, rotate and non-destructive adjustments. Everything happens on a canvas in your tab, so your photos are never uploaded.",
+    fullDescription:
+      "Inspired by ArtCraft's open-source push to replace Adobe's subscriptions, this is a scoped-down take on the most-used Photoshop workflow. Open, drop or paste an image; stack image, paint and text layers with opacity and 16 blend modes; paint and erase with adjustable size and opacity; sample colors with an eyedropper; crop, rotate and flip; and tune brightness, contrast, saturation, hue, blur, grayscale, sepia and invert per layer, or pick a preset. Adjustments stay editable instead of being baked in, and full undo/redo is cheap because layer canvases are copy-on-write, so history snapshots share every canvas an edit didn't touch. Exports PNG or JPG. No backend, no account, no AI credits.",
+    tags: ["Side Project", "Tool", "AI-Built"],
+    href: "/projects/photo-editor",
+    linkLabel: "Open the editor →",
+    slug: "photo-editor",
+    pm: {
+      users:
+        "People who need a quick crop, text overlay or color fix and don't want to install software, pay for a subscription, or upload a personal photo to someone's server.",
+      approach:
+        "Cover the 80% Photoshop workflow (layers, paint, text, crop, adjustments) client-side only, and skip what a browser canvas can't do well (RAW, CMYK, smart selections) rather than half-building it.",
+      metric:
+        "Export rate: share of sessions that open an image and download a result. Opening without exporting means the editor failed the job it was opened for.",
+      status: "Live. Prototype quality; no selections or masks yet.",
+    },
+  },
+  {
     title: "Decision Dice",
     description:
       "A lightweight tool for beating analysis paralysis: enter the options you're torn between, answer a couple of quick questions about your priorities, and get a ranked recommendation with a one-line rationale.",

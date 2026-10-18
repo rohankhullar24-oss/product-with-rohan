@@ -19,6 +19,7 @@ src/
 │   ├── articles/[slug], blogs/[slug]  markdown content, rendered via src/lib/posts.ts
 │   ├── handbook/                    a paid PDF handbook funnel (Razorpay checkout → email delivery)
 │   ├── resume-builder/              resume tailoring tool (parses + rewrites a resume with Claude)
+│   ├── passport-photo/              paid AI passport photo maker (Gemini → crop → Razorpay → JPEG, see below)
 │   ├── course/                      a mini course area (signup, weekly content, dashboard)
 │   ├── productshot/                 a distinct sub-product with its own login/session flow
 │   │                                 via src/lib/auth + src/lib/supabase (see subroutes below)
@@ -62,6 +63,7 @@ src/
 | Route | Purpose |
 |---|---|
 | `create-order`, `verify-payment` | Razorpay order creation + payment verification (handbook checkout) |
+| `passport-photo/{process,order,download}` | AI passport photo: Gemini edit + preview, Razorpay order, paid file render |
 | `handbook/download`, `handbook/email` | deliver the paid PDF handbook, email it via Resend |
 | `date-invite` | backs the novelty date-invite page |
 | `posts`, `posts/[slug]` | serve markdown blog/article content |
@@ -148,6 +150,31 @@ sitemap/nav). Two entry points share one backend:
   cap); a 400 fails fast since it's a request-shape bug, not a quota issue.
   `findings/route.ts` persists to the `inspection_findings` Supabase table
   (thumbnail only, not the full-size photo).
+
+## AI Passport Photo Maker (`/passport-photo`)
+
+A paid micro-tool: selfie in, upload-ready passport photo out, ₹79 per photo
+via the same Razorpay account as the handbook (`src/lib/razorpay.ts`).
+
+- **`src/app/passport-photo/`** — the page. The browser downscales the selfie
+  to 1280 px, then shows a watermarked preview with a draggable/zoomable crop
+  frame at the preset's aspect and an oval head guide. A paid job is stashed
+  in `sessionStorage` so a refresh doesn't make anyone pay twice.
+- **`src/app/api/passport-photo/`** — `process` calls Gemini's image model
+  (`gemini-2.5-flash-image`, then `gemini-3-pro-image-preview`;
+  `PASSPORT_PHOTO_MODEL` overrides) to whiten the background and optionally
+  add a suit/blazer, and returns the preview plus a **sealed token**: the clean
+  image AES-256-GCM-encrypted (`src/lib/passport-photo/token.ts`, key from
+  `PASSPORT_PHOTO_SECRET` or else derived from `RAZORPAY_KEY_SECRET`, 24 h
+  expiry). `order` creates a Razorpay order whose `notes.job` is the token's
+  hash. `download` verifies the signature, fetches the order to check it is
+  paid and that `notes.job` matches the token, then crops and renders with
+  `sharp` (`render.ts`): the single JPEG at exact pixels / 300 DPI, compressed
+  under the preset's KB limit, and a 6 × 4 in print sheet.
+- **No storage.** Nothing touches Supabase; the selfie only exists in the
+  request and the browser. Presets live in `presets.ts` (35 × 45 mm ≤ 50 KB,
+  2 × 2 in ≤ 240 KB). `process` is rate-limited hard (6 per 10 min per IP)
+  because every preview costs an image generation before anyone pays.
 
 ## Issue Check (`/issue-check`)
 

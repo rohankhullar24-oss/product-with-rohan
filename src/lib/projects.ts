@@ -281,6 +281,87 @@ export const projects: Project[] = [
     },
   },
   {
+    title: "Resume Builder: A Resume Tailored to the Role",
+    description:
+      "Upload your resume, pick the PM role and company you're applying to, and get back a rewritten resume as a ready-to-send PDF.",
+    fullDescription:
+      "Resume Builder takes an existing resume (PDF or DOCX), extracts its text, and asks Gemini to rewrite it for a specific target: a PM role level from APM to VP of Product, plus an optional company and industry. The model returns structured JSON (summary, skills, experience bullets, education, certifications) against a strict schema, so the output is always a well-formed resume rather than free text, and the page renders it as a downloadable PDF with @react-pdf/renderer. The rewrite reframes and sharpens what's already there; it is told not to invent employers, dates or metrics. Nothing is stored after the PDF is generated.",
+    tags: ["Side Project", "Tool", "AI/ML"],
+    href: "/resume-builder",
+    linkLabel: "Tailor your resume →",
+    slug: "resume-builder",
+    pm: {
+      users:
+        "Job-seeking PMs sending many applications who know each one deserves a tailored resume but won't hand-edit ten versions.",
+      approach:
+        "Constrain the model to a fixed resume schema instead of asking for prose, so every output is printable as-is, and keep the input to what the user already has: their current resume and a target.",
+      metric:
+        "Download rate per submission. Guardrail: users regenerating the same resume repeatedly, a sign the rewrite isn't trustworthy enough to send.",
+      status: "Live.",
+    },
+  },
+  {
+    title: "The Product Manager Handbook",
+    description:
+      "A five-volume PM handbook of 93 chapters covering foundations, product sense, execution, AI product management and company interview guides. Sold as a ₹199 PDF and Word download.",
+    fullDescription:
+      "The Product Manager Handbook is a paid digital product: five volumes and 93 chapters spanning PM foundations, product sense (20+ worked case studies), product execution, AI product management (LLMs, RAG, agents, evals), and company-specific interview playbooks, plus appendices of frameworks, templates, KPI libraries and SQL cheat sheets. The funnel is built into this site: a landing page, Razorpay checkout (card and UPI), server-side signature verification, and a success page that unlocks the PDF, a compressed PDF and the Word edition, with an emailed copy sent through Resend.",
+    tags: ["Side Project", "Product", "Learning"],
+    href: "/handbook",
+    linkLabel: "Get the handbook →",
+    slug: "pm-handbook",
+    pm: {
+      users:
+        "Aspiring and early-career PMs preparing for interviews who want one structured reference instead of fifty bookmarked blog posts.",
+      approach:
+        "One-time ₹199 price, low enough to be an impulse buy in India, with delivery fully automated (pay, verify, download, email) so it runs with no manual fulfilment.",
+      metric:
+        "Landing-page-to-payment conversion. Guardrail: payment failures and 'paid but didn't get it' support requests, which would mean the automated delivery is leaking.",
+      status: "Live, taking payments.",
+    },
+  },
+  {
+    title: "Issue Check: Photo In, Car Part and Issue Out",
+    description:
+      "A phone tool for used-car inspectors: send a photo or short video of a car part and get back which part it is and which issue to mark, chosen only from the inspection company's own part and issue list.",
+    fullDescription:
+      "Issue Check started as a Google Apps Script prototype and was rebuilt as a phone-first web page. An inspector snaps a photo or records up to two minutes of video; the browser downsizes photos and turns video into 6 to 20 frames so every request stays small. Gemini (with Claude as a fallback) identifies the part and the issue, but may only answer from a fixed list of 379 parts and 1,479 issues, and anything it invents is dropped. Findings draw boxes on the frame they point at. Every finding has Right/Wrong buttons, so each check also builds an accuracy log, and a shareable history page shows every check with its photos, boxes, answers and verdicts, searchable and filterable. The part/issue list is company data, so it lives in the database, not in the public code.",
+    tags: ["Side Project", "Tool", "AI/ML"],
+    href: "/issue-check",
+    linkLabel: "Open Issue Check →",
+    slug: "issue-check",
+    pm: {
+      users:
+        "Field inspectors who know a part looks wrong but lose time finding the exact checklist item for it among nearly 1,500 issues.",
+      approach:
+        "Constrain the model to the company's own taxonomy instead of letting it describe damage freely, so its answer maps one-to-one onto what the inspector has to mark, and log every verdict so accuracy is measured rather than assumed.",
+      metric:
+        "Share of findings rated Right. Guardrail: time per check, since a correct answer that is slower than scrolling the list doesn't help.",
+      status: "Live as an internal tool. Access may be gated by a shared code.",
+    },
+  },
+  {
+    title: "Claude Limits: A Widget That Rings When Your Limit Resets",
+    description:
+      "An Android home-screen widget showing your Claude subscription's 5-hour and weekly usage limits, which rings like an alarm clock the moment a window resets.",
+    fullDescription:
+      "Anthropic publishes no API for subscription usage limits, so Claude Limits reads the same data claude.ai's own usage page does: you sign in to claude.ai inside the app once, and it replays the usage request with that session. The widget shows the 5-hour session window and the weekly cap as two bars, each with a percentage, a countdown and the reset time, and refreshes every 15 minutes in the background. At each rollover it plays the alarm ringtone on loop with a full-screen Dismiss screen over the lock screen, the same alarm stack as the Reminders app. It survives reboots and time-zone changes, keeps showing the last good reading if a refresh fails, and silently re-solves Cloudflare challenges when you switch networks. Built in Kotlin with WorkManager, exact alarms and Keystore-backed session storage; the APK is built and published automatically on every commit.",
+    tags: ["Side Project", "Android App", "AI-Built"],
+    href: "https://github.com/rohankhullar24-oss/product-with-rohan/releases/download/claude-limits-app-latest/ClaudeLimits.apk",
+    external: true,
+    linkLabel: "Download the app →",
+    slug: "claude-limits",
+    pm: {
+      users:
+        "Heavy Claude subscribers who hit the 5-hour limit and either keep checking the usage page or miss the moment it resets.",
+      approach:
+        "Turn a number you have to go and look up into an alarm that comes to you. No computer and no token to copy: the session lives on the phone.",
+      metric:
+        "Time from a reset to the next Claude session. Guardrail: how often the widget shows stale data, since the source is undocumented and can break without notice.",
+      status: "Live as an APK. Depends on an undocumented endpoint, so it can break whenever claude.ai changes.",
+    },
+  },
+  {
     title: "Open Studio: A Free Creative and Work Suite in the Browser",
     description:
       "Thirteen apps in one browser suite: stand-ins for Photoshop, Illustrator, Premiere Pro, Lightroom, After Effects, InDesign and Acrobat, plus Word, Excel and PowerPoint editors, an Office viewer, OCR and zip tools. Files are never uploaded.",

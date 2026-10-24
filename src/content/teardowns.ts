@@ -73,6 +73,16 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/groww-teardown-pm-lens.png",
     publishedDate: "2026-09-20",
   },
+  {
+    slug: "razorpay-teardown-pm-lens",
+    company: "Razorpay",
+    eyebrow: "Product Teardown - India Fintech Infrastructure - October 2026",
+    headline: "Razorpay never sold a payment gateway. It sold a checkout page developers didn't have to argue with finance about.",
+    dek: "55% of India's online payment gateway market and Rs 3,783 Cr in FY25 revenue, up 65% YoY, built on being the integration a developer picks before legal or finance gets a vote.",
+    image:
+      "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/razorpay-teardown-pm-lens.png",
+    publishedDate: "2026-10-24",
+  },
 ];
 
 export function getTeardowns(): Teardown[] {

@@ -229,6 +229,16 @@ Script prototype.
   `issue-check-media` (`<check id>/<n>.jpg`); history serves them as 1-hour
   signed URLs. Both tables have RLS on with no policies — service role only.
 
+## Weekly content routine (`ops/product-shots-weekly/`)
+
+Not app code. The Sunday pipeline that writes the Shots question, News items,
+blog post (`src/content/blog/`), teardown (`src/content/teardowns.ts`) and
+LinkedIn post. `SKILL.md` is the pipeline, `checks/check.mjs` the publish
+gates, and the `.md` / `.jsonl` files are its run-to-run state, which each run
+commits back to `master`. It runs as a claude.ai cloud scheduled task;
+`CLOUD.md` maps the original laptop paths and tools onto the cloud. Ignored by
+ESLint.
+
 ## Android apps
 
 Three Gradle modules under one root build (`settings.gradle.kts`), sharing a

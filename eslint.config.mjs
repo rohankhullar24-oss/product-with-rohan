@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Weekly content routine scripts (plain Node, not part of the app).
+    "ops/**",
   ]),
 ]);
 

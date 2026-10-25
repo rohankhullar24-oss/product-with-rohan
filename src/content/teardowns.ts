@@ -83,6 +83,16 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/razorpay-teardown-pm-lens.png",
     publishedDate: "2026-10-24",
   },
+  {
+    slug: "canva-teardown-pm-lens",
+    company: "Canva",
+    eyebrow: "Product Teardown - Design Software - October 2026",
+    headline: "Canva never sold design software. It sold a template library, and now it is training a model on it.",
+    dek: "265M+ monthly users, 31M+ paying and $4B in ARR, built on templates that let non-designers ship. Its first image model, Craft, was trained on those same templates.",
+    image:
+      "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/canva-teardown-pm-lens.png",
+    publishedDate: "2026-10-25",
+  },
 ];
 
 export function getTeardowns(): Teardown[] {

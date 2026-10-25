@@ -25,6 +25,13 @@ Maximum 5 `open` proposals at once; the advisor must not add a sixth.
 
 ## Open
 
+### P12 — Stage 6's 60-day news delete is blocked in unattended cloud runs; decide how it should run
+`status: open`
+
+Raised 2026-10-25. Two cloud runs that day could not apply the age cleanup (1 row, `published_date` 2026-08-25, Emerald AI). The first was denied by the auto-mode classifier, the second timed out on a Supabase connector permission prompt nobody could answer. SKILL.md says no confirmation is needed, but the connector still asks. The row is now past 60 days and will stay until someone deletes it.
+
+Proposed: either Rohan pre-approves `execute_sql` DELETE on `news_items` for this task in the connector settings, or Stage 6 step 3 is dropped from cloud runs and done on the laptop. Not self-applied: it is a permission and scope change.
+
 ### P11 — Move this pipeline from a local scheduled task to a cloud routine, so it doesn't depend on Rohan's machine being on
 `status: open`
 

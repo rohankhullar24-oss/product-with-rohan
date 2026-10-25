@@ -1,5 +1,6 @@
 # LinkedIn CTA phrasing log
 
+- 2026-10-25 — Teardown (Canva): led with the 12% paid-conversion stat and the Craft-ranks-fourth tension, CTA pointed at the teardown page plus this week's Shots product_critique question (Airbnb search), closed with an open question to readers. Drafted and gate-passed, NOT posted, per Rohan.
 - 2026-08-13 — Shots: pointed at the live strategy_gtm question specifically (underdog GTM vs. a scaled incumbent), framed as "worth a look if you've pitched a launch plan with a fraction of the competitor's budget" — ties the CTA to the day's question content rather than value-of-answers, diagnostic-habit, or generic cadence framings. Hook: an engineer's stated reason for not trusting PRDs (nobody edits them when decisions change).
 - 2026-08-10 — Shots: framed the live root_cause_analysis question directly ("diagnose before you prescribe") rather than a value or cadence pitch. Hook: nuclear-reactor funding as a compute-scarcity signal for AI roadmaps.
 - 2026-08-09 — Shots: framed the new behavioral question as practice for a hard stakeholder call without losing the relationship. Hook: decisions are reopened because their reasoning disappears.

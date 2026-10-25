@@ -25,6 +25,13 @@ Maximum 5 `open` proposals at once; the advisor must not add a sixth.
 
 ## Open
 
+### P13 — 27 non-master branches have had no commit in 30+ days, and three draft PRs are 30+ days old
+`status: open`
+
+Stage 6b on 2026-10-25 found 35 non-master branches, 27 with no commit in 30+ days (oldest 56 days: `claude/remove-invalid-car-photo-qco2jv`, `claude/rekyc-funnel-artifact-nnzl9x`, `claude/hyperverge-internal-ml-tool-n61w8f`). Open PRs #67, #112 and #119 are all drafts, 30+ days old. None are Dependabot. This is a larger pile than the three branches P8 cleaned up on 2026-08-30.
+
+Proposed: Rohan decides which of these are finished, superseded or abandoned, the same way P8 was handled (check each against master before deleting). Not self-applied: this stage is report-only and never deletes branches.
+
 ### P12 — Stage 6's 60-day news delete is blocked in unattended cloud runs; decide how it should run
 `status: open`
 

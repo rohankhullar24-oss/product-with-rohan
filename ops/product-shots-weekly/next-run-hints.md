@@ -22,19 +22,11 @@ Rules the advisor must follow when writing this file:
 
 ## Open hints
 
-- **[2026-09-20] `strategy_gtm` and `metrics_analytics` lead at 6 rows; the other 6
-  types (including this run's `root_cause_analysis` insert) now sit at 5.** Next run
-  should default to one of `product_sense`, `guesstimate`, `behavioral`,
-  `prioritization`, or `product_critique` per Stage 1's lowest-count rule.
+- **[2026-10-25] `prioritization` and `behavioral` now trail at 5 rows; every other type is at 6.** Next run should pick one of those two under Stage 1's lowest-count rule.
 
-- **[2026-09-19] This run's blog post (metric dilution / Simpson's paradox) interlinks
-  directly with the same-run Shots question** (onboarding completion vs. Day-90
-  retention). When a Shots question and a blog post land on the same diagnostic theme
-  in one run, that's worth doing deliberately more often — it gives the blog post a
-  concrete practice link instead of a generic dashboard pointer, and this run's post
-  used exactly that. Consider it as a first option each run before defaulting to a
-  fully separate blog topic, though Stage 3's own dedup/evergreen/tone rules still
-  govern which topic actually gets picked.
+- **[2026-10-25] This run's blog (choosing an AI model with a 50-input eval) pairs naturally with a `metrics_analytics` or `root_cause_analysis` Shots question about an AI feature quality drop.** Worth considering as a same-theme follow-up, same logic as the earlier Shots-plus-blog pairing hint. Stage 3's own dedup, tone and evergreen rules still govern.
+
+- **[2026-10-25] Teardown lane: three of the last five teardowns were India fintech (Zerodha, Groww, Razorpay).** Canva broke that. Next teardown could stay global or consumer, for example a non-fintech India or global product, so the page does not read as one vertical.
 
 ## Recently retired
 

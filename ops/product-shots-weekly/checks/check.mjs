@@ -253,8 +253,13 @@ async function checkBlog() {
     warn('slug-collision', `blogdir ${blogdir} not readable — skipped collision + internal link checks`);
   }
 
-  // Handbook ban lifted for blog 2026-09-20 (LinkedIn-only now, see checkSocial).
+  // Handbook ban lifted for blog 2026-09-20. From 2026-11-01 a closing Handbook section is REQUIRED.
   pass('banned-content', 'Handbook restriction no longer applies to blog');
+  if (!/productwithrohan\.online\/handbook/i.test(body.slice(-1500))) {
+    fail('handbook-cta', 'the post must end with a Handbook closing section linking https://productwithrohan.online/handbook (checked in the last 1,500 characters)');
+  } else {
+    pass('handbook-cta', 'Handbook closing section present');
+  }
 
   // --- house style (the humanizer rules that are mechanically checkable) --
   const emDashes = (body.match(/[—–]/g) || []).length;
@@ -427,8 +432,11 @@ function checkSocial() {
   // --- banned content ------------------------------------------------------
   // Handbook is allowed again everywhere except LinkedIn (reversed 2026-09-20) — this
   // is now the ONLY surface still gated on it.
-  if (platform === 'linkedin') checkBanned(text, `${platform} post`);
-  else pass('banned-content', `Handbook restriction only applies to linkedin, not ${platform}`);
+  // From 2026-11-01 the LinkedIn post must mention and link the Handbook (it used to be banned there).
+  if (platform === 'linkedin') {
+    if (!text.includes('https://productwithrohan.online/handbook')) fail('handbook-cta', 'LinkedIn post must link https://productwithrohan.online/handbook');
+    else pass('handbook-cta', 'Handbook link present');
+  } else pass('banned-content', `Handbook restriction only applies to linkedin, not ${platform}`);
 
   // --- answer leak guard (Note 2: Shots teaser must never contain the answer) --
   // Deterministic stand-in for "did we accidentally give the answer away":

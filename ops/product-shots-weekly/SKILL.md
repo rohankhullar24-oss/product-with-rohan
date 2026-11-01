@@ -66,10 +66,18 @@ payloads) to the session scratchpad, never into the repo or this directory.
 
 **HANDBOOK — BACK ON, CAN BE USED (reversed 2026-09-20, was discontinued 2026-07-13).**
 Rohan reversed the discontinuation in-session: the Handbook can now be mentioned, linked,
-or priced again in blog posts, teardowns, and digest email. The one carve-out is
-LinkedIn — see the LinkedIn content-source rule below, which bans it there specifically,
-independent of this reversal. The check suite's banned-content gate now only applies to
-the `social --platform linkedin` check; blog/teardown/digest no longer block on it.
+or priced again in blog posts, teardowns, and digest email. The LinkedIn carve-out that
+used to sit here was superseded on 2026-11-01 by the Handbook CTA rule below.
+
+**HANDBOOK CTA IS REQUIRED ON BLOG POSTS AND LINKEDIN (2026-11-01, Rohan, in-session).**
+From the next run on: (1) every blog post ends with a short closing section that points to
+the Handbook (https://productwithrohan.online/handbook; 337 pages, five volumes, a one-time
+price on the page) in a sentence or two tied to that post's topic, and it is the last thing
+in the post; (2) every LinkedIn post mentions the Handbook and links
+https://productwithrohan.online/handbook in the body; (3) the article link (the blog URL, or
+the teardown page when the teardown is the angle) goes in the first comment on the LinkedIn
+post, not in the body. This supersedes the old LinkedIn Handbook ban and Stage 3 step 9's
+"don't force one". The gates enforce it. Teardown entries are unaffected.
 
 **REORG AND LAYOFFS ARE RETIRED SUBJECTS — NEVER PICK EITHER AGAIN (2026-09-20).** Rohan
 flagged in-session that three blog posts on reorgs landed within four weeks (Meta/Expedia
@@ -89,8 +97,8 @@ layoff angle; if one is ever written by mistake, this standing rule wins.
 article or this run's teardown/product shot, whichever is the stronger post that week —
 Stage 5 picks one, not a blend of both, and judges "stronger" the same way it already
 judges a hook (which has the sharper tension, the more concrete stat, the clearer
-practical takeaway). It must never mention the Handbook, regardless of the Handbook
-reversal above — the check suite still gates LinkedIn specifically on this.
+practical takeaway). It must mention and link the Handbook (see the Handbook CTA rule above);
+the article link goes in the first comment.
 
 **LINKEDIN IS BACK IN THIS JOB (rejoined 2026-09-08).** Removed entirely on 2026-08-13, now
 reinstated at Rohan's explicit request in chat (not inferred from `linkedin-cta-log.md` or run
@@ -215,9 +223,10 @@ Posts are markdown in `src/content/blog/*.md`. This one file powers both
    ```
    Today's date. Filename = kebab-case slug, no collision.
 8. Length: 1,500-3,000 words. The gate hard-fails below 1,200.
-9. Handbook mentions are allowed again on blog (see Standing rules, reversed
-   2026-09-20) — a genuine, non-forced Handbook CTA is fine if it fits the post; don't
-   force one onto a post it doesn't fit.
+9. **End the post with a Handbook section (required from 2026-11-01, see Standing rules).**
+   A short closing section, one to three sentences tied to the post's topic, linking
+   https://productwithrohan.online/handbook. It is the last thing in the post. The gate
+   hard-fails a post whose final 1,500 characters do not contain that link.
 10. **GATE:** `node check.mjs blog --file <post> --blogdir src/content/blog --date <today>`.
 11. Commit and push to `master`: `git add`, `git commit -m "Add blog post: <title>"`, `git push`.
     On failure, `git pull --rebase` once and retry. **Never force-push.** A second failure
@@ -306,8 +315,10 @@ is — no stage here posts on faith.
    lead with its sharpest stat or tension and point to the teardown page itself as the
    CTA. Rotate phrasing week to week — check `linkedin-cta-log.md`'s last ~10 entries
    so this week's hook and CTA phrasing are not a repeat.
-2. **No Handbook, ever, on LinkedIn specifically** — this is the one surface where the
-   Handbook reversal (see Standing rules) does not apply.
+2. **Mention and link the Handbook in the body (required from 2026-11-01).** One or two
+   sentences tied to the post's topic plus https://productwithrohan.online/handbook. Do
+   not put the article link in the body; it goes in the first comment (step 6b). Do not
+   pass `--blogurl` to the social gate.
 3. Draft through `anthropic-skills:writer`, then both `anthropic-skills:humanizer` and
    `anthropic-skills:anti-ai`, then a final `anthropic-skills:ogilvy-audit` pass, revised to
    address its findings — same pipeline as the blog post and teardown copy.
@@ -336,6 +347,12 @@ is — no stage here posts on faith.
    (not the repo), log the CTA phrasing to `linkedin-cta-log.md` anyway (still useful for
    next run's rotation check), and report clearly that the post is drafted and gated but
    not published.
+6b. **First comment with the article link.** Right after a successful post, call
+   `LINKEDIN_CREATE_COMMENT_ON_POST` (account `linkedin_missay-tied`, actor
+   `urn:li:person:a7RZ6Boa5m`, `target_urn` and `object` both set to the `urn:li:share:...`
+   id the post call returned). Text: one short line plus the link, the blog URL, or the
+   teardown page URL when the teardown is the angle. Max 1,250 characters. Retry once on
+   failure; if it still fails, say so in the report (the post stays up).
 7. On a successful post, append one line to `linkedin-cta-log.md` (newest entry at top,
    keep only the last ~10) recording the CTA angle and hook used, per the existing log format.
 

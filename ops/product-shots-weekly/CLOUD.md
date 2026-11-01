@@ -70,7 +70,8 @@ for the same three reads. Still report-only.
 
 Composio's LinkedIn toolkit via the Composio connector. If that connector is not loaded in
 this session, follow `SKILL.md`'s own missing-connector rule: draft and gate, do not post,
-report it.
+report it. The first comment with the article link (SKILL.md step 6b) uses the same
+connector's `LINKEDIN_CREATE_COMMENT_ON_POST`.
 
 ## Committing
 

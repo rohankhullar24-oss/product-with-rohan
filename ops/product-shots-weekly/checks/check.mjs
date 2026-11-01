@@ -436,6 +436,11 @@ function checkSocial() {
   if (platform === 'linkedin') {
     if (!text.includes('https://productwithrohan.online/handbook')) fail('handbook-cta', 'LinkedIn post must link https://productwithrohan.online/handbook');
     else pass('handbook-cta', 'Handbook link present');
+    // Never state the Handbook's price on LinkedIn (Rohan changes it). Scan the paragraph(s) that mention it.
+    const PRICE = /[₹$€£]\s?\d|\b(rs|inr|usd)\.?\s?\d|\d\s?(rupees|inr|usd|dollars)|\b(price|priced|pricing|cost|costs|cheap|affordable|free|discount|one-time|pay-what-you-want)\b/i;
+    const priceHit = text.split(/\n\s*\n/).filter((p) => /handbook/i.test(p)).find((p) => PRICE.test(p));
+    if (priceHit) fail('handbook-price', 'the paragraph mentioning the Handbook contains price wording; never state its price on LinkedIn');
+    else pass('handbook-price', 'no price wording near the Handbook mention');
   } else pass('banned-content', `Handbook restriction only applies to linkedin, not ${platform}`);
 
   // --- answer leak guard (Note 2: Shots teaser must never contain the answer) --

@@ -76,7 +76,9 @@ price on the page) in a sentence or two tied to that post's topic, and it is the
 in the post; (2) every LinkedIn post mentions the Handbook and links
 https://productwithrohan.online/handbook in the body; (3) the article link (the blog URL, or
 the teardown page when the teardown is the angle) goes in the first comment on the LinkedIn
-post, not in the body. This supersedes the old LinkedIn Handbook ban and Stage 3 step 9's
+post, not in the body. NEVER state or hint at the Handbook's price on LinkedIn (no amount,
+currency, "one-time", "free", "cheap", discount wording), because Rohan changes it from time
+to time; the gate fails it. This supersedes the old LinkedIn Handbook ban and Stage 3 step 9's
 "don't force one". The gates enforce it. Teardown entries are unaffected.
 
 **REORG AND LAYOFFS ARE RETIRED SUBJECTS — NEVER PICK EITHER AGAIN (2026-09-20).** Rohan
@@ -316,7 +318,8 @@ is — no stage here posts on faith.
    CTA. Rotate phrasing week to week — check `linkedin-cta-log.md`'s last ~10 entries
    so this week's hook and CTA phrasing are not a repeat.
 2. **Mention and link the Handbook in the body (required from 2026-11-01).** One or two
-   sentences tied to the post's topic plus https://productwithrohan.online/handbook. Do
+   sentences tied to the post's topic plus https://productwithrohan.online/handbook, with no
+   price or pricing wording of any kind. Do
    not put the article link in the body; it goes in the first comment (step 6b). Do not
    pass `--blogurl` to the social gate.
 3. Draft through `anthropic-skills:writer`, then both `anthropic-skills:humanizer` and

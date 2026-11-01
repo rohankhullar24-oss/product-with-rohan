@@ -25,10 +25,17 @@ Maximum 5 `open` proposals at once; the advisor must not add a sixth.
 
 ## Open
 
+### P14 — Attach the repo to this scheduled task so `git push` works; today every commit goes through Composio one file at a time
+`status: open`
+
+Raised 2026-11-01. This run's `git push --dry-run origin master` returned 403 from the git proxy ("not in this session's authorized repository set"), so the blog post, the teardown entry and the state files were each committed through the Composio GitHub connector. It worked, but it means content has to be sent through tool calls instead of pushed from the checkout, and the local gates and the committed files can drift.
+
+Proposed: Rohan adds `rohankhullar24-oss/product-with-rohan` to this task's repositories in its settings, so CLOUD.md's normal git flow applies. Not self-applied: it is a permission and scope change.
+
 ### P13 — 27 non-master branches have had no commit in 30+ days, and three draft PRs are 30+ days old
 `status: open`
 
-Stage 6b on 2026-10-25 found 35 non-master branches, 27 with no commit in 30+ days (oldest 56 days: `claude/remove-invalid-car-photo-qco2jv`, `claude/rekyc-funnel-artifact-nnzl9x`, `claude/hyperverge-internal-ml-tool-n61w8f`). Open PRs #67, #112 and #119 are all drafts, 30+ days old. None are Dependabot. This is a larger pile than the three branches P8 cleaned up on 2026-08-30.
+Update 2026-11-01: now 35 non-master branches, 30 with no commit in 30+ days (oldest 62 days); the three draft PRs (#67, #112, #119) are unchanged. Original finding, 2026-10-25: 35 non-master branches, 27 with no commit in 30+ days (oldest 56 days: `claude/remove-invalid-car-photo-qco2jv`, `claude/rekyc-funnel-artifact-nnzl9x`, `claude/hyperverge-internal-ml-tool-n61w8f`). Open PRs #67, #112 and #119 are all drafts, 30+ days old. None are Dependabot. This is a larger pile than the three branches P8 cleaned up on 2026-08-30.
 
 Proposed: Rohan decides which of these are finished, superseded or abandoned, the same way P8 was handled (check each against master before deleting). Not self-applied: this stage is report-only and never deletes branches.
 
@@ -36,6 +43,8 @@ Proposed: Rohan decides which of these are finished, superseded or abandoned, th
 `status: open`
 
 Raised 2026-10-25. Two cloud runs that day could not apply the age cleanup (1 row, `published_date` 2026-08-25, Emerald AI). The first was denied by the auto-mode classifier, the second timed out on a Supabase connector permission prompt nobody could answer. SKILL.md says no confirmation is needed, but the connector still asks. The row is now past 60 days and will stay until someone deletes it.
+
+Update 2026-11-01: blocked a fourth time (the DELETE timed out on the same unanswered permission prompt). The table now holds more than one row older than 60 days (items from late August and early September are still there).
 
 Proposed: either Rohan pre-approves `execute_sql` DELETE on `news_items` for this task in the connector settings, or Stage 6 step 3 is dropped from cloud runs and done on the laptop. Not self-applied: it is a permission and scope change.
 

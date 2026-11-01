@@ -22,13 +22,15 @@ Rules the advisor must follow when writing this file:
 
 ## Open hints
 
-- **[2026-10-25] `prioritization` and `behavioral` now trail at 5 rows; every other type is at 6.** Next run should pick one of those two under Stage 1's lowest-count rule.
+- **[2026-11-01] `behavioral` is now the only question type at 5 rows; every other type is at 6.** Next run should pick `behavioral` under Stage 1's lowest-count rule.
 
-- **[2026-10-25] This run's blog (choosing an AI model with a 50-input eval) pairs naturally with a `metrics_analytics` or `root_cause_analysis` Shots question about an AI feature quality drop.** Worth considering as a same-theme follow-up, same logic as the earlier Shots-plus-blog pairing hint. Stage 3's own dedup, tone and evergreen rules still govern.
+- **[2026-11-01] Blog lane: the last three posts were an evergreen metrics piece, an AI-model eval piece and this run's feature-sunset craft piece, all constructive.** A news-hooked post is due next. Pick a verified positive story from News (fetch the primary source first) and avoid reorg, layoff and buyout subjects. A good evergreen alternative: how to write acceptance criteria for an AI feature.
 
-- **[2026-10-25] Teardown lane: three of the last five teardowns were India fintech (Zerodha, Groww, Razorpay).** Canva broke that. Next teardown could stay global or consumer, for example a non-fintech India or global product, so the page does not read as one vertical.
+- **[2026-11-01] Teardown lane: three of the last four non-India picks were consumer subscription or freemium products (Duolingo, Canva, Spotify).** Next teardown could be a B2B SaaS, a marketplace or an India consumer non-fintech product (for example a quick-commerce or edtech company), so the page does not read as one business model.
 
 ## Recently retired
+
+- Prioritization-trails hint, pairing hint and India-fintech teardown hint (2026-10-25): acted on or superseded 2026-11-01 (prioritization question added, Spotify teardown broke the India fintech run; the AI-eval pairing hint was not used because the lowest-count rule pointed elsewhere).
 
 - Reorg/layoff-as-subject hint (2026-09-20): removed, not tracked as a hint anymore.
   Reorg and layoffs are now a permanent standing-rule exclusion in SKILL.md's Standing

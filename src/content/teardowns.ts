@@ -93,6 +93,16 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/canva-teardown-pm-lens.png",
     publishedDate: "2026-10-25",
   },
+  {
+    slug: "spotify-teardown-pm-lens",
+    company: "Spotify",
+    eyebrow: "Product Teardown - Consumer Audio - November 2026",
+    headline: "63% of Spotify's users are free. Its premium growth now leans on charging the rest more.",
+    dek: "788M monthly users, 306M paying, EUR 4.97B in quarterly revenue at a 33.0% gross margin. Subscribers grew 9% and premium ARPU grew 9.3%, so price is carrying about half of premium growth.",
+    image:
+      "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/spotify-teardown-pm-lens.png",
+    publishedDate: "2026-11-01",
+  },
 ];
 
 export function getTeardowns(): Teardown[] {

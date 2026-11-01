@@ -5,7 +5,7 @@ import { useState } from "react";
 import { track } from "@vercel/analytics";
 import type { RazorpayFailureResponse, RazorpayPaymentResponse } from "@/types/razorpay";
 
-const HANDBOOK_PRICE_INR = 199;
+const HANDBOOK_PRICE_INR = 499;
 
 export default function HandbookCheckout() {
   const [loading, setLoading] = useState(false);

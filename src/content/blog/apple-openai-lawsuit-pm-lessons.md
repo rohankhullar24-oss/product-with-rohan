@@ -48,4 +48,4 @@ Apple and OpenAI's relationship has been unusually close for competitors. In 202
 
 ## Want the deeper playbook?
 
-If lawsuits, layoffs, and hardware bets like this one are the kind of signal you want turned into a repeatable decision framework rather than a one-off news reaction, the Handbook goes deeper on how to build product judgment under competitive pressure. It's ₹199: https://productwithrohan.online/handbook
+If lawsuits, layoffs, and hardware bets like this one are the kind of signal you want turned into a repeatable decision framework rather than a one-off news reaction, the Handbook goes deeper on how to build product judgment under competitive pressure. It's ₹499: https://productwithrohan.online/handbook

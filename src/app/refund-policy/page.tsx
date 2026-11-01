@@ -39,7 +39,7 @@ export default function RefundPolicyPage() {
           <section>
             <h2 className="text-lg font-semibold text-navy dark:text-white">Fixed pricing</h2>
             <p className="mt-2">
-              The handbook is sold at a fixed price of ₹199, clearly shown before checkout. Refund
+              The handbook is sold at a fixed price of ₹499, clearly shown before checkout. Refund
               requests based on price (&quot;I didn&apos;t mean to pay that much&quot;) aren&apos;t
               applicable, since the price is disclosed upfront.
             </p>

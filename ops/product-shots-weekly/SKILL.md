@@ -407,6 +407,27 @@ auto-deletes anything; it surfaces state for Rohan to act on.
 5. If `gh` is not authenticated or the repo is unreachable, treat this as a soft stop for this
    stage only per the Stop conditions below: skip it, note why, continue the run.
 
+## Stage 6c: Three Substack notes for Rohan to paste (added 2026-11-01)
+
+Rohan pastes these into Substack himself. Nothing here is posted by the run, and no Substack
+tool is called. This is separate from the retired Substack drafts in
+`product-shots-teardown-substack`.
+
+1. Write three short notes: (a) the article (this run's blog post, or a one-line "no post this
+   run" skip if Stage 3 was blocked), (b) the Shots question added in Stage 1 (state the
+   question type and the question itself, never the answer), (c) the teardown from Stage 4.
+2. Each note: under 480 characters including URLs, no hashtags, no em or en dashes, plain
+   Rohan voice, one idea, the relevant link (blog URL, teardown page URL) and the Shots
+   dashboard URL `https://productwithrohan.online/productshot/dashboard`. Do not state the
+   Handbook price anywhere. Route the copy through the same writer, humanizer, anti-ai and
+   ogilvy-audit passes as the LinkedIn post.
+3. **GATE** each: `node check.mjs social --platform substack --file <note.txt>` (add
+   `--noanswer <answer.txt>` for the Shots note, with the answer text saved to scratch).
+   Fix and re-run once; a second failure drops that note only.
+4. Put the three gate-passed notes in the final message under "Substack notes", each in its
+   own code block so they copy cleanly, labelled Article, Shots and Teardown. They are not
+   committed to the repo.
+
 ## Stage 7: Advisor pass
 
 This is the stage that makes the pipeline improve rather than merely repeat. Run it last,
@@ -500,5 +521,6 @@ the LinkedIn post's angle/hook plus whether it actually posted or only drafted-a
 (Stage 5 — say explicitly if no posting connector was available). Also cover content health
 findings (Stage 6) and repo health findings (Stage 6b: failing workflows, stale branches,
 open Dependabot PRs, or "all clear"), and any advisor hints or proposals written. Say
-plainly what was skipped and why. Note that the four Substack drafts for the week come from
-`product-shots-teardown-substack`, a separate task, not this one.
+plainly what was skipped and why. End the report with the three paste-ready Substack notes from
+Stage 6c (Article, Shots, Teardown), each in its own code block. The older four-note Substack
+drafts still come from `product-shots-teardown-substack`, a separate task.

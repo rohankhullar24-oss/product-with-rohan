@@ -75,8 +75,9 @@ the Handbook (https://productwithrohan.online/handbook; 337 pages, five volumes,
 price on the page) in a sentence or two tied to that post's topic, and it is the last thing
 in the post; (2) every LinkedIn post mentions the Handbook and links
 https://productwithrohan.online/handbook in the body; (3) the article link (the blog URL, or
-the teardown page when the teardown is the angle) goes in the first comment on the LinkedIn
-post, not in the body. NEVER state or hint at the Handbook's price on LinkedIn (no amount,
+the teardown page when the teardown is the angle) and the Shots dashboard link go in the
+first comment on the LinkedIn post, not in the body. The body carries exactly one link: the
+Handbook. NEVER state or hint at the Handbook's price on LinkedIn (no amount,
 currency, "one-time", "free", "cheap", discount wording), because Rohan changes it from time
 to time; the gate fails it. This supersedes the old LinkedIn Handbook ban and Stage 3 step 9's
 "don't force one". The gates enforce it. Teardown entries are unaffected.
@@ -319,17 +320,19 @@ is — no stage here posts on faith.
    so this week's hook and CTA phrasing are not a repeat.
 2. **Mention and link the Handbook in the body (required from 2026-11-01).** One or two
    sentences tied to the post's topic plus https://productwithrohan.online/handbook, with no
-   price or pricing wording of any kind. Do
-   not put the article link in the body; it goes in the first comment (step 6b). Do not
-   pass `--blogurl` to the social gate.
+   price or pricing wording of any kind. The
+   body has exactly one URL, the Handbook link. The article link and the Shots dashboard link
+   go in the first comment (step 6b), and the body ends with a line like "Full article and
+   this week's Shots question are in the first comment."
 3. Draft through `anthropic-skills:writer`, then both `anthropic-skills:humanizer` and
    `anthropic-skills:anti-ai`, then a final `anthropic-skills:ogilvy-audit` pass, revised to
    address its findings — same pipeline as the blog post and teardown copy.
 4. Length: LinkedIn's practical read-more fold is short. Keep it under ~1,300 characters of
    real content (the gate's hard limit is 3,000, but that's a ceiling, not a target).
    3-5 hashtags, no em/en dashes (the gate fails on both).
-5. **GATE:** `node check.mjs social --platform linkedin --file <post.txt> --ctalog
-   linkedin-cta-log.md`. Fix and re-run once on a failure; a second failure stops this stage
+5. **GATE:** `node check.mjs social --platform linkedin --file <post.txt> --comment
+   <comment.txt> --blogurl <article-or-teardown-url> --ctalog linkedin-cta-log.md`
+   (the comment file holds the first comment text: article link plus Shots dashboard link). Fix and re-run once on a failure; a second failure stops this stage
    only (see Stop conditions).
 6. **Posting mechanism (confirmed working 2026-09-08).** Post via Composio's LinkedIn
    toolkit: `LINKEDIN_GET_MY_INFO` to resolve the author URN (`urn:li:person:a7RZ6Boa5m`,
@@ -353,8 +356,9 @@ is — no stage here posts on faith.
 6b. **First comment with the article link.** Right after a successful post, call
    `LINKEDIN_CREATE_COMMENT_ON_POST` (account `linkedin_missay-tied`, actor
    `urn:li:person:a7RZ6Boa5m`, `target_urn` and `object` both set to the `urn:li:share:...`
-   id the post call returned). Text: one short line plus the link, the blog URL, or the
-   teardown page URL when the teardown is the angle. Max 1,250 characters. Retry once on
+   id the post call returned). Text: two short labelled lines, the blog URL (or the
+   teardown page URL when the teardown is the angle) and the Shots dashboard URL
+   `https://productwithrohan.online/productshot/dashboard`. Max 1,250 characters. Retry once on
    failure; if it still fails, say so in the report (the post stays up).
 7. On a successful post, append one line to `linkedin-cta-log.md` (newest entry at top,
    keep only the last ~10) recording the CTA angle and hook used, per the existing log format.

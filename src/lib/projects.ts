@@ -303,7 +303,7 @@ export const projects: Project[] = [
   {
     title: "The Product Manager Handbook",
     description:
-      "A five-volume PM handbook of 93 chapters covering foundations, product sense, execution, AI product management and company interview guides. Sold as a ₹199 PDF and Word download.",
+      "A five-volume PM handbook of 93 chapters covering foundations, product sense, execution, AI product management and company interview guides. Sold as a ₹499 PDF and Word download.",
     fullDescription:
       "The Product Manager Handbook is a paid digital product: five volumes and 93 chapters spanning PM foundations, product sense (20+ worked case studies), product execution, AI product management (LLMs, RAG, agents, evals), and company-specific interview playbooks, plus appendices of frameworks, templates, KPI libraries and SQL cheat sheets. The funnel is built into this site: a landing page, Razorpay checkout (card and UPI), server-side signature verification, and a success page that unlocks the PDF, a compressed PDF and the Word edition, with an emailed copy sent through Resend.",
     tags: ["Side Project", "Product", "Learning"],
@@ -314,7 +314,7 @@ export const projects: Project[] = [
       users:
         "Aspiring and early-career PMs preparing for interviews who want one structured reference instead of fifty bookmarked blog posts.",
       approach:
-        "One-time ₹199 price, low enough to be an impulse buy in India, with delivery fully automated (pay, verify, download, email) so it runs with no manual fulfilment.",
+        "One-time ₹499 price, low enough to be an impulse buy in India, with delivery fully automated (pay, verify, download, email) so it runs with no manual fulfilment.",
       metric:
         "Landing-page-to-payment conversion. Guardrail: payment failures and 'paid but didn't get it' support requests, which would mean the automated delivery is leaking.",
       status: "Live, taking payments.",

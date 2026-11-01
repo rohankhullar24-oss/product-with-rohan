@@ -42,7 +42,7 @@ export default function TermsPage() {
               </li>
               <li>
                 <b className="text-navy dark:text-white">The Product Manager Handbook</b> — a
-                fixed-price (₹199) digital book, delivered by download after payment via Razorpay.
+                fixed-price (₹499) digital book, delivered by download after payment via Razorpay.
               </li>
               <li>
                 <b className="text-navy dark:text-white">AI Resume Builder</b> — you upload a
@@ -70,7 +70,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-lg font-semibold text-navy dark:text-white">Payments</h2>
             <p className="mt-2">
-              Handbook payments are processed by Razorpay. Pricing is fixed at ₹199. Refunds are
+              Handbook payments are processed by Razorpay. Pricing is fixed at ₹499. Refunds are
               governed by the{" "}
               <Link href="/refund-policy" className="text-accent hover:underline">
                 Refund &amp; Cancellation Policy

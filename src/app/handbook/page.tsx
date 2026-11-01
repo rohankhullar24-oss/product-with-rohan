@@ -5,13 +5,13 @@ import HandbookCheckout from "@/components/HandbookCheckout";
 export const metadata: Metadata = {
   title: "The Product Manager Handbook | Rohan Khullar",
   description:
-    "A complete Product Manager handbook — five volumes covering PM foundations, product sense, execution, AI product management, and company interview guides. ₹199, one-time.",
+    "A complete Product Manager handbook — five volumes covering PM foundations, product sense, execution, AI product management, and company interview guides. ₹499, one-time.",
   openGraph: {
     type: "website",
     url: "https://productwithrohan.online/handbook",
     title: "The Product Manager Handbook | Rohan Khullar",
     description:
-      "A complete Product Manager handbook — five volumes covering foundations, product sense, execution, AI product management, and company interview guides. ₹199, one-time.",
+      "A complete Product Manager handbook — five volumes covering foundations, product sense, execution, AI product management, and company interview guides. ₹499, one-time.",
   },
 };
 
@@ -151,7 +151,7 @@ export default function HandbookPage() {
         </Link>
 
         <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-accent">
-          ₹199 · One-time payment
+          ₹499 · One-time payment
         </p>
         <h1 className="mt-2 text-3xl font-semibold text-navy dark:text-white sm:text-4xl">
           The Product Manager Handbook

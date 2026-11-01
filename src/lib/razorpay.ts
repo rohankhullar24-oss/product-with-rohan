@@ -42,4 +42,4 @@ export function verifyRazorpaySignature(
   return crypto.timingSafeEqual(expectedBuffer, actualBuffer);
 }
 
-export const HANDBOOK_PRICE_INR = 199;
+export const HANDBOOK_PRICE_INR = 499;

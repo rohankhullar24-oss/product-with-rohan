@@ -8,6 +8,7 @@ export default function StructuredData() {
       "https://www.linkedin.com/in/rohan-khullar",
       "https://twitter.com/rohankhullar24",
       "https://github.com/rohankhullar24-oss",
+      "https://www.instagram.com/product.with.rohan/",
     ],
     jobTitle: "Product Manager",
     worksFor: {

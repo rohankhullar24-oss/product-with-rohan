@@ -19,6 +19,11 @@ const contacts = [
     href: "https://www.linkedin.com/in/rohankhullar/",
   },
   {
+    label: "Instagram",
+    value: "@product.with.rohan",
+    href: "https://www.instagram.com/product.with.rohan/",
+  },
+  {
     label: "GitHub",
     value: "github.com/rohankhullar24-oss",
     href: "https://github.com/rohankhullar24-oss",

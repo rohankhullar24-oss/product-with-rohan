@@ -203,6 +203,15 @@ export const projects: Project[] = [
     },
   },
   {
+    title: "Nearby Outlets & Market View for Field Rangers",
+    description:
+      "A nearby merchant and retailer system plus a market view for Rangers (field sales), so they can see the outlets around them and work each one through a full task-based checklist.",
+    fullDescription:
+      "Built a nearby merchant and retailer system and a market view for Rangers (field sales), so they could see the outlets near them and work the market in a structured way. Each Ranger had a full task-based checklist: some tasks were system-driven, and others were manual, with the sales team uploading data so each Ranger's work could be calculated.",
+    tags: ["Product Case Study"],
+    slug: "ranger-nearby-outlets",
+  },
+  {
     title: "CarBecho: Used-Car Inspection Co-Pilot",
     description:
       "A field-inspector tool for used-car checklists. Voice, text, and photo answers get logged straight to a 200-point inspection via an AI co-pilot, no code written manually.",

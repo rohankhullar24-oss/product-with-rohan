@@ -22,13 +22,15 @@ Rules the advisor must follow when writing this file:
 
 ## Open hints
 
-- **[2026-11-01] `behavioral` is now the only question type at 5 rows; every other type is at 6.** Next run should pick `behavioral` under Stage 1's lowest-count rule.
+- **[2026-11-08] All eight question types are now at 6 rows.** Stage 1's lowest-count rule has no winner next run, so pick the type whose newest row is oldest (`select type, max(created_at) from public.shots_questions group by type order by 2 asc`).
 
-- **[2026-11-01] Blog lane: the last three posts were an evergreen metrics piece, an AI-model eval piece and this run's feature-sunset craft piece, all constructive.** A news-hooked post is due next. Pick a verified positive story from News (fetch the primary source first) and avoid reorg, layoff and buyout subjects. A good evergreen alternative: how to write acceptance criteria for an AI feature.
+- **[2026-11-08] Blog lane: the last three posts (feature sunset, AI-model eval, this run's proof-of-shipped-AI post) were all constructive.** A news-hooked post is still the right shape next, but pick a different subject from hiring and AI careers. An evergreen alternative carried over from last week: how to write acceptance criteria for an AI feature. Avoid reorg, layoff and buyout subjects.
 
-- **[2026-11-01] Teardown lane: three of the last four non-India picks were consumer subscription or freemium products (Duolingo, Canva, Spotify).** Next teardown could be a B2B SaaS, a marketplace or an India consumer non-fintech product (for example a quick-commerce or edtech company), so the page does not read as one business model.
+- **[2026-11-08] Teardown lane: Shopify broke the consumer-subscription run.** Next teardown could be an India consumer non-fintech product (quick commerce such as Zepto or Blinkit, or edtech) or a marketplace. Zepto was researched this run and set aside, so its numbers are not wasted but need re-verifying.
 
 ## Recently retired
+
+- Behavioral, news-hooked blog and non-consumer-subscription teardown hints (2026-11-01): acted on 2026-11-08 (behavioral question added, CompTIA-hooked blog, Shopify teardown).
 
 - Prioritization-trails hint, pairing hint and India-fintech teardown hint (2026-10-25): acted on or superseded 2026-11-01 (prioritization question added, Spotify teardown broke the India fintech run; the AI-eval pairing hint was not used because the lowest-count rule pointed elsewhere).
 

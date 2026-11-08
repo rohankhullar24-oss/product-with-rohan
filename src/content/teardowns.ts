@@ -103,6 +103,16 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/spotify-teardown-pm-lens.png",
     publishedDate: "2026-11-01",
   },
+  {
+    slug: "shopify-teardown-pm-lens",
+    company: "Shopify",
+    eyebrow: "Product Teardown - Commerce Software - November 2026",
+    headline: "Shopify is sold as software. 78% of its revenue comes from merchant solutions.",
+    dek: "$3.74B in Q3 revenue on $119.1B of GMV is a 3.14% take. Merchant solutions grew 35% against 20% for subscriptions, and it earns a 38.5% gross margin against 79.1%.",
+    image:
+      "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/shopify-teardown-pm-lens.png",
+    publishedDate: "2026-11-08",
+  },
 ];
 
 export function getTeardowns(): Teardown[] {

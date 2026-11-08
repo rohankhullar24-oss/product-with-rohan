@@ -423,7 +423,8 @@ function checkSocial() {
   // --- required URLs present verbatim -----------------------------------
   if (platform === 'linkedin') {
     // From 2026-11-08 (Rohan) the LinkedIn body carries exactly one link: the article. No
-    // Handbook, no Product Shots mention, no first comment. --blogurl is the article URL.
+    // Handbook, no Product Shots mention, no first comment. --blogurl is the one link: the article URL
+    // or, on teardown weeks, the teardown page URL (the URL itself is exempt from the Shots-mention check).
     const bodyUrls = text.match(/https?:\/\/\S+/g) || [];
     if (bodyUrls.length !== 1) fail('link-count', `LinkedIn body has ${bodyUrls.length} link(s); it must have exactly one (the article)`);
     else pass('link-count', 'one link in the body');
@@ -448,7 +449,7 @@ function checkSocial() {
     // From 2026-11-08 (Rohan): no Handbook and no Product Shots mention on LinkedIn for now.
     if (/handbook/i.test(text)) fail('no-handbook', 'LinkedIn post must not mention the Handbook (paused 2026-11-08)');
     else pass('no-handbook', 'no Handbook mention');
-    if (/product\s*shots?|productshot|shots (question|dashboard)/i.test(text)) fail('no-shots', 'LinkedIn post must not mention Product Shots (paused 2026-11-08)');
+    if (/product\s*shots?|productshot|shots (question|dashboard)/i.test(text.replace(/https?:\/\/\S+/g, ''))) fail('no-shots', 'LinkedIn post must not mention Product Shots (paused 2026-11-08)');
     else pass('no-shots', 'no Product Shots mention');
   } else pass('banned-content', `Handbook restriction only applies to linkedin, not ${platform}`);
 

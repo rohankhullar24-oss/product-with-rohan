@@ -72,8 +72,12 @@ used to sit here was superseded on 2026-11-01 by the Handbook CTA rule below.
 **LINKEDIN IS ARTICLE-ONLY, NO HANDBOOK, NO PRODUCT SHOTS (2026-11-08, Rohan, in-session). THIS
 SUPERSEDES EVERY LINKEDIN RULE BELOW.** Rohan noticed the last three weeks only posted teardowns
 and that evergreen and changing-PM topics work best on LinkedIn. From the next run: (1) Stage 5
-posts this run's blog article every run, not the teardown; the teardown is not posted to LinkedIn
-unless Rohan asks; (2) the body carries exactly one link, the article URL, and nothing else: no
+ALTERNATES week to week between this run's blog article and this run's teardown (Rohan,
+2026-11-08: "alternate between teardown and article"). Read `linkedin-cta-log.md`; post the type
+that was NOT posted most recently. The 2026-11-08 run posted both, so the next run (2026-11-15)
+posts the article, then the teardown, and so on. If the log is unclear, post the article;
+(2) the body carries exactly one link (the article URL, or the teardown page URL on teardown
+weeks) and nothing else: no
 Handbook mention or link, no Product Shots or Shots dashboard mention, no first comment; (3) lean
 Stage 3 topic choice toward evergreen subjects and the changing role of the PM, because that is
 what performs on LinkedIn. The gate enforces (2). The Handbook closing section on blog posts is
@@ -319,10 +323,10 @@ stage's `teardowns.ts` entry instead of building its own.
 One LinkedIn post per run, drafted and gated the same way everything else in this pipeline
 is — no stage here posts on faith.
 
-0. **From 2026-11-08 the angle is always this run's blog article (see the standing rule at the
-   top). Steps 1, 2, 5 and 6b below are superseded: no Handbook, no Shots mention, one link
-   (the article URL) in the body, no first comment. Gate with
-   `check.mjs social --platform linkedin --file <post.txt> --blogurl <article-url> --ctalog linkedin-cta-log.md`.**
+0. **From 2026-11-08 the angle alternates between this run's blog article and this run's teardown
+   (see the standing rule at the top; log which one in `linkedin-cta-log.md`). Steps 1, 2, 5 and 6b below are superseded: no Handbook, no Shots mention, one link
+   (the article URL, or the teardown page URL) in the body, no first comment. Gate with
+   `check.mjs social --platform linkedin --file <post.txt> --blogurl <that-url> --ctalog linkedin-cta-log.md`.**
 1. **(Superseded by step 0.) Pick the angle: blog article or teardown/product shot, whichever is stronger this
    week (2026-09-20).** Stage 5 picks one, not a blend of both — judge "stronger" the
    way a hook gets judged anywhere else in this pipeline: sharper tension, a more

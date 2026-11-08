@@ -422,23 +422,14 @@ function checkSocial() {
 
   // --- required URLs present verbatim -----------------------------------
   if (platform === 'linkedin') {
-    // From 2026-11-01 the LinkedIn body carries exactly one link (the Handbook). The article
-    // link and the Shots dashboard link live in the first comment (--comment <file>).
+    // From 2026-11-08 (Rohan) the LinkedIn body carries exactly one link: the article. No
+    // Handbook, no Product Shots mention, no first comment. --blogurl is the article URL.
     const bodyUrls = text.match(/https?:\/\/\S+/g) || [];
-    if (bodyUrls.length !== 1) fail('link-count', `LinkedIn body has ${bodyUrls.length} link(s); it must have exactly one (the Handbook)`);
+    if (bodyUrls.length !== 1) fail('link-count', `LinkedIn body has ${bodyUrls.length} link(s); it must have exactly one (the article)`);
     else pass('link-count', 'one link in the body');
-    const commentFile = argOf('comment', false);
-    if (!commentFile) fail('required-urls', 'pass --comment <file> with the first-comment text (article link + Shots dashboard link)');
-    else {
-      const comment = readOrDie(commentFile);
-      if (!comment.includes(REQUIRED_URLS.shots)) fail('required-urls', `first comment is missing the Product Shots URL (${REQUIRED_URLS.shots})`);
-      else pass('required-urls', 'Product Shots link in the first comment');
-      if (blogUrl) {
-        if (!comment.includes(blogUrl)) fail('required-urls', `first comment is missing the article URL (${blogUrl})`);
-        else pass('required-urls', 'article link in the first comment');
-      }
-      if ([...comment].length > 1250) fail('comment-length', 'first comment exceeds 1,250 characters');
-    }
+    if (!blogUrl) fail('required-urls', 'pass --blogurl <article url> for the LinkedIn post');
+    else if (!text.includes(blogUrl)) fail('required-urls', `body is missing the article URL (${blogUrl})`);
+    else pass('required-urls', 'article link in the body');
   } else {
     if (!text.includes(REQUIRED_URLS.shots)) fail('required-urls', `missing the Product Shots URL (${REQUIRED_URLS.shots})`);
     else pass('required-urls', 'Product Shots link present');
@@ -454,13 +445,11 @@ function checkSocial() {
   // is now the ONLY surface still gated on it.
   // From 2026-11-01 the LinkedIn post must mention and link the Handbook (it used to be banned there).
   if (platform === 'linkedin') {
-    if (!text.includes('https://productwithrohan.online/handbook')) fail('handbook-cta', 'LinkedIn post must link https://productwithrohan.online/handbook');
-    else pass('handbook-cta', 'Handbook link present');
-    // Never state the Handbook's price on LinkedIn (Rohan changes it). Scan the paragraph(s) that mention it.
-    const PRICE = /[₹$€£]\s?\d|\b(rs|inr|usd)\.?\s?\d|\d\s?(rupees|inr|usd|dollars)|\b(price|priced|pricing|cost|costs|cheap|affordable|free|discount|one-time|pay-what-you-want)\b/i;
-    const priceHit = text.split(/\n\s*\n/).filter((p) => /handbook/i.test(p)).find((p) => PRICE.test(p));
-    if (priceHit) fail('handbook-price', 'the paragraph mentioning the Handbook contains price wording; never state its price on LinkedIn');
-    else pass('handbook-price', 'no price wording near the Handbook mention');
+    // From 2026-11-08 (Rohan): no Handbook and no Product Shots mention on LinkedIn for now.
+    if (/handbook/i.test(text)) fail('no-handbook', 'LinkedIn post must not mention the Handbook (paused 2026-11-08)');
+    else pass('no-handbook', 'no Handbook mention');
+    if (/product\s*shots?|productshot|shots (question|dashboard)/i.test(text)) fail('no-shots', 'LinkedIn post must not mention Product Shots (paused 2026-11-08)');
+    else pass('no-shots', 'no Product Shots mention');
   } else pass('banned-content', `Handbook restriction only applies to linkedin, not ${platform}`);
 
   // --- answer leak guard (Note 2: Shots teaser must never contain the answer) --

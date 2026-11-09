@@ -334,6 +334,16 @@
             android:exported="false"
             android:parentActivityName=".AutoSchedulerActivity" />
 
+        <!-- Open Gym: openGym's web app in a WebView. It keeps a session in progress in
+             memory, so a rotation or a keyboard must not rebuild the activity under it. -->
+        <activity
+            android:name=".OpenGymActivity"
+            android:exported="false"
+            android:label="@string/title_open_gym"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboard|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize"
+            android:parentActivityName=".MainActivity" />
+
         <activity
             android:name=".FakeCallActivity"
             android:exported="false"

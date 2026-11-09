@@ -162,6 +162,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, WorksEnablerActivity::class.java))
             true
         }
+        R.id.action_open_gym -> {
+            startActivity(Intent(this, OpenGymActivity::class.java))
+            true
+        }
         R.id.action_sound -> {
             NotificationHelper.ensureChannel(this)
             startActivity(

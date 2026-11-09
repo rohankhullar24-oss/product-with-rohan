@@ -36,6 +36,12 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # Open Gym's web bundle is built from source during the Gradle build
+      # (reminder-app/opengym/build.sh), which needs Node.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       # Both apps and the shared usage-core module are one Gradle build rooted
       # at the repo, so the task is module-qualified and runs from the root.
       - name: Build debug APK

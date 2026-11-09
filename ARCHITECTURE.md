@@ -535,6 +535,37 @@ common library:
     structure from memory — so treat it as the least trustworthy part of
     this feature until someone verifies it on a device.
 
+  - **Open Gym** (`OpenGymActivity`, `reminder-app/opengym/`) — a seventh
+    feature area, one menu item ("Open Gym") off `MainActivity`:
+    [openGym](https://github.com/DuarteSantos8/openGym), a third-party
+    open-source (AGPL-3.0) gym tracker, running entirely on the phone. It is
+    **not vendored**: `opengym/build.sh` (Gradle task `buildOpenGym`, a
+    `preBuild` dependency like `downloadTessdata`) fetches a pinned upstream
+    commit, applies `opengym/opengym.patch`, runs its Vite phone build
+    (`VITE_MOBILE=1`, i.e. no backend) and writes the bundle to the
+    git-ignored `assets/opengym/` — so the build machine needs Node 22+
+    (`reminder-app.yml` installs it). `OpenGymActivity` serves that folder to
+    a WebView from `https://appassets.androidplatform.net/` via
+    `shouldInterceptRequest`; there is no Capacitor shell, so openGym's
+    native-only features (notifications, Health Connect, watches, widgets,
+    NFC, PDF print) are inert. The patch adds the one feature upstream lacks —
+    **a suggested session for every weekday** on Home
+    (`lib/daily-suggest.js`: a fixed push/pull/legs/core/upper/lower/recovery
+    split whose exercises rotate weekly and respect the equipment profile) —
+    plus three host hooks behind `window.OpenGymHost` (`HostBridge`): skip
+    the "this device or my server?" question, route Export to Android's
+    "save to" picker, and route the system back press through openGym's own
+    back handler. `opengym/host-bridge.js` mirrors openGym's localStorage
+    state to `files/opengym_state.json` (listed in both backup-rules files)
+    and restores it when the WebView's storage is empty. Nothing syncs
+    through Supabase. Two licence constraints, both in
+    `opengym/README.md`: shipping the modified AGPL bundle means the patch
+    must stay publicly available, and upstream's exercise pictures/animations
+    are licensed for openGym only, so `build.sh` never downloads them and
+    exercises show a placeholder. **CI-compiled but not hardware-verified** —
+    the web bundle was exercised in headless Chromium against a fake
+    `OpenGymHost`, but the Kotlin host has never run on a device.
+
   Two things worth knowing when touching this app: **versioning** —
   `versionCode` derives from `GITHUB_RUN_NUMBER` (always increasing on every
   CI build) rather than being hand-bumped, and `versionName` is bumped

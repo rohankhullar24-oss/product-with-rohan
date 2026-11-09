@@ -17,6 +17,8 @@
         <include domain="file" path="auto_reply_rules.json" />
         <include domain="file" path="itinerary_trips.json" />
         <include domain="file" path="itinerary_stops.json" />
+        <!-- Open Gym: the copy of openGym's training log (OpenGymActivity.HostBridge). -->
+        <include domain="file" path="opengym_state.json" />
 
         <include domain="sharedpref" path="auto_reply_settings.xml" />
         <include domain="sharedpref" path="auto_forward_settings.xml" />
@@ -34,6 +36,8 @@
         <include domain="file" path="auto_reply_rules.json" />
         <include domain="file" path="itinerary_trips.json" />
         <include domain="file" path="itinerary_stops.json" />
+        <!-- Open Gym: the copy of openGym's training log (OpenGymActivity.HostBridge). -->
+        <include domain="file" path="opengym_state.json" />
 
         <include domain="sharedpref" path="auto_reply_settings.xml" />
         <include domain="sharedpref" path="auto_forward_settings.xml" />

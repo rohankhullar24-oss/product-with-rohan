@@ -9,3 +9,6 @@
 .cxx
 local.properties
 **/build/
+
+# Open Gym's web bundle: built by opengym/build.sh (Gradle task buildOpenGym), never committed.
+app/src/main/assets/opengym/

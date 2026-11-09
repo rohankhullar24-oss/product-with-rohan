@@ -53,8 +53,20 @@ val downloadTessdata by tasks.registering {
     }
 }
 
+// Open Gym: build openGym's web bundle into assets/opengym/ instead of
+// committing ~29 MB of generated JavaScript. opengym/build.sh fetches the
+// pinned upstream commit, applies opengym/opengym.patch and runs its Vite
+// build, so the build machine needs git, Node 22+ and npm (CI installs Node;
+// see reminder-app/opengym/README.md). Re-runs only when opengym/ changes.
+val openGymSources = layout.projectDirectory.dir("../opengym")
+val buildOpenGym by tasks.registering(Exec::class) {
+    inputs.dir(openGymSources)
+    outputs.dir(layout.projectDirectory.dir("src/main/assets/opengym"))
+    commandLine("bash", openGymSources.file("build.sh").asFile.absolutePath)
+}
+
 tasks.named("preBuild") {
-    dependsOn(downloadTessdata)
+    dependsOn(downloadTessdata, buildOpenGym)
 }
 
 dependencies {

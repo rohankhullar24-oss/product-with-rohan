@@ -28,6 +28,9 @@
         android:id="@+id/action_works_enabler"
         android:title="@string/title_works_enabler" />
     <item
+        android:id="@+id/action_open_gym"
+        android:title="@string/title_open_gym" />
+    <item
         android:id="@+id/action_sound"
         android:title="@string/notification_sound" />
     <item

@@ -1,0 +1,291 @@
+diff --git a/frontend/src/components/DailySuggestion.jsx b/frontend/src/components/DailySuggestion.jsx
+new file mode 100644
+index 00000000..9863c210
+--- /dev/null
++++ b/frontend/src/components/DailySuggestion.jsx
+@@ -0,0 +1,46 @@
++// Home's "Suggested for today" card (added for the Reminders app's Open Gym section; not part
++// of upstream openGym). Shown on a day with nothing planned and nothing logged: the session
++// lib/daily-suggest.js picks for the weekday, one tap from being today's workout.
++import { useState } from 'react'
++import { useStore } from '../store/useStore.js'
++import { useUI } from '../store/useUI.js'
++import { EXIDX } from '../lib/exercises.js'
++import { todayISO } from '../lib/format.js'
++import { t, exerciseNameFor } from '../lib/i18n.js'
++import { suggestionFor, adoptSuggestion, fillWeekWithSuggestions } from '../lib/daily-suggest.js'
++import { startFlow } from '../sheets.jsx'
++import CardHead from './CardHead.jsx'
++import { Button } from './ui.jsx'
++
++export default function DailySuggestion({ S }) {
++  const [shift, setShift] = useState(0)
++  const iso = todayISO()
++  const sug = suggestionFor(S, iso, shift)
++  if (!sug) return null
++  const update = (...a) => useStore.getState().update(...a)
++
++  const start = () => {
++    let id = null
++    update(st => { id = adoptSuggestion(st, sug); st.dayPlan[iso] = id })
++    if (id) startFlow([id])
++  }
++  const fillWeek = () => {
++    let n = 0
++    update(st => { n = fillWeekWithSuggestions(st, iso, shift) })
++    useUI.getState().toast(n ? t('Your week is planned. Change any day in Plan.') : t('Every training day already has a routine.'))
++  }
++
++  return <div className="card daily-suggestion">
++    <CardHead icon="sparkles" tint="var(--acc)" eyebrow={t('Suggested for today')} title={sug.name.replace(/^Suggested /, '')} sub={t(sug.focus)}
++      action={<Button size="sm" variant="ghost" icon="shuffle" aria-label={t('Shuffle')} onClick={() => setShift(n => n + 1)}>{t('Shuffle')}</Button>} />
++    <div style={{ margin: '4px 0 12px' }}>
++      {sug.ex.map(e => <div key={e.id} className="row between small" style={{ padding: '5px 0', gap: 12 }}>
++        <span style={{ minWidth: 0, textTransform: 'capitalize' }}>{EXIDX[e.id] ? exerciseNameFor(EXIDX[e.id]) : e.id}</span>
++        <span className="muted" style={{ flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>{e.sets} × {e.reps}</span>
++      </div>)}
++    </div>
++    <Button variant="primary" icon="play" onClick={start}>{t('Start this workout')}</Button>
++    <div style={{ height: 8 }} />
++    <Button icon="calendar" onClick={fillWeek}>{t('Plan my whole week like this')}</Button>
++  </div>
++}
+diff --git a/frontend/src/lib/back.js b/frontend/src/lib/back.js
+index 1350b112..bcd2b2c5 100644
+--- a/frontend/src/lib/back.js
++++ b/frontend/src/lib/back.js
+@@ -51,19 +51,27 @@ export function makeBackHandler({ getSheets, getLocation = () => ({}), closeShee
+ // (or the PWA shell) walks history on its own and there is no plugin to talk to.
+ export async function initBackButton() {
+   if (!MOBILE) return () => {}
++  const handlerFor = exit => makeBackHandler({
++    getSheets: () => useUI.getState().sheets,
++    getLocation: () => ({
++      pathname: window.location.hash.slice(1).split('?')[0] || '/',
++      key: window.history.state?.key ?? window.location.hash,
++    }),
++    closeSheet: id => useUI.getState().closeSheet(id),
++    toast: msg => useUI.getState().toast(msg),
++    goBack: () => window.history.back(),
++    exit,
++  })
++  // Hosted inside the Reminders app (window.OpenGymHost): there is no Capacitor App plugin to
++  // deliver the back press, so the host activity calls this itself, and "exit" closes its screen.
++  if (typeof window !== 'undefined' && window.OpenGymHost) {
++    const handler = handlerFor(() => window.OpenGymHost.exit())
++    window.__openGymBack = () => (tourBack() ? 'tour' : handler({ canGoBack: window.history.length > 1 }))
++    return () => { delete window.__openGymBack }
++  }
+   try {
+     const { App } = await import('@capacitor/app')
+-    const handler = makeBackHandler({
+-      getSheets: () => useUI.getState().sheets,
+-      getLocation: () => ({
+-        pathname: window.location.hash.slice(1).split('?')[0] || '/',
+-        key: window.history.state?.key ?? window.location.hash,
+-      }),
+-      closeSheet: id => useUI.getState().closeSheet(id),
+-      toast: msg => useUI.getState().toast(msg),
+-      goBack: () => window.history.back(),
+-      exit: () => App.exitApp(),
+-    })
++    const handler = handlerFor(() => App.exitApp())
+     // The app tour takes a back press first: it closes (lib/tour.js).
+     const sub = await App.addListener('backButton', ev => (tourBack() ? 'tour' : handler(ev)))
+     return () => sub.remove()
+diff --git a/frontend/src/lib/daily-suggest.js b/frontend/src/lib/daily-suggest.js
+new file mode 100644
+index 00000000..50ac2261
+--- /dev/null
++++ b/frontend/src/lib/daily-suggest.js
+@@ -0,0 +1,140 @@
++// A suggested session for every day of the week (added for the Reminders app's Open Gym
++// section; not part of upstream openGym). A day with nothing planned no longer reads as a bare
++// "Rest day": Home offers a session picked for that weekday instead, and one tap turns it into
++// an ordinary routine pinned to the day.
++//
++// The week is a fixed split, so the same weekday always trains the same thing. Each slot of a
++// session lists a few lifts that do the same job; which one is offered moves on by one every
++// calendar week (and by one more per Shuffle), so Monday is always Push but not always the same
++// six exercises. A lift the active equipment profile rules out gives way to the slot's next
++// option, then to the closest match the catalogue has (lib/starter.js substituteFor).
++import { EXIDX } from './exercises.js'
++import { activeProfile, exAvailable, profileEquipment } from './equipment.js'
++import { substituteFor } from './starter.js'
++import { uid } from './format.js'
++
++// weekday (0 = Sunday) → { key, name, focus, emoji, slots: [[options…], sets, reps] }.
++// Names stay canonical English, like the starter plans: they become ordinary user routines.
++export const SPLIT = {
++  1: { key: 'push', name: 'Suggested Push', focus: 'Chest, shoulders and triceps', emoji: 'barbell', slots: [
++    [['0025', '0289', '0662'], 4, 8],      // bench press: barbell, dumbbell, push-up
++    [['0314', '0047', '0251'], 3, 10],     // incline press or dip
++    [['0426', '0405', '0091'], 3, 10],     // overhead press
++    [['0334', '0178'], 3, 12],             // lateral raise
++    [['0241', '0351', '0814'], 3, 12],     // triceps
++    [['0308', '0662'], 3, 12]              // fly or push-up finisher
++  ] },
++  2: { key: 'pull', name: 'Suggested Pull', focus: 'Back and biceps', emoji: 'pullup', slots: [
++    [['2330', '0652', '1326'], 4, 10],     // vertical pull
++    [['0027', '0293', '0499'], 4, 8],      // row
++    [['1323', '0293', '0499'], 3, 10],     // second row
++    [['0378', '2487'], 3, 12],             // rear delts
++    [['0031', '0294', '0868'], 3, 10],     // curl
++    [['0313', '0285'], 3, 12]              // hammer or alternating curl
++  ] },
++  3: { key: 'legs', name: 'Suggested Legs', focus: 'Quads, hamstrings and calves', emoji: 'legs', slots: [
++    [['0043', '1760', '3948'], 4, 8],      // squat
++    [['0085', '1459'], 3, 10],             // Romanian deadlift
++    [['0739', '2290', '0336'], 3, 12],     // leg press, split squat or lunge
++    [['0586', '2072'], 3, 12],             // leg curl or hip thrust
++    [['0585', '1460'], 3, 12],             // leg extension or walking lunge
++    [['0605', '0594'], 4, 15]              // calves
++  ] },
++  4: { key: 'core', name: 'Suggested Core and Cardio', focus: 'Abs, obliques and conditioning', emoji: 'abs', slots: [
++    [['0472', '0274', '6211'], 3, 12],     // leg raise or crunch
++    [['0687', '3449'], 3, 20],             // Russian twist
++    [['0276', '6211'], 3, 12],             // dead bug or bicycle crunch
++    [['0630', '3094'], 3, 30],             // mountain climber or jumping jack
++    [['1160', '3094'], 3, 10]              // burpee
++  ] },
++  5: { key: 'upper', name: 'Suggested Upper Body', focus: 'Chest, back, shoulders and arms', emoji: 'figureStrength', slots: [
++    [['0289', '0025', '0662'], 3, 10],     // press
++    [['0293', '0027', '0499'], 3, 10],     // row
++    [['0405', '0426'], 3, 10],             // shoulder press
++    [['0652', '2330', '1326'], 3, 8],      // pull-up or pulldown
++    [['0334', '0178'], 2, 15],             // lateral raise
++    [['0294', '0031'], 2, 12],             // curl
++    [['0351', '0241', '0814'], 2, 12]      // triceps
++  ] },
++  6: { key: 'lower', name: 'Suggested Lower Body', focus: 'Glutes, hamstrings and quads', emoji: 'legs', slots: [
++    [['0032', '1459', '0085'], 4, 6],      // deadlift
++    [['2290', '0336', '1460'], 3, 10],     // single-leg work
++    [['1409', '2072'], 3, 12],             // glute bridge or hip thrust
++    [['1760', '0739', '3948'], 3, 12],     // goblet squat or leg press
++    [['0586', '0431'], 3, 12],             // leg curl or step-up
++    [['0605', '0594'], 3, 15]              // calves
++  ] },
++  0: { key: 'recovery', name: 'Suggested Recovery', focus: 'Easy movement, nothing heavy', emoji: 'stretch', slots: [
++    [['4580'], 2, 10],                     // cat cow
++    [['1604'], 2, 6],                      // world's greatest stretch
++    [['2072'], 2, 15],                     // hip thrust, body weight
++    [['0276'], 2, 10],                     // dead bug
++    [['3948'], 2, 15]                      // air squat
++  ] }
++}
++
++const weekdayOf = iso => new Date(iso + 'T12:00:00').getDay()
++// Whole weeks since a fixed Monday, so the offered option changes when the week does.
++const weekIndex = iso => Math.floor((Date.parse(iso + 'T12:00:00Z') - Date.UTC(2024, 0, 1)) / 6048e5)
++
++/**
++ * The session suggested for `iso` under the user's equipment: `{ key, name, focus, emoji, ex }`
++ * with `ex` shaped like a routine's (`{ id, sets, reps, weight }`), or null when the equipment
++ * leaves nothing to do. `shift` moves every slot on by that many options (Shuffle).
++ */
++export function suggestionFor(S, iso, shift = 0) {
++  const day = SPLIT[weekdayOf(iso)]
++  if (!day) return null
++  const profile = activeProfile(S)
++  const equipment = profile ? profileEquipment(profile) : null
++  const turn = weekIndex(iso) + shift
++  const taken = new Set()
++  const ex = []
++  for (const [options, sets, reps] of day.slots) {
++    const n = options.length
++    let pick = null
++    for (let i = 0; i < n && !pick; i++) {
++      const c = EXIDX[options[(((turn + i) % n) + n) % n]]
++      if (c && !taken.has(c.id) && exAvailable(S, c)) pick = c
++    }
++    if (!pick && equipment && EXIDX[options[0]]) pick = substituteFor(EXIDX[options[0]], equipment, taken)
++    if (!pick) continue
++    taken.add(pick.id)
++    ex.push({ id: pick.id, sets, reps, weight: 0 })
++  }
++  return ex.length ? { key: day.key, name: day.name, focus: day.focus, emoji: day.emoji, ex } : null
++}
++
++const sameLifts = (a, b) => a.ex.length === b.ex.length && a.ex.every((e, i) => e.id === b.ex[i].id)
++
++// Inside an update(): the routine for a suggestion, reusing the one an earlier tap made (same
++// name, same lifts) so a week of suggestions does not pile up copies. Returns its id.
++export function adoptSuggestion(st, sug) {
++  const have = st.routines.find(r => r.name === sug.name && sameLifts(r, sug))
++  if (have) return have.id
++  const routine = { id: uid(), name: sug.name, emoji: sug.emoji, ex: sug.ex.map(e => ({ ...e })) }
++  st.routines.push(routine)
++  return routine.id
++}
++
++/**
++ * Inside an update(): puts this week's suggestion on every weekday that has no routine yet.
++ * Sunday stays a rest day in the plan (its recovery session is still offered on the day).
++ * `shift` is the Shuffle the card is showing, so the week matches what was on screen.
++ * Returns how many weekdays it filled.
++ */
++export function fillWeekWithSuggestions(st, todayIso, shift = 0) {
++  const base = new Date(todayIso + 'T12:00:00')
++  let filled = 0
++  for (let i = 0; i < 7; i++) {
++    const d = new Date(base); d.setDate(base.getDate() + i)
++    const day = d.getDay()
++    if (day === 0 || [].concat(st.week[day] || []).length) continue
++    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
++    const sug = suggestionFor(st, iso, shift)
++    if (!sug) continue
++    st.week[day] = [adoptSuggestion(st, sug)]
++    filled++
++  }
++  return filled
++}
+diff --git a/frontend/src/lib/mobile.js b/frontend/src/lib/mobile.js
+index fe5d0605..a3592f40 100644
+--- a/frontend/src/lib/mobile.js
++++ b/frontend/src/lib/mobile.js
+@@ -291,6 +291,9 @@ export function onAppActive(cb) {
+ // WKWebView can't do blob-URL downloads, so the backup goes out through the OS share sheet
+ // (Files, AirDrop, mail, …) from a temp file instead.
+ export async function shareExport(json, filename) {
++  // Inside the Reminders app's Open Gym section there is no Capacitor shell: the host saves the
++  // file through Android's own "save to" picker instead (OpenGymActivity.HostBridge).
++  if (typeof window !== 'undefined' && window.OpenGymHost?.saveText) { window.OpenGymHost.saveText(filename, json); return }
+   const { Filesystem, Directory, Encoding } = await import('@capacitor/filesystem')
+   const { Share } = await import('@capacitor/share')
+   const w = await Filesystem.writeFile({ path: filename, directory: Directory.Cache, data: json, encoding: Encoding.UTF8 })
+diff --git a/frontend/src/store/useStore.js b/frontend/src/store/useStore.js
+index 175cc38a..1f53d4a7 100644
+--- a/frontend/src/store/useStore.js
++++ b/frontend/src/store/useStore.js
+@@ -2094,7 +2094,8 @@ export const useStore = create((set, get) => {
+         // Only a genuinely first launch — nothing chosen yet and nothing to lose either — offers
+         // the choice. Picking local (even with no data yet) persists that choice below and this
+         // never asks again.
+-        finishBoot({ needsMobileOnboarding: !remote && !hasData(get().S) })
++        // Hosted inside the Reminders app (window.OpenGymHost): always this device, so no choice to offer.
++        finishBoot({ needsMobileOnboarding: !remote && !hasData(get().S) && !(typeof window !== 'undefined' && window.OpenGymHost) })
+         return
+       }
+       // Demo build (GitHub Pages): no backend at all — seed once, stay in guest mode.
+diff --git a/frontend/src/views/Home.jsx b/frontend/src/views/Home.jsx
+index 1248bdf9..16a655bb 100644
+--- a/frontend/src/views/Home.jsx
++++ b/frontend/src/views/Home.jsx
+@@ -30,6 +30,7 @@ import { WrappedHomeCard } from '../components/WrappedEntry.jsx'
+ import RecoveryHint from '../components/RecoveryHint.jsx'
+ import { ChallengesCard } from '../components/Challenges.jsx'
+ import { isOn } from '../lib/modules.js'
++import DailySuggestion from '../components/DailySuggestion.jsx'
+ 
+ // Home = what to do now + a quick glance. Deep charts & history live in Stats.
+ export default function Home() {
+@@ -191,6 +192,9 @@ export default function Home() {
+       <SeasonDeco spot="home-hero" />
+     </div>
+ 
++    {/* Nothing planned and nothing logged today: a session picked for the weekday (lib/daily-suggest.js). */}
++    {!S.active && !todayRoutines.length && !doneToday && !rotating && <DailySuggestion S={S} />}
++
+     {/* Monday: Your week; the 1st: Your month (lib/recap.js). Off in Settings → Look & Home. */}
+     <RecapHomeCard S={S} />
+ 

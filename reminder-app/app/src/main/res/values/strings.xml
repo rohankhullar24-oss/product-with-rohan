@@ -232,6 +232,12 @@
     <string name="zip_password_title">Enter password</string>
     <string name="zip_password_hint">Zip password</string>
 
+    <!-- Open Gym -->
+    <string name="title_open_gym">Open Gym</string>
+    <string name="open_gym_missing">Open Gym is not part of this build. It is added when the app is built with Node.js available (see reminder-app/opengym/README.md).</string>
+    <string name="open_gym_export_saved">Saved</string>
+    <string name="open_gym_export_failed">Could not save the file</string>
+
     <!-- Works Enabler -->
     <string name="title_works_enabler">Works Enabler</string>
     <string name="works_enabler_explainer">Open-source document tools. Everything runs on this phone — nothing is uploaded anywhere.</string>

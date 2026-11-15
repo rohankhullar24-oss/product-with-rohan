@@ -22,13 +22,15 @@ Rules the advisor must follow when writing this file:
 
 ## Open hints
 
-- **[2026-11-08] All eight question types are now at 6 rows.** Stage 1's lowest-count rule has no winner next run, so pick the type whose newest row is oldest (`select type, max(created_at) from public.shots_questions group by type order by 2 asc`).
+- **[2026-11-15] Question type: strategy_gtm is now at 7 rows, the other seven types are at 6.** Stage 1 should pick among those seven by oldest newest row (`select type, max(created_at) from public.shots_questions group by type order by 2 asc`), not strategy_gtm.
 
-- **[2026-11-08] Blog lane: the last three posts (feature sunset, AI-model eval, this run's proof-of-shipped-AI post) were all constructive.** A news-hooked post is still the right shape next, but pick a different subject from hiring and AI careers. An evergreen alternative carried over from last week: how to write acceptance criteria for an AI feature. Avoid reorg, layoff and buyout subjects.
+- **[2026-11-15] Blog lane: the last two posts (AI hiring proof, AI agent approval step) were both AI-themed, and the one before was a feature sunset.** Pick a non-AI craft subject next (discovery, stakeholder alignment, roadmap trade-offs or a PM workflow), news-hooked if a good hook exists. Avoid reorg, layoff and buyout subjects.
 
-- **[2026-11-08] Teardown lane: Shopify broke the consumer-subscription run.** Next teardown could be an India consumer non-fintech product (quick commerce such as Zepto or Blinkit, or edtech) or a marketplace. Zepto was researched this run and set aside, so its numbers are not wasted but need re-verifying.
+- **[2026-11-15] Teardown lane: Zepto is done, and its primary sources (DRHP, BSE letter) could not be opened from the cloud run.** Next teardown should be a company whose filing is fetchable (SEC EDGAR 10-Q or 8-K, or an investor relations PDF), such as a B2B SaaS or marketplace company, so the numbers rest on a primary source. The last four were Canva, Spotify, Shopify and Zepto.
 
 ## Recently retired
+
+- Question-type tie, AI-acceptance-criteria blog and India quick-commerce teardown hints (2026-11-08): acted on 2026-11-15 (strategy_gtm question added, AI agent approval-step post with acceptance criteria, Zepto teardown).
 
 - Behavioral, news-hooked blog and non-consumer-subscription teardown hints (2026-11-01): acted on 2026-11-08 (behavioral question added, CompTIA-hooked blog, Shopify teardown).
 

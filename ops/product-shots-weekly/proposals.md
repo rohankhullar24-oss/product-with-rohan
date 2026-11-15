@@ -28,6 +28,8 @@ Maximum 5 `open` proposals at once; the advisor must not add a sixth.
 ### P14 — Attach the repo to this scheduled task so `git push` works; today every commit goes through Composio one file at a time
 `status: open`
 
+Update 2026-11-15: 403 again. The blog (a203649), the teardown (4c27431) and the state files went through Composio. `gh` also has an invalid token, so Stage 6b reads ran through Composio too.
+
 Update 2026-11-08: the dry-run returned 403 again, so the blog (1a1d92d), the teardown (ac5393f) and the state files went through Composio again. Nothing was lost, but each new file has to be sent through a tool call.
 
 Raised 2026-11-01. This run's `git push --dry-run origin master` returned 403 from the git proxy ("not in this session's authorized repository set"), so the blog post, the teardown entry and the state files were each committed through the Composio GitHub connector. It worked, but it means content has to be sent through tool calls instead of pushed from the checkout, and the local gates and the committed files can drift.
@@ -36,6 +38,8 @@ Proposed: Rohan adds `rohankhullar24-oss/product-with-rohan` to this task's repo
 
 ### P13 — 27 non-master branches have had no commit in 30+ days, and three draft PRs are 30+ days old
 `status: open`
+
+Update 2026-11-15: 37 non-master branches, 31 with no commit in 30+ days (oldest 76 days: `claude/hyperverge-internal-ml-tool-n61w8f`, `claude/rekyc-funnel-artifact-nnzl9x`, `claude/remove-invalid-car-photo-qco2jv`); draft PRs #67 (76 days), #112 (55) and #119 (51) unchanged; no Dependabot PRs and no failed or cancelled workflow runs in the last 7 days.
 
 Update 2026-11-08: 36 non-master branches, 31 with no commit in 30+ days (oldest 69 days); draft PRs #67, #112 and #119 unchanged.
 
@@ -47,6 +51,8 @@ Proposed: Rohan decides which of these are finished, superseded or abandoned, th
 `status: open`
 
 Raised 2026-10-25. Two cloud runs that day could not apply the age cleanup (1 row, `published_date` 2026-08-25, Emerald AI). The first was denied by the auto-mode classifier, the second timed out on a Supabase connector permission prompt nobody could answer. SKILL.md says no confirmation is needed, but the connector still asks. The row is now past 60 days and will stay until someone deletes it.
+
+Update 2026-11-15: blocked a sixth time (11 rows older than 60 days now, oldest 2026-08-25). This time the confirmation was cancelled before the DELETE ran; it was not retried or worked around.
 
 Update 2026-11-08: blocked a fifth time (7 rows older than 60 days now, oldest 2026-08-25; the DELETE timed out on the same unanswered permission prompt and was not retried).
 
@@ -152,6 +158,8 @@ conversation rather than being built now.
 
 ### P9 — `published/reachable` has failed in 3 of the last 7 runs; consider a longer/backoff wait before the Stage 3 gate
 `status: open`
+
+Update 2026-11-15: the Stage 4 teardown live check returned 404 on the first poll (deploy lag) and passed on the second, so the same backoff is worth adding there.
 
 `node checks/history.mjs summary` shows the `published/reachable` check has failed in
 3 of the last 7 runs — the single most failure-prone check in the whole suite. This

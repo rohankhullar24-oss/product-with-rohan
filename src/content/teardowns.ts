@@ -113,6 +113,16 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/shopify-teardown-pm-lens.png",
     publishedDate: "2026-11-08",
   },
+  {
+    slug: "zepto-teardown-pm-lens",
+    company: "Zepto",
+    eyebrow: "Product Teardown - India Quick Commerce - November 2026",
+    headline: "Zepto doubled revenue on 11% more dark stores. It still loses ₹79 an order.",
+    dek: "FY26 revenue rose 104% to ₹22,624 Cr, yet the net loss grew 26% to ₹5,905 Cr. Orders per store per day rose 50%, and the adjusted EBITDA loss per order fell from ₹136 to ₹79.",
+    image:
+      "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/zepto-teardown-pm-lens.png",
+    publishedDate: "2026-11-15",
+  },
 ];
 
 export function getTeardowns(): Teardown[] {

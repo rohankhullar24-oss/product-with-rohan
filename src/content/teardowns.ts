@@ -123,6 +123,16 @@ export const teardowns: Teardown[] = [
       "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/zepto-teardown-pm-lens.png",
     publishedDate: "2026-11-15",
   },
+  {
+    slug: "figma-teardown-pm-lens",
+    company: "Figma",
+    eyebrow: "Product Teardown - B2B Design Software - November 2026",
+    headline: "Figma's AI usage keeps climbing. Its net dollar retention fell 8 points in two quarters.",
+    dek: "Revenue grew 43% to $391.4M, yet net dollar retention slid from 139% to 131% and guidance implies 33% growth next quarter. Figma repriced AI credits in August and covered the agent's inference costs, which weighed on gross margin.",
+    image:
+      "https://uksoubgwjbgjwtaafdxo.supabase.co/storage/v1/object/public/newsletter-images/teardowns/figma-teardown-pm-lens.png",
+    publishedDate: "2026-11-22",
+  },
 ];
 
 export function getTeardowns(): Teardown[] {

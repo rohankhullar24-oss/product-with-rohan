@@ -22,13 +22,15 @@ Rules the advisor must follow when writing this file:
 
 ## Open hints
 
-- **[2026-11-15] Question type: strategy_gtm is now at 7 rows, the other seven types are at 6.** Stage 1 should pick among those seven by oldest newest row (`select type, max(created_at) from public.shots_questions group by type order by 2 asc`), not strategy_gtm.
+- **[2026-11-22] Question type: metrics_analytics and strategy_gtm are both at 7 rows, the other six types are at 6.** Stage 1 should pick among those six by oldest newest row (`select type, max(created_at) from public.shots_questions group by type order by 2 asc`). On 2026-11-22 the oldest is root_cause_analysis (last added 2026-09-20), then guesstimate and product_sense.
 
-- **[2026-11-15] Blog lane: the last two posts (AI hiring proof, AI agent approval step) were both AI-themed, and the one before was a feature sunset.** Pick a non-AI craft subject next (discovery, stakeholder alignment, roadmap trade-offs or a PM workflow), news-hooked if a good hook exists. Avoid reorg, layoff and buyout subjects.
+- **[2026-11-22] Blog lane: the last three posts were all hooked to AI stories (AI hiring proof, AI agent approval step, Signal and agentic AI).** Pick a craft subject with a non-AI news hook next (discovery, stakeholder alignment, roadmap trade-offs or a PM workflow). Avoid reorg, layoff and buyout subjects.
 
-- **[2026-11-15] Teardown lane: Zepto is done, and its primary sources (DRHP, BSE letter) could not be opened from the cloud run.** Next teardown should be a company whose filing is fetchable (SEC EDGAR 10-Q or 8-K, or an investor relations PDF), such as a B2B SaaS or marketplace company, so the numbers rest on a primary source. The last four were Canva, Spotify, Shopify and Zepto.
+- **[2026-11-22] Teardown lane: Figma is done, and its 10-Q and quarterly releases were fetchable, so every figure rests on a primary source.** The three-quarter trend format (net dollar retention 139, 136, 131) made the tension easy to see. Next teardown: another company with a fetchable SEC filing or IR release, preferably a marketplace or fintech rather than software tooling. The last four were Spotify, Shopify, Zepto and Figma.
 
 ## Recently retired
+
+- Question-type, non-AI blog and fetchable-filing teardown hints (2026-11-15): acted on 2026-11-22 (metrics_analytics question added, Signal principles post, Figma teardown from the 10-Q and releases). The blog hint was only half met: the subject was non-AI craft, but the news hook was AI-related, so it is restated above.
 
 - Question-type tie, AI-acceptance-criteria blog and India quick-commerce teardown hints (2026-11-08): acted on 2026-11-15 (strategy_gtm question added, AI agent approval-step post with acceptance criteria, Zepto teardown).
 

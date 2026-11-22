@@ -28,6 +28,8 @@ Maximum 5 `open` proposals at once; the advisor must not add a sixth.
 ### P14 — Attach the repo to this scheduled task so `git push` works; today every commit goes through Composio one file at a time
 `status: open`
 
+Update 2026-11-22: 403 again. The blog (5fcf4db), the teardown (d30846d) and the state files went through Composio. `gh` still has an invalid token, so Stage 6b reads ran through Composio too. Side effect this run: the LinkedIn read-back (`LINKEDIN_GET_POST_CONTENT`) also returned 403, so the teardown image attachment could not be verified.
+
 Update 2026-11-15: 403 again. The blog (a203649), the teardown (4c27431) and the state files went through Composio. `gh` also has an invalid token, so Stage 6b reads ran through Composio too.
 
 Update 2026-11-08: the dry-run returned 403 again, so the blog (1a1d92d), the teardown (ac5393f) and the state files went through Composio again. Nothing was lost, but each new file has to be sent through a tool call.
@@ -38,6 +40,8 @@ Proposed: Rohan adds `rohankhullar24-oss/product-with-rohan` to this task's repo
 
 ### P13 — 27 non-master branches have had no commit in 30+ days, and three draft PRs are 30+ days old
 `status: open`
+
+Update 2026-11-22: 37 non-master branches, 33 with no commit in 30+ days (oldest 83 days: `claude/remove-invalid-car-photo-qco2jv`, `claude/rekyc-funnel-artifact-nnzl9x`, `claude/hyperverge-internal-ml-tool-n61w8f`); draft PRs #67 (83 days), #112 (62) and #119 (58) unchanged; no Dependabot PRs and no failed or cancelled workflow runs in the last 7 days.
 
 Update 2026-11-15: 37 non-master branches, 31 with no commit in 30+ days (oldest 76 days: `claude/hyperverge-internal-ml-tool-n61w8f`, `claude/rekyc-funnel-artifact-nnzl9x`, `claude/remove-invalid-car-photo-qco2jv`); draft PRs #67 (76 days), #112 (55) and #119 (51) unchanged; no Dependabot PRs and no failed or cancelled workflow runs in the last 7 days.
 
@@ -51,6 +55,8 @@ Proposed: Rohan decides which of these are finished, superseded or abandoned, th
 `status: open`
 
 Raised 2026-10-25. Two cloud runs that day could not apply the age cleanup (1 row, `published_date` 2026-08-25, Emerald AI). The first was denied by the auto-mode classifier, the second timed out on a Supabase connector permission prompt nobody could answer. SKILL.md says no confirmation is needed, but the connector still asks. The row is now past 60 days and will stay until someone deletes it.
+
+Update 2026-11-22: blocked a seventh time (13 rows older than 60 days now, oldest 2026-08-25). The confirmation was cancelled before the DELETE ran; it was not retried or worked around.
 
 Update 2026-11-15: blocked a sixth time (11 rows older than 60 days now, oldest 2026-08-25). This time the confirmation was cancelled before the DELETE ran; it was not retried or worked around.
 

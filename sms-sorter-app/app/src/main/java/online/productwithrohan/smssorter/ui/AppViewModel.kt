@@ -104,7 +104,6 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun clearUpdateMessage() = _state.update { it.copy(updateMessage = null) }
-    }
 
     override fun onCleared() {
         getApplication<Application>().contentResolver.unregisterContentObserver(observer)

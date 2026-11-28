@@ -1,6 +1,7 @@
 package online.productwithrohan.smssorter.data
 
 import android.Manifest
+import android.app.role.RoleManager
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
@@ -12,11 +13,22 @@ import android.telephony.SmsManager
 import online.productwithrohan.smssorter.core.Classifier
 import online.productwithrohan.smssorter.core.Sms
 
+data class ContactEntry(val name: String, val number: String)
+
 /** Reads and writes the phone's SMS store. Writes only succeed while we are the default SMS app. */
 class SmsRepository(private val context: Context) {
     private val resolver get() = context.contentResolver
 
-    fun isDefaultSmsApp(): Boolean = Telephony.Sms.getDefaultSmsPackage(context) == context.packageName
+    /**
+     * Whether we hold the SMS role. RoleManager is the source of truth on Android 10+;
+     * getDefaultSmsPackage() can keep reporting the previous app on some phones, which left
+     * the "make default" banner stuck after the user had already switched.
+     */
+    fun isDefaultSmsApp(): Boolean {
+        val rm = context.getSystemService(RoleManager::class.java)
+        if (rm != null && rm.isRoleAvailable(RoleManager.ROLE_SMS)) return rm.isRoleHeld(RoleManager.ROLE_SMS)
+        return Telephony.Sms.getDefaultSmsPackage(context) == context.packageName
+    }
 
     fun canRead(): Boolean =
         context.checkSelfPermission(Manifest.permission.READ_SMS) == PackageManager.PERMISSION_GRANTED
@@ -104,6 +116,34 @@ class SmsRepository(private val context: Context) {
             }
             resolver.insert(Telephony.Sms.Sent.CONTENT_URI, values)
         }
+    }
+
+    fun canReadContacts(): Boolean =
+        context.checkSelfPermission(Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
+
+    /** Every contact phone number, A–Z, one row per distinct number (needs READ_CONTACTS). */
+    fun allContacts(): List<ContactEntry> {
+        if (!canReadContacts()) return emptyList()
+        val out = ArrayList<ContactEntry>()
+        val seen = HashSet<String>()
+        val projection = arrayOf(
+            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+            ContactsContract.CommonDataKinds.Phone.NUMBER,
+        )
+        runCatching {
+            resolver.query(
+                ContactsContract.CommonDataKinds.Phone.CONTENT_URI, projection, null, null,
+                "${ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME} COLLATE NOCASE ASC",
+            )?.use { c ->
+                while (c.moveToNext()) {
+                    val name = c.getString(0) ?: continue
+                    val number = c.getString(1) ?: continue
+                    val key = number.filter(Char::isDigit).takeLast(10)
+                    if (key.isNotEmpty() && seen.add(key)) out += ContactEntry(name, number)
+                }
+            }
+        }
+        return out
     }
 
     /** Contact names for phone-number senders (needs READ_CONTACTS; empty otherwise). */

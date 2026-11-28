@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import online.productwithrohan.smssorter.core.Classifier
 import online.productwithrohan.smssorter.core.OtpParser
 import online.productwithrohan.smssorter.core.Sms
+import online.productwithrohan.smssorter.data.ContactEntry
 
 private sealed interface Entry {
     val key: Any
@@ -225,11 +226,29 @@ fun MessageInput(onSend: (String) -> Unit) {
 fun ComposeScreen(
     initialAddress: String,
     isDefault: Boolean,
+    contacts: List<ContactEntry>,
+    canReadContacts: Boolean,
+    onOpen: () -> Unit,
+    requestContacts: () -> Unit,
     onBack: () -> Unit,
     requestDefault: () -> Unit,
     onSend: (address: String, body: String) -> Unit,
 ) {
     var to by rememberSaveable { mutableStateOf(initialAddress) }
+    var chosenName by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) { onOpen() }
+
+    val picked = chosenName
+    val query = to.trim()
+    val digits = query.filter(Char::isDigit)
+    val matches = remember(query, contacts) {
+        if (query.isEmpty()) contacts
+        else contacts.filter {
+            it.name.contains(query, ignoreCase = true) ||
+                (digits.length >= 3 && it.number.filter(Char::isDigit).contains(digits))
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -251,14 +270,37 @@ fun ComposeScreen(
             }
         },
     ) { padding ->
-        Column(Modifier.padding(padding).padding(16.dp)) {
+        Column(Modifier.padding(padding).fillMaxSize()) {
             OutlinedTextField(
                 value = to,
-                onValueChange = { to = it },
-                label = { Text("To (phone number)") },
+                onValueChange = { to = it; chosenName = null },
+                label = { Text("To: name or number") },
+                supportingText = if (picked != null) { { Text(picked) } } else null,
                 singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             )
+            when {
+                !canReadContacts -> Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                    TextButton(onClick = requestContacts) { Text("Allow access to contacts to pick a recipient") }
+                }
+                chosenName != null -> Unit
+                else -> LazyColumn(Modifier.fillMaxSize()) {
+                    items(matches, key = { it.number }) { c ->
+                        Row(
+                            Modifier.fillMaxWidth()
+                                .clickable { to = c.number; chosenName = c.name }
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Avatar(c.name, size = 40.dp)
+                            Column(Modifier.padding(start = 14.dp)) {
+                                Text(c.name, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                Text(c.number, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

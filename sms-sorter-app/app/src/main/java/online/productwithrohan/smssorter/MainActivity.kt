@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import online.productwithrohan.smssorter.data.Notifier
+import online.productwithrohan.smssorter.data.SmsRepository
 import online.productwithrohan.smssorter.ui.AppViewModel
 import online.productwithrohan.smssorter.ui.ComposeScreen
 import online.productwithrohan.smssorter.ui.FinanceScreen
@@ -67,9 +68,17 @@ class MainActivity : ComponentActivity() {
     private val pendingAddress = mutableStateOf<String?>(null)
 
     private val permissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { vm.refresh() }
+        registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+            vm.refresh()
+            vm.loadContacts()
+        }
     private val roleLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { vm.refresh() }
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            vm.refresh()
+            // Some phones close the role dialog without granting (or never show it).
+            // Fall back to Android's own Default apps screen so the user can pick us there.
+            if (!SmsRepository(this).isDefaultSmsApp()) openDefaultAppsSettings()
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -117,10 +126,19 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun requestDefaultSmsApp() {
-        val rm = getSystemService(RoleManager::class.java) ?: return
-        if (rm.isRoleAvailable(RoleManager.ROLE_SMS) && !rm.isRoleHeld(RoleManager.ROLE_SMS)) {
-            roleLauncher.launch(rm.createRequestRoleIntent(RoleManager.ROLE_SMS))
+        val rm = getSystemService(RoleManager::class.java)
+        when {
+            // Already the default: the banner was just stale, so refresh it.
+            SmsRepository(this).isDefaultSmsApp() -> vm.refresh()
+            rm != null && rm.isRoleAvailable(RoleManager.ROLE_SMS) ->
+                roleLauncher.launch(rm.createRequestRoleIntent(RoleManager.ROLE_SMS))
+            else -> openDefaultAppsSettings()
         }
+    }
+
+    private fun openDefaultAppsSettings() {
+        runCatching { startActivity(Intent(android.provider.Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS)) }
+            .onFailure { runCatching { startActivity(Intent(android.provider.Settings.ACTION_SETTINGS)) } }
     }
 }
 
@@ -164,6 +182,10 @@ private fun App(
         is Route.Compose -> ComposeScreen(
             initialAddress = r.address,
             isDefault = state.isDefaultApp,
+            contacts = state.contacts,
+            canReadContacts = state.canReadContacts,
+            onOpen = vm::loadContacts,
+            requestContacts = requestPermissions,
             onBack = { route = Route.Home },
             requestDefault = requestDefault,
             onSend = { to, body -> vm.send(to, body); route = Route.Home },

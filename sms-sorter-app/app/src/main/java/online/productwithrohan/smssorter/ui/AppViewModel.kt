@@ -13,6 +13,7 @@ import online.productwithrohan.smssorter.core.Reminders
 import online.productwithrohan.smssorter.core.Sms
 import online.productwithrohan.smssorter.core.Transaction
 import online.productwithrohan.smssorter.core.TransactionParser
+import online.productwithrohan.smssorter.data.ContactEntry
 import online.productwithrohan.smssorter.data.Prefs
 import online.productwithrohan.smssorter.data.SmsRepository
 import online.productwithrohan.smssorter.data.UpdateChecker
@@ -43,6 +44,9 @@ data class UiState(
     val seenThreads: Set<Long> = emptySet(),
     /** versionCode of a newer published build, if there is one. */
     val updateAvailable: Long? = null,
+    /** Phone contacts for the New message screen, loaded when it opens. */
+    val contacts: List<ContactEntry> = emptyList(),
+    val canReadContacts: Boolean = false,
 ) {
     fun unread(c: Conversation) = if (c.threadId in seenThreads) 0 else c.unread
     fun displayName(address: String) = names[address] ?: address
@@ -116,7 +120,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 transactions = txns,
             )
         }
-        _state.update { loaded.copy(starred = it.starred, seenThreads = it.seenThreads, updateAvailable = it.updateAvailable) }
+        _state.update { loaded.copy(starred = it.starred, seenThreads = it.seenThreads, updateAvailable = it.updateAvailable, contacts = it.contacts, canReadContacts = it.canReadContacts) }
+    }
+
+    fun loadContacts() {
+        viewModelScope.launch {
+            val contacts = withContext(Dispatchers.IO) { repo.allContacts() }
+            _state.update { it.copy(contacts = contacts, canReadContacts = repo.canReadContacts()) }
+        }
     }
 
     fun toggleStar(id: Long) {

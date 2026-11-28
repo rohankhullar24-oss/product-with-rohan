@@ -93,6 +93,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         vm.refresh()
+        vm.checkForUpdate()
     }
 
     private fun handleIntent(intent: Intent?) {

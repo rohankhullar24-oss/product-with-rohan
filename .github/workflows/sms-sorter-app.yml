@@ -33,6 +33,22 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # One fixed signing key for every build, so each new APK installs over the old one
+      # (and keeps the user's stars). Set once as repo secrets; see sms-sorter-app/README.md.
+      # Without them the build still works, signed with the runner's throwaway debug key.
+      - name: Load signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.SMS_SORTER_KEYSTORE_B64 }}
+          KEY_PASSWORD: ${{ secrets.SMS_SORTER_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/smssorter.jks"
+            echo "SMS_SORTER_KEYSTORE=$RUNNER_TEMP/smssorter.jks" >> "$GITHUB_ENV"
+            echo "SMS_SORTER_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+          else
+            echo "::warning::SMS_SORTER_KEYSTORE_B64 is not set. This APK is signed with a throwaway key and won't install over a previous build."
+          fi
+
       - name: Unit tests (sorting, parsers, delete rules)
         run: ./gradlew :core:test --no-daemon
 
@@ -53,11 +69,13 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp app/build/outputs/apk/debug/*.apk SmsSorter.apk
+          # The app reads this to offer "Update available" (versionCode = run number).
+          echo "{\"versionCode\": ${{ github.run_number }}}" > version.json
           gh release create sms-sorter-app-latest --prerelease \
             --title "SMS Sorter app (latest build)" \
             --notes "Auto-built debug APK of sms-sorter-app/. Download SmsSorter.apk on your phone and install it." \
             || true
-          gh release upload sms-sorter-app-latest SmsSorter.apk --clobber
+          gh release upload sms-sorter-app-latest SmsSorter.apk version.json --clobber
 
       - name: Publish preview APK to release
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/claude/')

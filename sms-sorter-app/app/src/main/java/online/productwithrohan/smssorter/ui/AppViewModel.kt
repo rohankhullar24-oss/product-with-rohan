@@ -15,6 +15,7 @@ import online.productwithrohan.smssorter.core.Transaction
 import online.productwithrohan.smssorter.core.TransactionParser
 import online.productwithrohan.smssorter.data.Prefs
 import online.productwithrohan.smssorter.data.SmsRepository
+import online.productwithrohan.smssorter.data.UpdateChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -40,6 +41,8 @@ data class UiState(
     val reminders: Reminders = Reminders(emptyList(), emptyList()),
     val transactions: List<TxnItem> = emptyList(),
     val seenThreads: Set<Long> = emptySet(),
+    /** versionCode of a newer published build, if there is one. */
+    val updateAvailable: Long? = null,
 ) {
     fun unread(c: Conversation) = if (c.threadId in seenThreads) 0 else c.unread
     fun displayName(address: String) = names[address] ?: address
@@ -56,9 +59,24 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         override fun onChange(selfChange: Boolean) = scheduleReload()
     }
 
+    private var lastUpdateCheck = 0L
+
     init {
         app.contentResolver.registerContentObserver(Telephony.Sms.CONTENT_URI, true, observer)
         refresh()
+        checkForUpdate()
+    }
+
+
+    /** Looks for a newer build at most every 6 hours (called on launch and on resume). */
+    fun checkForUpdate() {
+        val now = System.currentTimeMillis()
+        if (now - lastUpdateCheck < 6 * 60 * 60 * 1000L) return
+        lastUpdateCheck = now
+        viewModelScope.launch {
+            val newer = withContext(Dispatchers.IO) { UpdateChecker.availableUpdate(getApplication<Application>()) }
+            _state.update { it.copy(updateAvailable = newer) }
+        }
     }
 
     override fun onCleared() {
@@ -98,7 +116,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 transactions = txns,
             )
         }
-        _state.update { loaded.copy(starred = it.starred, seenThreads = it.seenThreads) }
+        _state.update { loaded.copy(starred = it.starred, seenThreads = it.seenThreads, updateAvailable = it.updateAvailable) }
     }
 
     fun toggleStar(id: Long) {

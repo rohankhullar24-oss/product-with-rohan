@@ -31,6 +31,22 @@ sms-sorter-app/
 
 Download **[SmsSorter.apk](https://github.com/rohankhullar24-oss/product-with-rohan/releases/download/sms-sorter-app-latest/SmsSorter.apk)** on your phone and open it. CI builds it on every push to `master` (`.github/workflows/sms-sorter-app.yml`); the app's `versionCode` is the CI run number.
 
+### Always the latest version
+
+- The download link above never changes. Every build on `master` replaces the APK behind it.
+- The app checks for a newer build when you open it (at most every 6 hours) and shows
+  **"A new version is available → Update"**. Tap it, download, and install over the old app;
+  your messages, stars and reminders stay.
+- For an update to install over the old app, every build must be signed with the same key.
+  Set this up once in GitHub → repo **Settings → Secrets and variables → Actions**:
+  - `SMS_SORTER_KEYSTORE_B64`: the keystore file, base64-encoded
+  - `SMS_SORTER_KEY_PASSWORD`: its password (key alias `smssorter`)
+
+  Create the keystore with
+  `keytool -genkeypair -v -keystore smssorter.jks -alias smssorter -keyalg RSA -keysize 2048 -validity 10000`
+  and encode it with `base64 -w0 smssorter.jks`. Keep a copy somewhere safe: if it's lost,
+  the next update needs an uninstall.
+
 ## Build it yourself
 
 You need Android Studio (Ladybug or newer) or the Android SDK with platform 35.

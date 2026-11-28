@@ -67,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import online.productwithrohan.smssorter.core.Category
 import online.productwithrohan.smssorter.core.Conversation
 import online.productwithrohan.smssorter.core.Sms
+import online.productwithrohan.smssorter.data.UpdateChecker
 import kotlinx.coroutines.launch
 
 enum class InboxTab(val label: String, val category: Category?) {
@@ -153,6 +154,7 @@ fun MessagesScreen(
         },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize()) {
+            state.updateAvailable?.let { UpdateBanner(it) }
             if (!state.isDefaultApp) DefaultAppBanner(requestDefault)
             if (q.isEmpty()) {
                 LazyRow(
@@ -223,6 +225,29 @@ fun MessagesScreen(
 }
 
 private fun Set<Long>.toggle(id: Long) = if (id in this) this - id else this + id
+
+@Composable
+private fun UpdateBanner(version: Long) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+    ) {
+        Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                "A new version of SMS Sorter is available (build $version).",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(onClick = {
+                context.startActivity(
+                    android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(UpdateChecker.APK_URL)),
+                )
+            }) { Text("Update") }
+        }
+    }
+}
 
 @Composable
 private fun DefaultAppBanner(onClick: () -> Unit) {

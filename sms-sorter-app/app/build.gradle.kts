@@ -17,12 +17,29 @@ android {
         versionName = "0.1.0"
     }
 
+    // CI signs every build with one fixed key (from the SMS_SORTER_* repo secrets), so each new
+    // APK installs over the previous one and keeps your stars. Without it, Android's per-machine
+    // debug key changes every run and an update would need an uninstall.
+    val stableKeystore = System.getenv("SMS_SORTER_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
+    signingConfigs {
+        if (stableKeystore != null) {
+            create("stable") {
+                storeFile = stableKeystore
+                storePassword = System.getenv("SMS_SORTER_KEY_PASSWORD")
+                keyAlias = "smssorter"
+                keyPassword = System.getenv("SMS_SORTER_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            if (stableKeystore != null) signingConfig = signingConfigs.getByName("stable")
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            // Personal sideloaded build: sign with the debug key so `assembleRelease` installs directly.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("stable") ?: signingConfigs.getByName("debug")
         }
     }
     compileOptions {

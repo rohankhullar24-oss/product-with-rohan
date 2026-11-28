@@ -1,0 +1,90 @@
+name: Build SMS Sorter APK
+
+on:
+  push:
+    branches: ["master", "claude/**"]
+    paths:
+      - "sms-sorter-app/**"
+      - ".github/workflows/sms-sorter-app.yml"
+  pull_request:
+    paths:
+      - "sms-sorter-app/**"
+      - ".github/workflows/sms-sorter-app.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # sms-sorter-app is its own Gradle build (Kotlin 2 + Compose), separate
+        # from the repo-root build the other two apps share.
+        working-directory: sms-sorter-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # One fixed signing key for every build, so each new APK installs over the old one
+      # (and keeps the user's stars). Set once as repo secrets; see sms-sorter-app/README.md.
+      # Without them the build still works, signed with the runner's throwaway debug key.
+      - name: Load signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.SMS_SORTER_KEYSTORE_B64 }}
+          KEY_PASSWORD: ${{ secrets.SMS_SORTER_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/smssorter.jks"
+            echo "SMS_SORTER_KEYSTORE=$RUNNER_TEMP/smssorter.jks" >> "$GITHUB_ENV"
+            echo "SMS_SORTER_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+          else
+            echo "::warning::SMS_SORTER_KEYSTORE_B64 is not set. This APK is signed with a throwaway key and won't install over a previous build."
+          fi
+
+      - name: Unit tests (sorting, parsers, delete rules)
+        run: ./gradlew :core:test --no-daemon
+
+      - name: Build debug APK
+        run: ./gradlew :app:assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: sms-sorter-debug-apk
+          path: sms-sorter-app/app/build/outputs/apk/debug/*.apk
+
+      # Same two-tag scheme as the other apps: -latest is the stable download
+      # and only master writes it; -preview is overwritten by branch builds.
+      - name: Publish APK to release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/*.apk SmsSorter.apk
+          # The app reads this to offer "Update available" (versionCode = run number).
+          echo "{\"versionCode\": ${{ github.run_number }}}" > version.json
+          gh release create sms-sorter-app-latest --prerelease \
+            --title "SMS Sorter app (latest build)" \
+            --notes "Auto-built debug APK of sms-sorter-app/. Download SmsSorter.apk on your phone and install it." \
+            || true
+          gh release upload sms-sorter-app-latest SmsSorter.apk version.json --clobber
+
+      - name: Publish preview APK to release
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/claude/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/*.apk SmsSorter.apk
+          gh release create sms-sorter-app-preview --prerelease \
+            --title "SMS Sorter app (branch preview)" \
+            --notes "Unreviewed build from a work-in-progress branch. Overwritten by every branch push — use the sms-sorter-app-latest release for the stable download." \
+            || true
+          gh release upload sms-sorter-app-preview SmsSorter.apk --clobber

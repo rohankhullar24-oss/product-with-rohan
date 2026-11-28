@@ -42,6 +42,28 @@ export const projects: Project[] = [
     },
   },
   {
+    title: "SMS Sorter: An SMS Organizer App That Files Your Inbox",
+    description:
+      "An Android SMS app that sorts every message into Personal, Transactions and Promotions, pulls bill due dates and train trips into Reminders, and adds up your month in Finance. Built to replace Microsoft SMS Organizer before it shuts down in January 2027.",
+    fullDescription:
+      "Microsoft is retiring SMS Organizer on 17 January 2027, and nothing else on Android does the same job for Indian inboxes, where most SMS come from banks, billers and brands, not people. SMS Sorter reads the TRAI suffix on every commercial sender ID (-P promotional, -S service, -T transactional, -G government) and files messages into Personal, Transactions and Promotions tabs. Older headers without a suffix are sorted by their text. Parsers pull bill due dates (mobile, credit card, utilities) and IRCTC journeys into a Reminders tab with Upcoming and History, and bank credits and debits into a monthly Finance view of money in and out, per account. OTPs get a one-tap copy button. Starred messages are protected: deleting a conversation keeps its starred messages unless you explicitly turn on 'Delete starred messages'. It works as a full default SMS app (receive, notify, reply, compose), with promotions on a silent notification channel. Everything runs on the phone and no message leaves the device. Built in Kotlin and Jetpack Compose, with the sorting and parsing logic in a plain Kotlin module covered by unit tests built from real Indian SMS formats. The download link always serves the newest build, and the app tells you when an update is out.",
+    tags: ["Side Project", "Android App", "AI-Built"],
+    href: "https://github.com/rohankhullar24-oss/product-with-rohan/releases/download/sms-sorter-app-latest/SmsSorter.apk",
+    external: true,
+    linkLabel: "Download the app →",
+    featured: true,
+    slug: "sms-sorter",
+    pm: {
+      users:
+        "SMS Organizer users in India about to lose the app in January 2027. They already rely on auto-sorting and bill reminders, so the bar is: nothing they use today goes missing.",
+      approach:
+        "Don't guess with ML where the regulator already labels the data. The TRAI sender suffix sorts most messages with zero ambiguity, and text heuristics cover only the long tail. Starred messages are kept safe on delete, because losing a message you meant to keep is the one mistake users won't forgive.",
+      metric:
+        "North star: share of messages a user never re-files by hand. Guardrail: zero starred messages lost to a delete.",
+      status: "Parsers unit-tested; Android app CI-built, not yet tested on a real phone.",
+    },
+  },
+  {
     title: "AI-Powered Document Verification for Merchant Onboarding",
     description:
       "Led the design and rollout of an AI-driven document-verification workflow for partner KYC, cutting manual verification effort by 60% while strengthening fraud and RBI compliance controls.",

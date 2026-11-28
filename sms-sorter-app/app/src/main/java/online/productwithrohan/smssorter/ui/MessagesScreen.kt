@@ -58,6 +58,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -93,6 +97,11 @@ fun MessagesScreen(
     var showDelete by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    var menuOpen by remember { mutableStateOf(false) }
+
+    LaunchedEffect(state.updateMessage) {
+        state.updateMessage?.let { snackbar.showSnackbar(it); vm.clearUpdateMessage() }
+    }
 
     val q = query.trim()
     val visible = state.conversations.filter { c ->
@@ -143,7 +152,28 @@ fun MessagesScreen(
                 )
                 else -> TopAppBar(
                     title = { Text("Messages", style = MaterialTheme.typography.headlineMedium) },
-                    actions = { IconButton(onClick = { searching = true }) { Icon(Icons.Filled.Search, "Search") } },
+                    actions = {
+                        IconButton(onClick = { searching = true }) { Icon(Icons.Filled.Search, "Search") }
+                        Box {
+                            IconButton(onClick = { menuOpen = true }) { Icon(Icons.Filled.MoreVert, "More options") }
+                            DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                                DropdownMenuItem(
+                                    text = { Text("Check for updates") },
+                                    onClick = { menuOpen = false; vm.checkForUpdate(manual = true) },
+                                )
+                                DropdownMenuItem(
+                                    text = {
+                                        Text(
+                                            "SMS Sorter · build ${state.installedVersion}",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    onClick = {},
+                                    enabled = false,
+                                )
+                            }
+                        }
+                    },
                 )
             }
         },

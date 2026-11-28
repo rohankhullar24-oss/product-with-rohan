@@ -241,7 +241,7 @@ ESLint.
 
 ## Android apps
 
-Three Gradle modules under one root build (`settings.gradle.kts`), sharing a
+Three Gradle modules under one root build (plus `sms-sorter-app/`, a separate build) (`settings.gradle.kts`), sharing a
 common library:
 
 - **`usage-core/`** — shared library both apps depend on: fetches/tracks
@@ -585,7 +585,17 @@ common library:
   window resets. No API exists for this data; see `claude-limits-app/README.md`
   for how it's obtained (browser session, refreshed in the background).
 
-Both apps keep their original directory layout; only the Gradle build files
+- **`sms-sorter-app/`** — an SMS app that replaces Microsoft SMS Organizer
+  (retiring 17 Jan 2027): Personal / Transactions / Promotions / Starred
+  tabs, bill and train reminders, a monthly finance view, and star-protected
+  deletes. **A standalone Gradle build** with its own `settings.gradle.kts`
+  and wrapper, not part of the root build, because it uses Kotlin 2 +
+  Jetpack Compose while the root build is pinned to Kotlin 1.9. `core/` is
+  pure Kotlin (classifier and parsers, JVM unit tests); `app/` is the
+  Android UI and the default-SMS-app plumbing. CI:
+  `.github/workflows/sms-sorter-app.yml` → release `sms-sorter-app-latest`.
+
+The two root-build apps keep their original directory layout; only the Gradle build files
 were lifted to the repo root so they can share `usage-core` without a source
 move (see the comment in `settings.gradle.kts`).
 

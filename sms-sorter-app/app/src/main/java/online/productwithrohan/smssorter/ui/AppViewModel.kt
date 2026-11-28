@@ -47,6 +47,10 @@ data class UiState(
     /** Phone contacts for the New message screen, loaded when it opens. */
     val contacts: List<ContactEntry> = emptyList(),
     val canReadContacts: Boolean = false,
+    /** versionCode of this install (= CI build number), shown in the menu. */
+    val installedVersion: Long = 0,
+    /** One-off result of a manual "Check for updates", shown as a snackbar. */
+    val updateMessage: String? = null,
 ) {
     fun unread(c: Conversation) = if (c.threadId in seenThreads) 0 else c.unread
     fun displayName(address: String) = names[address] ?: address
@@ -72,16 +76,34 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     }
 
 
-    /** Looks for a newer build at most every 6 hours (called on launch and on resume). */
-    fun checkForUpdate() {
+    /**
+     * Looks for a newer build on launch and on every resume (at most every 15 minutes), or
+     * right away when [manual]. A failed check (offline) doesn't count, so it retries next time.
+     */
+    fun checkForUpdate(manual: Boolean = false) {
         val now = System.currentTimeMillis()
-        if (now - lastUpdateCheck < 6 * 60 * 60 * 1000L) return
-        lastUpdateCheck = now
+        if (!manual && now - lastUpdateCheck < 15 * 60 * 1000L) return
         viewModelScope.launch {
-            val newer = withContext(Dispatchers.IO) { UpdateChecker.availableUpdate(getApplication<Application>()) }
-            _state.update { it.copy(updateAvailable = newer) }
+            val app = getApplication<Application>()
+            val installed = UpdateChecker.installedVersion(app)
+            val latest = withContext(Dispatchers.IO) { UpdateChecker.latestVersion() }
+            if (latest != null) lastUpdateCheck = System.currentTimeMillis()
+            _state.update {
+                it.copy(
+                    installedVersion = installed,
+                    updateAvailable = if (latest != null) latest.takeIf { v -> v > installed } else it.updateAvailable,
+                    updateMessage = when {
+                        !manual -> it.updateMessage
+                        latest == null -> "Couldn't check for updates. Check your internet connection."
+                        latest > installed -> null // the Update banner shows instead
+                        else -> "You're on the latest version (build $installed)."
+                    },
+                )
+            }
         }
     }
+
+    fun clearUpdateMessage() = _state.update { it.copy(updateMessage = null) }
 
     override fun onCleared() {
         getApplication<Application>().contentResolver.unregisterContentObserver(observer)
@@ -108,7 +130,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 .filter { it.incoming }
                 .mapNotNull { sms -> TransactionParser.parse(sms.body)?.let { TxnItem(sms, it) } }
                 .toList()
-            _state.value.copy(
+            UiState(
                 loading = false,
                 canRead = repo.canRead(),
                 isDefaultApp = repo.isDefaultSmsApp(),
@@ -120,7 +142,19 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
                 transactions = txns,
             )
         }
-        _state.update { loaded.copy(starred = it.starred, seenThreads = it.seenThreads, updateAvailable = it.updateAvailable, contacts = it.contacts, canReadContacts = it.canReadContacts) }
+        _state.update {
+            it.copy(
+                loading = loaded.loading,
+                canRead = loaded.canRead,
+                isDefaultApp = loaded.isDefaultApp,
+                messages = loaded.messages,
+                byThread = loaded.byThread,
+                conversations = loaded.conversations,
+                names = loaded.names,
+                reminders = loaded.reminders,
+                transactions = loaded.transactions,
+            )
+        }
     }
 
     fun loadContacts() {

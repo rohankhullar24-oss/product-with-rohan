@@ -42,9 +42,20 @@ jobs:
           KEY_PASSWORD: ${{ secrets.SMS_SORTER_KEY_PASSWORD }}
         run: |
           if [ -n "$KEYSTORE_B64" ]; then
-            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/smssorter.jks"
-            echo "SMS_SORTER_KEYSTORE=$RUNNER_TEMP/smssorter.jks" >> "$GITHUB_ENV"
-            echo "SMS_SORTER_KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
+            ks="$RUNNER_TEMP/smssorter.jks"
+            # Strip whitespace/newlines a copy-paste may add to either secret.
+            printf '%s' "$KEYSTORE_B64" | tr -d '[:space:]' | base64 -d > "$ks" \
+              || { echo "::error::SMS_SORTER_KEYSTORE_B64 is not valid base64. Re-copy the whole long line."; exit 1; }
+            pw=$(printf '%s' "$KEY_PASSWORD" | tr -d '\r\n' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            # Non-secret fingerprints, to compare against the key that was generated.
+            echo "keystore: $(wc -c < "$ks") bytes, sha256 $(sha256sum "$ks" | cut -c1-16); password length ${#pw}"
+            if ! keytool -list -keystore "$ks" -storepass "$pw" -alias smssorter > /dev/null 2>&1; then
+              echo "::error::Keystore and password don't match. Check both secrets were pasted completely (the password ends with '-')."
+              exit 1
+            fi
+            echo "SMS_SORTER_KEYSTORE=$ks" >> "$GITHUB_ENV"
+            echo "SMS_SORTER_KEY_PASSWORD=$pw" >> "$GITHUB_ENV"
+            echo "Signing with the stable SMS Sorter key."
           else
             echo "::warning::SMS_SORTER_KEYSTORE_B64 is not set. This APK is signed with a throwaway key and won't install over a previous build."
           fi
